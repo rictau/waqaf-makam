@@ -2,9 +2,9 @@ const setMeta = (selector: string, value: string) => {
   document.querySelector(selector)?.setAttribute('content', value);
 };
 
-const siteUrl = 'https://waqaf-mig.kmii.jp';
-const defaultTitle = 'Waqaf Pembangunan Masjid - KMII Jepang';
-const defaultDescription = 'Barangsiapa membangun masjid karena Allah, maka Allah akan membangunkan baginya rumah di surga. (HR. Bukhari dan Muslim)';
+const siteUrl = 'https://honjo.kmii.jp';
+const defaultTitle = 'Wakaf Tanah Makam Muslim - KMII Jepang';
+const defaultDescription = 'Bersama Wujudkan Pemakaman Muslim untuk WNI di Jepang - Pemakaman Muslim Honjo. Amal jariyah abadi bersama KMII Jepang.';
 
 const toAbsoluteUrl = (value: string) => {
   try {
