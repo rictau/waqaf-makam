@@ -86,79 +86,63 @@ export const ConfirmUpload: React.FC<ConfirmUploadProps> = ({ uploadFile, setUpl
           onClick={() => fileInputRef.current?.click()}
           sx={{
             width: '100%',
-            textAlign: 'center',
+            textAlign: 'left',
             display: 'flex',
-            flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'center',
-            gap: 1.25,
+            gap: 1.5,
             px: 2,
-            py: 3.5,
+            py: 2,
             cursor: 'pointer',
             bgcolor: c.paper,
-            border: `2px dashed ${c.ruleStrong}`,
-            borderRadius: radius.md,
+            border: `1px dashed ${c.ruleStrong}`,
+            borderRadius: radius.lg,
             transition: 'border-color 150ms ease, background-color 150ms ease',
             '&:hover': { borderColor: c.forest, bgcolor: c.forestTint },
             '&:active': { transform: 'scale(0.995)' },
           }}
         >
-          <Box
-            sx={{
-              width: 48,
-              height: 48,
-              borderRadius: '50%',
-              bgcolor: c.forestTint,
-              color: c.forest,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              mb: 0.5,
-            }}
-          >
-            <Upload size={24} strokeWidth={2.5} />
+          <Box sx={{ color: c.forest, display: 'flex', flexShrink: 0 }}>
+            <Upload size={20} strokeWidth={2} />
           </Box>
-          <Typography sx={{ fontSize: '1rem', fontWeight: 700, color: c.ink }}>
-            Klik untuk Pilih Bukti Transfer
-          </Typography>
-          <Typography sx={{ fontSize: '0.75rem', color: c.inkMuted, maxWidth: 360, lineHeight: 1.5 }}>
-            Format JPG, PNG, atau PDF (maks. 10 MB).<br />
-            <Box component="span" sx={{ color: c.danger, fontWeight: 700 }}>Penting:</Box> Mohon tidak menggunakan format iPhone HEIC.
-          </Typography>
+          <Box sx={{ minWidth: 0 }}>
+            <Typography sx={{ fontSize: '0.875rem', fontWeight: 700, color: c.ink }}>
+              Pilih bukti transfer
+            </Typography>
+            <Typography sx={{ fontSize: '0.6875rem', color: c.inkMuted, mt: 0.25, lineHeight: 1.45 }}>
+              JPG, PNG atau PDF · maks. 10 MB · <Box component="span" sx={{ color: c.danger, fontWeight: 700 }}>bukan HEIC</Box>
+            </Typography>
+          </Box>
         </Box>
       ) : (
-        <Box sx={{ bgcolor: c.paper, border: `1.5px solid ${c.verified}`, borderRadius: radius.md, overflow: 'hidden' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, px: 2, py: 2, bgcolor: '#eef5f0' }}>
+        <Box sx={{ bgcolor: c.paper, border: `1px solid ${c.ruleStrong}`, borderRadius: radius.lg, overflow: 'hidden' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, px: 2, py: 1.5 }}>
             <Box sx={{ color: c.verified, display: 'flex', flexShrink: 0 }}>
-              <FileCheck2 size={24} />
+              <FileCheck2 size={18} />
             </Box>
             <Box sx={{ minWidth: 0, flex: 1 }}>
-              <Typography noWrap sx={{ fontSize: '0.875rem', fontWeight: 700, color: c.ink }}>
+              <Typography noWrap sx={{ fontSize: '0.8125rem', fontWeight: 700, color: c.ink }}>
                 {uploadFile.name}
               </Typography>
-              <Typography sx={{ fontSize: '0.75rem', color: c.inkMuted, ...tnum, mt: 0.25 }}>
-                {formatFileSize(uploadFile.size)} · Siap dikirim
+              <Typography sx={{ fontSize: '0.6875rem', color: c.inkMuted, ...tnum }}>
+                {formatFileSize(uploadFile.size)}
               </Typography>
             </Box>
             <Button
-              size="small"
-              variant="outlined"
-              onClick={handleClearFile}
+              size="small" variant="text" onClick={handleClearFile}
               disabled={uploadState === 'uploading'}
-              sx={{ minHeight: 32, px: 1.5, fontSize: '0.75rem', fontWeight: 700, color: c.inkMuted, flexShrink: 0 }}
+              sx={{ ...eyebrow, fontSize: '0.5625rem', color: c.inkMuted, px: 1, flexShrink: 0 }}
             >
-              Ganti File
+              Ganti
             </Button>
           </Box>
         </Box>
       )}
 
-      {/* Always-visible Primary Submit CTA */}
-      <Box sx={{ mt: 2.5 }}>
+      {/* Primary Submit CTA - Always visible */}
+      <Box sx={{ mt: 2 }}>
         <Button
           variant="contained"
           fullWidth
-          size="large"
           onClick={() => {
             if (!uploadFile) {
               fileInputRef.current?.click();
@@ -167,28 +151,18 @@ export const ConfirmUpload: React.FC<ConfirmUploadProps> = ({ uploadFile, setUpl
             }
           }}
           disabled={uploadState === 'uploading'}
-          sx={{
-            py: 1.5,
-            minHeight: 52,
-            fontSize: '1rem',
-            fontWeight: 800,
-            borderRadius: radius.md,
-            bgcolor: c.forest,
-            color: '#ffffff',
-            boxShadow: '0 4px 14px rgba(20, 58, 40, 0.25)',
-            '&:hover': { bgcolor: c.forestDeep },
-          }}
+          sx={{ py: 1.375, ...eyebrow, fontSize: '0.75rem', color: c.paper }}
         >
           {uploadState === 'uploading' ? (
-            <CircularProgress size={22} color="inherit" thickness={5} />
+            <CircularProgress size={18} color="inherit" thickness={5} />
           ) : !uploadFile ? (
             'Pilih Bukti Transfer & Kirim'
           ) : (
             'Kirim Donasi Sekarang'
           )}
         </Button>
-        <Typography sx={{ mt: 1, textAlign: 'center', fontSize: '0.75rem', color: c.inkFaint }}>
-          Pastikan data dan bukti transfer yang Anda lampirkan sudah benar
+        <Typography sx={{ mt: 1, textAlign: 'center', fontSize: '0.6875rem', color: c.inkFaint }}>
+          Pastikan data yang Anda masukkan sudah benar
         </Typography>
       </Box>
     </Box>

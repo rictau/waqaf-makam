@@ -55,7 +55,7 @@ export const PackageSelection: React.FC<PackageSelectionProps> = ({
 
       <PullQuote cite={citation} sx={{ mb: 2 }}>“{quote}”</PullQuote>
 
-      <Box role="radiogroup" aria-label="Nominal wakaf" sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+      <Box role="radiogroup" aria-label="Nominal wakaf" sx={{ border: `1px solid ${c.rule}`, borderRadius: radius.lg, bgcolor: c.paper, overflow: 'hidden' }}>
         {packages.map((pkg, index) => {
           const isActive = selectedPackage === pkg.id;
           const hasBadge = Boolean(pkg.badge);
@@ -64,19 +64,7 @@ export const PackageSelection: React.FC<PackageSelectionProps> = ({
           const idr = idrEstimate(pkg.priceLabel);
 
           return (
-            <Box
-              key={pkg.id}
-              sx={{
-                border: isActive ? `2px solid ${c.forest}` : `1.5px solid ${c.ruleStrong}`,
-                borderRadius: radius.md,
-                bgcolor: isActive ? c.forestTint : c.paper,
-                overflow: 'hidden',
-                transition: 'border-color 150ms ease, background-color 150ms ease, box-shadow 150ms ease',
-                '&:hover': {
-                  borderColor: c.forest,
-                },
-              }}
-            >
+            <Box key={pkg.id} sx={{ borderTop: index === 0 ? 'none' : `1px solid ${c.rule}` }}>
               <Box
                 component="button"
                 type="button"
@@ -90,59 +78,59 @@ export const PackageSelection: React.FC<PackageSelectionProps> = ({
                   width: '100%',
                   textAlign: 'left',
                   display: 'flex',
-                  alignItems: 'center',
-                  gap: 1.75,
-                  p: 2,
+                  alignItems: 'flex-start',
+                  gap: 1.5,
+                  px: 2,
+                  py: 1.75,
                   cursor: 'pointer',
                   border: 'none',
-                  bgcolor: 'transparent',
-                  minHeight: 58,
+                  borderLeft: `3px solid ${isActive ? c.forest : 'transparent'}`,
+                  bgcolor: isActive ? c.forestTint : 'transparent',
+                  transition: 'background-color 150ms ease, border-color 150ms ease',
+                  '&:hover': { bgcolor: isActive ? c.forestTint : 'rgba(20,58,40,0.035)' },
+                  '&:active': { transform: 'scale(0.995)' },
                 }}
               >
-                {/* Radio button indicator — universally recognized clickable cue */}
+                {/* Radio indicator for clear clickability */}
                 <Box
                   sx={{
-                    width: 22,
-                    height: 22,
+                    width: 18,
+                    height: 18,
                     borderRadius: '50%',
-                    border: `2px solid ${isActive ? c.forest : c.ruleStrong}`,
+                    border: `1.5px solid ${isActive ? c.forest : c.ruleStrong}`,
                     bgcolor: isActive ? c.forest : 'transparent',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexShrink: 0,
+                    mt: '2px',
                     transition: 'all 150ms ease',
                   }}
                 >
-                  {isActive && <Check size={14} color="#ffffff" strokeWidth={3} />}
+                  {isActive && <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: c.paper }} />}
                 </Box>
 
+                <Typography component="span" sx={{ fontFamily: mono, fontSize: '0.6875rem', color: isActive ? c.forest : c.inkFaint, pt: '3px', ...tnum }}>
+                  {String(index + 1).padStart(2, '0')}
+                </Typography>
+
                 <Box sx={{ minWidth: 0, flex: 1 }}>
-                  <Typography
-                    component="span"
-                    sx={{
-                      fontSize: '0.9375rem',
-                      fontWeight: 700,
-                      color: isActive ? c.forest : c.ink,
-                      display: 'block',
-                      lineHeight: 1.3,
-                    }}
-                  >
+                  <Typography component="span" sx={{ ...eyebrow, fontSize: '0.6875rem', color: isActive ? c.forest : c.ink, display: 'block' }}>
                     {name}
                   </Typography>
                   {pkg.subtext && (
-                    <Typography sx={{ fontSize: '0.75rem', lineHeight: 1.45, color: c.inkMuted, mt: 0.5 }}>
+                    <Typography sx={{ fontSize: '0.6875rem', lineHeight: 1.45, color: c.inkMuted, mt: 0.5 }}>
                       {pkg.subtext}
                     </Typography>
                   )}
                 </Box>
 
                 <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
-                  <Figure size="1.125rem" tone={isActive ? c.forest : c.ink} sx={{ display: 'block' }}>
+                  <Figure size="1rem" tone={isActive ? c.forest : c.ink} sx={{ display: 'block' }}>
                     {priceMain}
                   </Figure>
                   {idr && (
-                    <Typography sx={{ fontSize: '0.6875rem', fontWeight: 600, color: c.inkMuted, mt: 0.25, ...tnum }}>
+                    <Typography sx={{ fontSize: '0.625rem', fontWeight: 500, color: c.inkFaint, mt: 0.25, ...tnum }}>
                       {idr}
                     </Typography>
                   )}

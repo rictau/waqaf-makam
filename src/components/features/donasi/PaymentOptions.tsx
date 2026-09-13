@@ -93,28 +93,17 @@ export const PaymentOptions: React.FC<PaymentOptionsProps> = ({ selectedBank, se
             <Box
               key={bank.id}
               sx={{
-                p: { xs: 2, sm: 2.25 },
+                p: 2,
                 borderTop: index === 0 ? 'none' : `1px solid ${c.rule}`,
+                borderLeft: `3px solid ${isActive ? c.forest : 'transparent'}`,
                 bgcolor: isActive ? c.forestTint : 'transparent',
-                transition: 'background-color 150ms ease',
+                transition: 'background-color 150ms ease, border-color 150ms ease',
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1.5, mb: 1 }}>
-                <Typography sx={{ fontSize: '0.875rem', fontWeight: 700, color: c.ink }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1.5 }}>
+                <Eyebrow tone={isActive ? 'brass' : 'muted'} sx={{ fontSize: '0.625rem', minWidth: 0 }}>
                   {bank.label}
-                </Typography>
-                {isActive && (
-                  <Box sx={{ px: 1, py: 0.25, bgcolor: c.forest, color: c.paper, borderRadius: radius.sm, fontSize: '0.6875rem', fontWeight: 700 }}>
-                    Dipilih
-                  </Box>
-                )}
-              </Box>
-
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap', my: 1 }}>
-                <Mono sx={{ fontSize: '1.25rem', fontWeight: 700, color: isActive ? c.forest : c.ink, letterSpacing: '0.04em' }}>
-                  {bank.account}
-                </Mono>
-
+                </Eyebrow>
                 <Box
                   component="button"
                   type="button"
@@ -122,31 +111,33 @@ export const PaymentOptions: React.FC<PaymentOptionsProps> = ({ selectedBank, se
                   sx={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: 0.75,
-                    px: 2,
-                    py: 0.875,
-                    minHeight: 38,
+                    gap: 0.625,
+                    px: 1.25,
+                    py: 0.625,
+                    minHeight: 32,
                     cursor: 'pointer',
-                    borderRadius: radius.md,
-                    border: `1.5px solid ${isCopied ? c.verified : c.forest}`,
-                    bgcolor: isCopied ? c.verified : isActive ? c.forest : 'transparent',
-                    color: isCopied ? '#ffffff' : isActive ? '#ffffff' : c.forest,
-                    fontSize: '0.8125rem',
-                    fontWeight: 700,
+                    borderRadius: radius.sm,
+                    border: `1px solid ${isCopied ? c.verified : c.ruleStrong}`,
+                    bgcolor: isCopied ? '#e9f0ea' : c.well,
+                    color: isCopied ? c.verified : c.ink,
+                    ...eyebrow,
+                    fontSize: '0.625rem',
+                    letterSpacing: '0.08em',
                     transition: 'all 150ms ease',
-                    '&:hover': {
-                      bgcolor: isCopied ? c.verified : c.forest,
-                      color: '#ffffff',
-                    },
+                    '&:hover': { borderColor: c.forest, color: c.forest },
                     '&:active': { transform: 'scale(0.98)' },
                   }}
                 >
-                  {isCopied ? <Check size={16} strokeWidth={3} /> : <Copy size={16} />}
-                  <span>{isCopied ? 'Tersalin ke Clipboard!' : 'Salin Nomor'}</span>
+                  {isCopied ? <Check size={13} strokeWidth={3} /> : <Copy size={13} />}
+                  <span>{isCopied ? 'Disalin' : 'Salin Nomor'}</span>
                 </Box>
               </Box>
 
-              <Typography sx={{ fontSize: '0.75rem', fontWeight: 500, color: c.inkMuted, whiteSpace: 'pre-line', lineHeight: 1.45 }}>
+              <Mono sx={{ display: 'block', mt: 0.75, fontSize: '1.125rem', fontWeight: 600, color: isActive ? c.forest : c.ink }}>
+                {bank.account}
+              </Mono>
+
+              <Typography sx={{ mt: 0.375, fontSize: '0.6875rem', fontWeight: 500, color: c.inkMuted, whiteSpace: 'pre-line', lineHeight: 1.45 }}>
                 {bank.name}
               </Typography>
             </Box>

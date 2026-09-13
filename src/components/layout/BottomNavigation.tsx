@@ -69,8 +69,8 @@ export const BottomNavigation: React.FC<BottomNavProps> = ({ activeTab, setActiv
                 '&:active': { transform: 'scale(0.98)' },
               }}
             >
-              <Icon size={22} strokeWidth={isActive ? 2.5 : 1.75} />
-              <Typography component="span" sx={{ fontSize: '0.75rem', fontWeight: 700, color: 'inherit', letterSpacing: '0.02em' }}>
+              <Icon size={19} strokeWidth={isActive ? 2.5 : 2} />
+              <Typography component="span" sx={{ ...eyebrow, fontSize: '0.5625rem', color: 'inherit' }}>
                 {tab.label}
               </Typography>
             </Box>

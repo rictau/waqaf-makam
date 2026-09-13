@@ -1,7 +1,7 @@
 import React from 'react';
-import { Box, Typography, TextField, InputAdornment } from '@mui/material';
-import { User, Mail, Phone, MapPin, CheckCircle2 } from 'lucide-react';
-import { c, radius } from '../../../design';
+import { Box, InputBase, Typography } from '@mui/material';
+import { CheckCircle2 } from 'lucide-react';
+import { c, eyebrow, radius, sans } from '../../../design';
 import { Eyebrow } from '../../common/primitives';
 import { Toggle } from '../../common/Toggle';
 
@@ -17,6 +17,57 @@ interface DonorFormProps {
   donorEmail: string;
   setDonorEmail: (val: string) => void;
 }
+
+/**
+ * Editorial ledger form rows: small-caps label column, clean legible field,
+ * hairline dividers, and a forest active edge.
+ */
+const FieldRow: React.FC<{
+  id: string;
+  label: string;
+  last?: boolean;
+  valid?: boolean;
+  children: React.ReactNode;
+}> = ({ id, label, last, valid, children }) => (
+  <Box
+    sx={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 2,
+      px: 2,
+      py: 1.5,
+      minHeight: 48,
+      borderBottom: last ? 'none' : `1px solid ${c.rule}`,
+      borderLeft: '3px solid transparent',
+      transition: 'background-color 150ms ease, border-color 150ms ease',
+      '&:focus-within': { bgcolor: c.raised, borderLeftColor: c.forest },
+    }}
+  >
+    <Box component="label" htmlFor={id} sx={{ ...eyebrow, fontSize: '0.625rem', width: 90, flexShrink: 0, cursor: 'pointer' }}>
+      {label}
+    </Box>
+    <Box sx={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 1 }}>
+      {children}
+      <Box sx={{ width: 16, flexShrink: 0, color: c.verified, display: 'flex', visibility: valid ? 'visible' : 'hidden' }}>
+        <CheckCircle2 size={16} />
+      </Box>
+    </Box>
+  </Box>
+);
+
+const fieldSx = {
+  flex: 1,
+  minWidth: 0,
+  '& .MuiInputBase-input': {
+    p: '4px 0',
+    fontFamily: sans,
+    fontSize: '0.9375rem',
+    fontWeight: 600,
+    color: c.ink,
+    '&::placeholder': { color: c.inkFaint, opacity: 1, fontWeight: 400 },
+    '&.Mui-disabled': { color: c.inkMuted, WebkitTextFillColor: c.inkMuted },
+  },
+};
 
 export const DonorForm: React.FC<DonorFormProps> = ({
   isAnonymous,
@@ -36,123 +87,48 @@ export const DonorForm: React.FC<DonorFormProps> = ({
     <Box component="section">
       <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', pb: 1, mb: 1.5, borderBottom: `1px solid ${c.ruleStrong}` }}>
         <Eyebrow tone="ink">Data Donatur</Eyebrow>
-        <Typography sx={{ fontSize: '0.6875rem', fontWeight: 600, color: c.inkFaint }}>Wajib diisi</Typography>
+        <Typography sx={{ fontSize: '0.625rem', fontWeight: 600, color: c.inkFaint }}>Wajib diisi</Typography>
       </Box>
 
-      <Box sx={{ p: { xs: 2, sm: 2.5 }, border: `1px solid ${c.ruleStrong}`, borderRadius: radius.md, bgcolor: c.paper, display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <TextField
-          fullWidth
-          label="Nama Lengkap"
-          placeholder="Cth: Ahmad Abdullah"
-          value={isAnonymous ? 'Hamba Allah' : donorName}
-          disabled={isAnonymous}
-          onChange={(e) => setDonorName(e.target.value)}
-          slotProps={{
-            input: {
-              startAdornment: (
-                <InputAdornment position="start">
-                  <User size={18} color={c.inkMuted} />
-                </InputAdornment>
-              ),
-              endAdornment: donorName.length > 2 && !isAnonymous && (
-                <InputAdornment position="end">
-                  <CheckCircle2 size={18} color={c.verified} />
-                </InputAdornment>
-              ),
-            },
-          }}
-        />
+      <Box sx={{ border: `1px solid ${c.rule}`, borderRadius: radius.lg, bgcolor: c.paper, overflow: 'hidden' }}>
+        <FieldRow id="donor-name" label="Nama" valid={donorName.length > 2 && !isAnonymous}>
+          <InputBase
+            id="donor-name" fullWidth placeholder="Cth: Ahmad Abdullah" sx={fieldSx}
+            value={isAnonymous ? 'Hamba Allah' : donorName}
+            disabled={isAnonymous}
+            onChange={(e) => setDonorName(e.target.value)}
+          />
+        </FieldRow>
 
-        <TextField
-          fullWidth
-          type="email"
-          label="Email Aktif"
-          placeholder="email@anda.com"
-          value={donorEmail}
-          onChange={(e) => setDonorEmail(e.target.value)}
-          helperText="Bukti konfirmasi donasi akan dikirimkan ke email ini"
-          slotProps={{
-            input: {
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Mail size={18} color={c.inkMuted} />
-                </InputAdornment>
-              ),
-              endAdornment: isEmailValid(donorEmail) && (
-                <InputAdornment position="end">
-                  <CheckCircle2 size={18} color={c.verified} />
-                </InputAdornment>
-              ),
-            },
-          }}
-        />
+        <FieldRow id="donor-email" label="Email" valid={isEmailValid(donorEmail)}>
+          <InputBase
+            id="donor-email" fullWidth type="email" placeholder="email@anda.com" sx={fieldSx}
+            value={donorEmail}
+            onChange={(e) => setDonorEmail(e.target.value)}
+          />
+        </FieldRow>
 
-        <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
-          <TextField
-            fullWidth
-            type="tel"
-            label="Nomor WhatsApp"
-            placeholder="08123456789 atau 080..."
+        <FieldRow id="donor-phone" label="WhatsApp" valid={donorPhone.length > 7}>
+          <InputBase
+            id="donor-phone" fullWidth type="tel" inputMode="numeric" placeholder="0812…" sx={fieldSx}
             value={donorPhone}
             onChange={(e) => setDonorPhone(e.target.value.replace(/[^0-9]/g, ''))}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Phone size={18} color={c.inkMuted} />
-                  </InputAdornment>
-                ),
-                endAdornment: donorPhone.length > 7 && (
-                  <InputAdornment position="end">
-                    <CheckCircle2 size={18} color={c.verified} />
-                  </InputAdornment>
-                ),
-              },
-            }}
           />
+        </FieldRow>
 
-          <TextField
-            fullWidth
-            label="Domisili"
-            placeholder="Cth: Tokyo / Saitama / Jakarta"
+        <FieldRow id="donor-city" label="Domisili" valid={donorCity.length > 1} last>
+          <InputBase
+            id="donor-city" fullWidth placeholder="Cth: Tokyo / Saitama" sx={fieldSx}
             value={donorCity}
             onChange={(e) => setDonorCity(e.target.value)}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <MapPin size={18} color={c.inkMuted} />
-                  </InputAdornment>
-                ),
-                endAdornment: donorCity.length > 1 && (
-                  <InputAdornment position="end">
-                    <CheckCircle2 size={18} color={c.verified} />
-                  </InputAdornment>
-                ),
-              },
-            }}
           />
-        </Box>
+        </FieldRow>
 
-        {/* Anonim Toggle Card */}
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 2,
-            p: 1.75,
-            bgcolor: c.well,
-            border: `1px solid ${c.rule}`,
-            borderRadius: radius.md,
-          }}
-        >
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, px: 2, py: 1.5, bgcolor: c.well, borderTop: `1px solid ${c.rule}` }}>
           <Box>
-            <Typography sx={{ fontSize: '0.875rem', fontWeight: 700, color: c.ink }}>
-              Donasi Sebagai Hamba Allah (Anonim)
-            </Typography>
-            <Typography sx={{ fontSize: '0.75rem', color: c.inkMuted, mt: 0.25 }}>
-              Nama Anda akan disamarkan sebagai “Hamba Allah” pada daftar donatur publik
+            <Eyebrow tone="ink" sx={{ fontSize: '0.625rem' }}>Donasi Anonim</Eyebrow>
+            <Typography sx={{ fontSize: '0.6875rem', color: c.inkMuted, mt: 0.25 }}>
+              Nama diganti “Hamba Allah” pada daftar publik
             </Typography>
           </Box>
           <Toggle checked={isAnonymous} onChange={setIsAnonymous} label="Donasi anonim" />

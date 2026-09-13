@@ -64,7 +64,7 @@ const theme = createTheme({
     button: { fontSize: "0.8125rem", fontWeight: 700, letterSpacing: "0.04em" },
   },
 
-  shape: { borderRadius: 6 },
+  shape: { borderRadius: 3 },
 
   // Flat system: every elevation slot resolves to "none" except overlays,
   // which opt in explicitly via the Dialog/Popover overrides below.
@@ -117,25 +117,21 @@ const theme = createTheme({
           borderRadius: radius.md,
           textTransform: "none",
           minWidth: 0,
-          fontWeight: 700,
-          fontSize: "0.875rem",
+          fontFamily: sans,
           transition: "border-color 150ms ease, background-color 150ms ease, color 150ms ease",
           "&:active": { transform: "scale(0.99)" },
         },
         sizeLarge: {
           minHeight: 48,
           padding: "12px 24px",
-          fontSize: "0.9375rem",
         },
         sizeMedium: {
-          minHeight: 42,
-          padding: "8px 18px",
-          fontSize: "0.875rem",
+          minHeight: 40,
+          padding: "8px 16px",
         },
         sizeSmall: {
-          minHeight: 34,
-          padding: "5px 12px",
-          fontSize: "0.8125rem",
+          minHeight: 32,
+          padding: "4px 10px",
         },
         contained: {
           backgroundColor: c.forest,
@@ -170,13 +166,14 @@ const theme = createTheme({
         root: {
           borderRadius: radius.md,
           backgroundColor: c.raised,
-          minHeight: 46,
-          "& .MuiOutlinedInput-notchedOutline": { borderColor: c.ruleStrong },
-          "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: c.forest },
-          "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderWidth: 2, borderColor: c.forest },
-          transition: "border-color 150ms ease, background-color 150ms ease",
+          minHeight: 44,
+          fontFamily: sans,
+          "& .MuiOutlinedInput-notchedOutline": { borderColor: c.rule },
+          "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: c.ruleStrong },
+          "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderWidth: 1.5, borderColor: c.forest },
+          transition: "background-color 150ms ease",
         },
-        input: { fontSize: "0.9375rem", fontWeight: 600, padding: "12px 14px" },
+        input: { fontSize: "0.875rem", fontWeight: 500, fontFamily: sans },
       },
     },
 
