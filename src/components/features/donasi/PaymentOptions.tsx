@@ -77,9 +77,11 @@ export const PaymentOptions: React.FC<PaymentOptionsProps> = ({ selectedBank, se
         </Box>
 
         {accounts.length > 0 && (
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2, py: 0.875, bgcolor: c.well, borderBottom: `1px solid ${c.ruleStrong}` }}>
-            <Eyebrow sx={{ fontSize: '0.5625rem' }}>Rekening Tujuan</Eyebrow>
-            <Eyebrow sx={{ fontSize: '0.5625rem' }}>Ketuk untuk menyalin</Eyebrow>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2, py: 1, bgcolor: c.well, borderBottom: `1px solid ${c.ruleStrong}` }}>
+            <Eyebrow sx={{ fontSize: '0.6875rem' }}>Rekening Tujuan</Eyebrow>
+            <Typography sx={{ fontSize: '0.6875rem', fontWeight: 600, color: c.inkFaint }}>
+              Salin untuk kemudahan transfer
+            </Typography>
           </Box>
         )}
 
@@ -90,41 +92,61 @@ export const PaymentOptions: React.FC<PaymentOptionsProps> = ({ selectedBank, se
           return (
             <Box
               key={bank.id}
-              component="button"
-              type="button"
-              aria-pressed={isActive}
-              onClick={() => onCopy(bank.account, bank.id)}
               sx={{
-                width: '100%',
-                textAlign: 'left',
-                display: 'block',
-                px: 2,
-                py: 1.5,
-                cursor: 'pointer',
-                border: 'none',
+                p: { xs: 2, sm: 2.25 },
                 borderTop: index === 0 ? 'none' : `1px solid ${c.rule}`,
-                borderLeft: `3px solid ${isActive ? c.forest : 'transparent'}`,
                 bgcolor: isActive ? c.forestTint : 'transparent',
-                transition: 'background-color 150ms ease, border-color 150ms ease',
-                '&:hover': { bgcolor: isActive ? c.forestTint : 'rgba(20,58,40,0.035)' },
-                '&:active': { transform: 'scale(0.995)' },
+                transition: 'background-color 150ms ease',
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 1.5 }}>
-                <Eyebrow tone={isActive ? 'brass' : 'muted'} sx={{ fontSize: '0.5625rem', minWidth: 0 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1.5, mb: 1 }}>
+                <Typography sx={{ fontSize: '0.875rem', fontWeight: 700, color: c.ink }}>
                   {bank.label}
-                </Eyebrow>
-                <Box component="span" sx={{ ...eyebrow, fontSize: '0.5625rem', flexShrink: 0, color: isCopied ? c.verified : isActive ? c.forest : c.inkFaint, display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
-                  {isCopied ? <Check size={12} strokeWidth={3} /> : <Copy size={12} />}
-                  {isCopied ? 'Disalin' : isActive ? 'Terpilih' : 'Salin'}
+                </Typography>
+                {isActive && (
+                  <Box sx={{ px: 1, py: 0.25, bgcolor: c.forest, color: c.paper, borderRadius: radius.sm, fontSize: '0.6875rem', fontWeight: 700 }}>
+                    Dipilih
+                  </Box>
+                )}
+              </Box>
+
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap', my: 1 }}>
+                <Mono sx={{ fontSize: '1.25rem', fontWeight: 700, color: isActive ? c.forest : c.ink, letterSpacing: '0.04em' }}>
+                  {bank.account}
+                </Mono>
+
+                <Box
+                  component="button"
+                  type="button"
+                  onClick={() => onCopy(bank.account, bank.id)}
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 0.75,
+                    px: 2,
+                    py: 0.875,
+                    minHeight: 38,
+                    cursor: 'pointer',
+                    borderRadius: radius.md,
+                    border: `1.5px solid ${isCopied ? c.verified : c.forest}`,
+                    bgcolor: isCopied ? c.verified : isActive ? c.forest : 'transparent',
+                    color: isCopied ? '#ffffff' : isActive ? '#ffffff' : c.forest,
+                    fontSize: '0.8125rem',
+                    fontWeight: 700,
+                    transition: 'all 150ms ease',
+                    '&:hover': {
+                      bgcolor: isCopied ? c.verified : c.forest,
+                      color: '#ffffff',
+                    },
+                    '&:active': { transform: 'scale(0.98)' },
+                  }}
+                >
+                  {isCopied ? <Check size={16} strokeWidth={3} /> : <Copy size={16} />}
+                  <span>{isCopied ? 'Tersalin ke Clipboard!' : 'Salin Nomor'}</span>
                 </Box>
               </Box>
 
-              <Mono sx={{ display: 'block', mt: 0.625, fontSize: '1rem', fontWeight: 600, color: isActive ? c.forest : c.ink }}>
-                {bank.account}
-              </Mono>
-
-              <Typography sx={{ mt: 0.375, fontSize: '0.6875rem', fontWeight: 500, color: c.inkMuted, whiteSpace: 'pre-line', lineHeight: 1.45 }}>
+              <Typography sx={{ fontSize: '0.75rem', fontWeight: 500, color: c.inkMuted, whiteSpace: 'pre-line', lineHeight: 1.45 }}>
                 {bank.name}
               </Typography>
             </Box>
@@ -132,13 +154,13 @@ export const PaymentOptions: React.FC<PaymentOptionsProps> = ({ selectedBank, se
         })}
 
         {selectedBank === 'cash' && (
-          <Box sx={{ px: 2, py: 2 }}>
-            <Eyebrow tone="ink">Pembayaran Tunai</Eyebrow>
-            <Typography sx={{ mt: 1, fontSize: '0.8125rem', lineHeight: 1.6, color: c.inkMuted }}>
+          <Box sx={{ px: 2, py: 2.5 }}>
+            <Eyebrow tone="ink" sx={{ fontSize: '0.8125rem', mb: 1 }}>Pembayaran Tunai</Eyebrow>
+            <Typography sx={{ fontSize: '0.875rem', lineHeight: 1.6, color: c.ink }}>
               {publicConfig.cashPaymentText.replace('{masjidName}', publicConfig.masjidName)}
             </Typography>
-            <Box sx={{ mt: 1.5, pl: 1.5, borderLeft: `2px solid ${c.brassBright}` }}>
-              <Typography sx={{ fontSize: '0.75rem', lineHeight: 1.55, color: c.ink, fontWeight: 500 }}>
+            <Box sx={{ mt: 2, p: 1.75, bgcolor: c.well, borderLeft: `3px solid ${c.brassBright}`, borderRadius: radius.sm }}>
+              <Typography sx={{ fontSize: '0.8125rem', lineHeight: 1.55, color: c.ink, fontWeight: 500 }}>
                 Mohon lampirkan foto tanda terima atau foto bersama panitia saat serah terima tunai pada bagian
                 {' '}<strong>Upload Bukti</strong> di bawah.
               </Typography>
@@ -148,8 +170,8 @@ export const PaymentOptions: React.FC<PaymentOptionsProps> = ({ selectedBank, se
       </Box>
 
       {selectedBank !== 'cash' && (
-        <Typography sx={{ mt: 1, fontSize: '0.6875rem', color: c.inkFaint, ...tnum }}>
-          Nomor rekening tersalin otomatis saat dipilih.
+        <Typography sx={{ mt: 1, fontSize: '0.75rem', color: c.inkMuted }}>
+          Silakan transfer ke salah satu nomor rekening di atas, lalu lampirkan bukti transfer di bawah.
         </Typography>
       )}
     </Box>

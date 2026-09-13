@@ -54,7 +54,7 @@ export const sans = '"Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", 
 export const mono = 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace';
 
 /* ---- Geometry ---- */
-export const radius = { sm: '2px', md: '3px', lg: '4px' } as const;
+export const radius = { sm: '4px', md: '6px', lg: '8px', xl: '12px' } as const;
 
 /** Standard interaction timing: functional, not decorative. */
 export const t150 = 'border-color 150ms ease, background-color 150ms ease, color 150ms ease';
@@ -64,10 +64,10 @@ export const t150 = 'border-color 150ms ease, background-color 150ms ease, color
 /** Small caps label. The signature of the system — use instead of icon chrome. */
 export const eyebrow = {
   fontFamily: sans,
-  fontSize: '0.6875rem',
+  fontSize: '0.75rem',
   fontWeight: 700,
   lineHeight: 1.3,
-  letterSpacing: '0.12em',
+  letterSpacing: '0.08em',
   textTransform: 'uppercase' as const,
   color: c.inkMuted,
 };

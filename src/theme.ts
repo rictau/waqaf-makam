@@ -64,7 +64,7 @@ const theme = createTheme({
     button: { fontSize: "0.8125rem", fontWeight: 700, letterSpacing: "0.04em" },
   },
 
-  shape: { borderRadius: 3 },
+  shape: { borderRadius: 6 },
 
   // Flat system: every elevation slot resolves to "none" except overlays,
   // which opt in explicitly via the Dialog/Popover overrides below.
@@ -117,10 +117,29 @@ const theme = createTheme({
           borderRadius: radius.md,
           textTransform: "none",
           minWidth: 0,
+          fontWeight: 700,
+          fontSize: "0.875rem",
           transition: "border-color 150ms ease, background-color 150ms ease, color 150ms ease",
           "&:active": { transform: "scale(0.99)" },
         },
+        sizeLarge: {
+          minHeight: 48,
+          padding: "12px 24px",
+          fontSize: "0.9375rem",
+        },
+        sizeMedium: {
+          minHeight: 42,
+          padding: "8px 18px",
+          fontSize: "0.875rem",
+        },
+        sizeSmall: {
+          minHeight: 34,
+          padding: "5px 12px",
+          fontSize: "0.8125rem",
+        },
         contained: {
+          backgroundColor: c.forest,
+          color: c.paper,
           "&:hover": { backgroundColor: c.forestDeep },
         },
         containedError: {
@@ -151,12 +170,13 @@ const theme = createTheme({
         root: {
           borderRadius: radius.md,
           backgroundColor: c.raised,
-          "& .MuiOutlinedInput-notchedOutline": { borderColor: c.rule },
-          "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: c.ruleStrong },
-          "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderWidth: 1.5, borderColor: c.forest },
-          transition: "background-color 150ms ease",
+          minHeight: 46,
+          "& .MuiOutlinedInput-notchedOutline": { borderColor: c.ruleStrong },
+          "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: c.forest },
+          "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderWidth: 2, borderColor: c.forest },
+          transition: "border-color 150ms ease, background-color 150ms ease",
         },
-        input: { fontSize: "0.875rem", fontWeight: 500 },
+        input: { fontSize: "0.9375rem", fontWeight: 600, padding: "12px 14px" },
       },
     },
 

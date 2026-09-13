@@ -1062,7 +1062,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   size="small" label="Nama Pendek" value={publicConfigInput.shortName}
                   onChange={(e) => updatePublicConfigInput('shortName', e.target.value)}
                   fullWidth
-                  sx={{ maxWidth: { sm: 180 } }}
                 />
               </Box>
               <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>

@@ -49,9 +49,10 @@ export const SegmentedControl = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: 0.75,
-            py: 1,
-            px: 1,
+            gap: 1,
+            minHeight: 44,
+            py: 1.25,
+            px: 1.5,
             cursor: 'pointer',
             border: 'none',
             borderLeft: i === 0 ? 'none' : `1px solid ${isActive ? c.forest : c.rule}`,
@@ -63,7 +64,7 @@ export const SegmentedControl = ({
           }}
         >
           {opt.icon}
-          <Box component="span" sx={{ ...eyebrow, color: 'inherit', fontSize: '0.5625rem', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>
+          <Box component="span" sx={{ fontFamily: 'inherit', fontWeight: 700, color: 'inherit', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}>
             {opt.label}
           </Box>
         </Box>
