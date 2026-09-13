@@ -12,7 +12,7 @@ const defaultPublicConfig: PublicConfig = {
   locationText: "Pemakaman Muslim Honjo, Saitama, Jepang",
   footerCredit: "KMII Jepang x Indonesian Volunteer Community",
   donorListTitle: "Daftar Donatur",
-  donorListSubtitleDate: "21 September 2027",
+  donorListSubtitleDate: "21 September 2026",
   wakafHadith: '"Apabila seorang manusia meninggal dunia, maka terputuslah semua amalnya kecuali tiga perkara: sedekah jariyah, ilmu yang bermanfaat, dan anak saleh yang mendoakannya." (HR. Muslim No. 1631)',
   cashPaymentText: "Donasi tunai dapat diserahkan langsung atau dikonfirmasikan kepada panitia: Cak Anas (Ibaraki: +81 90-9684-5955) atau Fauzan (Tokyo: +81 80-4830-1988).",
   donationClosedTitle: "Periode Donasi Telah Ditutup",
