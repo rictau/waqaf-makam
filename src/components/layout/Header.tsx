@@ -34,7 +34,7 @@ export const Header: React.FC<HeaderProps> = ({ user, isAdminUser, onAdminClick,
                 <img
                   src={logo.src}
                   alt={logo.alt}
-                  style={{ height: 36, width: 'auto', objectFit: 'contain' }}
+                  style={{ height: 42, width: 'auto', objectFit: 'contain' }}
                 />
               </React.Fragment>
             ))}
