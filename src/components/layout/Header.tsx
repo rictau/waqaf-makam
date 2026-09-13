@@ -23,20 +23,14 @@ export const Header: React.FC<HeaderProps> = ({ user, isAdminUser, onAdminClick,
     <>
       <Box sx={{ pt: 1.25, pb: 1.25, px: 2, bgcolor: 'background.paper', borderBottom: '1px solid', borderColor: 'divider', position: 'relative' }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            {publicConfig.logos.map((logo, idx) => (
-              <React.Fragment key={logo.src}>
-                {idx > 0 && (
-                  <Typography variant="body2" sx={{ color: 'text.disabled', fontWeight: 900, mx: 0.25 }}>
-                    ×
-                  </Typography>
-                )}
-                <img
-                  src={logo.src}
-                  alt={logo.alt}
-                  style={{ height: 42, width: 'auto', objectFit: 'contain' }}
-                />
-              </React.Fragment>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            {publicConfig.logos.map((logo) => (
+              <img
+                key={logo.src}
+                src={logo.src}
+                alt={logo.alt}
+                style={{ height: 42, width: 'auto', objectFit: 'contain' }}
+              />
             ))}
           </Box>
 
