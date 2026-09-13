@@ -90,9 +90,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     donorListSubtitleDate: publicConfig.donorListSubtitleDate,
     phase1Label: publicConfig.phases[0]?.shortLabel || '',
     phase2Label: publicConfig.phases[1]?.shortLabel || '',
-    package1m2Price: String(findPackage('1m2')?.priceJPY || ''),
-    packageHalfPrice: String(findPackage('0.5m2')?.priceJPY || ''),
-    packageMultiplePrice: String(findPackage('kelipatan')?.priceJPY || ''),
+    packageBulananPrice: String(findPackage('bulanan')?.priceJPY || '3000'),
+    packageSekaliPrice: String(findPackage('sekali')?.priceJPY || '10000'),
+    package1SlotPrice: String(findPackage('1slot')?.priceJPY || '320000'),
     whatsapp: publicConfig.contactLinks.WHATSAPP,
     instagram: publicConfig.contactLinks.INSTAGRAM,
     email: publicConfig.contactLinks.EMAIL,
@@ -123,9 +123,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       donorListSubtitleDate: publicConfig.donorListSubtitleDate,
       phase1Label: publicConfig.phases[0]?.shortLabel || '',
       phase2Label: publicConfig.phases[1]?.shortLabel || '',
-      package1m2Price: String(publicConfig.packages.find((pkg) => pkg.id === '1m2')?.priceJPY || ''),
-      packageHalfPrice: String(publicConfig.packages.find((pkg) => pkg.id === '0.5m2')?.priceJPY || ''),
-      packageMultiplePrice: String(publicConfig.packages.find((pkg) => pkg.id === 'kelipatan')?.priceJPY || ''),
+      packageBulananPrice: String(publicConfig.packages.find((pkg) => pkg.id === 'bulanan')?.priceJPY || '3000'),
+      packageSekaliPrice: String(publicConfig.packages.find((pkg) => pkg.id === 'sekali')?.priceJPY || '10000'),
+      package1SlotPrice: String(publicConfig.packages.find((pkg) => pkg.id === '1slot')?.priceJPY || '320000'),
       whatsapp: publicConfig.contactLinks.WHATSAPP,
       instagram: publicConfig.contactLinks.INSTAGRAM,
       email: publicConfig.contactLinks.EMAIL,
@@ -144,17 +144,46 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const yenLabel = (amount?: number) => amount ? `¥${amount.toLocaleString('en-US')}` : 'Nominal Bebas';
 
   const buildPackages = (): DonationPackageConfig[] => {
-    const price1m2 = Number(publicConfigInput.package1m2Price);
-    const priceHalf = Number(publicConfigInput.packageHalfPrice);
-    const priceMultiple = Number(publicConfigInput.packageMultiplePrice);
-    if (isNaN(price1m2) || price1m2 <= 0) throw new Error('Harga Wakaf 1 m2 harus angka positif.');
-    if (isNaN(priceHalf) || priceHalf <= 0) throw new Error('Harga Wakaf 0.5 m2 harus angka positif.');
-    if (isNaN(priceMultiple) || priceMultiple <= 0) throw new Error('Harga Wakaf kelipatan harus angka positif.');
+    const priceBulanan = Number(publicConfigInput.packageBulananPrice);
+    const priceSekali = Number(publicConfigInput.packageSekaliPrice);
+    const price1Slot = Number(publicConfigInput.package1SlotPrice);
+    if (isNaN(priceBulanan) || priceBulanan <= 0) throw new Error('Harga Paket Bulanan harus angka positif.');
+    if (isNaN(priceSekali) || priceSekali <= 0) throw new Error('Harga Paket Sekali Bayar harus angka positif.');
+    if (isNaN(price1Slot) || price1Slot <= 0) throw new Error('Harga Paket 1 Slot Makam harus angka positif.');
+
+    const rate = Number(jpyToIdrRateInput) || 113;
 
     return publicConfig.packages.map((pkg) => {
-      if (pkg.id === '1m2') return { ...pkg, priceJPY: price1m2, priceLabel: yenLabel(price1m2) };
-      if (pkg.id === '0.5m2') return { ...pkg, priceJPY: priceHalf, priceLabel: yenLabel(priceHalf) };
-      if (pkg.id === 'kelipatan') return { ...pkg, priceJPY: priceMultiple, priceLabel: `${yenLabel(priceMultiple)} / m2` };
+      if (pkg.id === 'bulanan') {
+        const idr = Math.round(priceBulanan * rate);
+        return {
+          ...pkg,
+          label: `${yenLabel(priceBulanan)} / Bulan`,
+          priceJPY: priceBulanan,
+          priceLabel: `${yenLabel(priceBulanan)} (~Rp ${idr.toLocaleString('id-ID')}) / Bulan`,
+          subtext: `Target: 1.000 jamaah × ${yenLabel(priceBulanan)}/bln s/d Maret 2027`
+        };
+      }
+      if (pkg.id === 'sekali') {
+        const idr = Math.round(priceSekali * rate);
+        return {
+          ...pkg,
+          label: yenLabel(priceSekali),
+          priceJPY: priceSekali,
+          priceLabel: `${yenLabel(priceSekali)} (~Rp ${idr.toLocaleString('id-ID')})`,
+          subtext: `Target: 1.800 jamaah × ${yenLabel(priceSekali)} = Tanah Lunas`
+        };
+      }
+      if (pkg.id === '1slot') {
+        const idr = Math.round(price1Slot * rate);
+        return {
+          ...pkg,
+          label: yenLabel(price1Slot),
+          priceJPY: price1Slot,
+          priceLabel: `${yenLabel(price1Slot)} (~Rp ${idr.toLocaleString('id-ID')})`,
+          subtext: 'Administrasi & perawatan termasuk. Mendapat sertifikat wakaf.'
+        };
+      }
       return pkg;
     });
   };
@@ -335,23 +364,24 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         }
 
         const firstPhaseBase = publicConfig.phases[0] || {
-          id: "building",
-          label: "Pembelian Gedung",
-          shortLabel: "Pembelian Gedung",
-          targetJPY: 5000000,
-          shortfallLabel: "Kekurangan dana",
+          id: "pemakaman",
+          label: "Tahap 1: Lahan Pemakaman Muslim Honjo (10 Kapling / 120 Slot)",
+          shortLabel: "Pemakaman Honjo",
+          targetJPY: 20000000,
+          shortfallLabel: "Masih Dibutuhkan",
           completedLabel: "Lunas (100%)",
           completedDate: "",
-          completionAnnouncement: "Alhamdulillah, target tahap sebelumnya telah tercapai."
+          completionAnnouncement: "Alhamdulillah, pembebasan lahan pemakaman telah lunas.",
+          subtext: "10 kapling (~300 m² / 120 slot). Batas pelunasan 31 Maret 2027."
         };
         
         const secondPhaseBase = publicConfig.phases[1] || {
-          id: "renovation",
-          label: "Renovasi Awal",
-          shortLabel: "Renovasi Awal",
+          id: "tahap2",
+          label: "Tahap 2: Fasilitas & Operasional Makam",
+          shortLabel: "Fasilitas Makam",
           targetJPY: 5000000,
-          shortfallLabel: "Kekurangan dana",
-          subtext: "Donasi tahap berikutnya kini dibuka."
+          shortfallLabel: "Masih Dibutuhkan",
+          subtext: "Pengembangan sarana & prasarana pemakaman."
         };
 
         const phases = [];
@@ -384,15 +414,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             id: `jp${index + 1}`,
             label: bank.label.trim(),
             account: bank.account.trim(),
-            name: bank.name.trim().replace(/ \/ /g, '\n'),
-            paymentMethod: (bank.paymentMethod || bank.label).trim()
+            name: bank.name.trim(),
+            paymentMethod: bank.paymentMethod || 'Japan Post Bank'
           })),
           ID: banksID.map((bank, index) => ({
             id: `id${index + 1}`,
             label: bank.label.trim(),
             account: bank.account.trim(),
-            name: bank.name.trim().replace(/ \/ /g, '\n'),
-            paymentMethod: (bank.paymentMethod || bank.label).trim()
+            name: bank.name.trim(),
+            paymentMethod: bank.paymentMethod || 'BSI'
           }))
         };
 
@@ -1024,7 +1054,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
               <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
                 <TextField
-                  size="small" label="Nama Masjid" value={publicConfigInput.masjidName}
+                  size="small" label="Nama Program / Lembaga" value={publicConfigInput.masjidName}
                   onChange={(e) => updatePublicConfigInput('masjidName', e.target.value)}
                   fullWidth
                 />
@@ -1042,8 +1072,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               />
               <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
                 <TextField
-                  size="small" label="Tanggal Mulai Program" value={publicConfigInput.donorListSubtitleDate}
+                  size="small" 
+                  label="Subtitle Daftar Donatur" 
+                  value={publicConfigInput.donorListSubtitleDate}
                   onChange={(e) => updatePublicConfigInput('donorListSubtitleDate', e.target.value)}
+                  helperText="Tampil di tab Daftar Donatur (misal: 21 September 2027)"
                   fullWidth
                 />
                 <TextField
@@ -1119,18 +1152,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
                     <TextField
-                      size="small" label="Harga Wakaf 1 m² (JPY)" type="number" value={publicConfigInput.package1m2Price}
-                      onChange={(e) => updatePublicConfigInput('package1m2Price', e.target.value)}
+                      size="small" label="Paket Rutin Bulanan (JPY)" type="number" value={publicConfigInput.packageBulananPrice}
+                      onChange={(e) => updatePublicConfigInput('packageBulananPrice', e.target.value)}
+                      helperText="Default: ¥3,000 / bln"
                       fullWidth
                     />
                     <TextField
-                      size="small" label="Harga Wakaf 0.5 m² (JPY)" type="number" value={publicConfigInput.packageHalfPrice}
-                      onChange={(e) => updatePublicConfigInput('packageHalfPrice', e.target.value)}
+                      size="small" label="Paket Sekali Bayar (JPY)" type="number" value={publicConfigInput.packageSekaliPrice}
+                      onChange={(e) => updatePublicConfigInput('packageSekaliPrice', e.target.value)}
+                      helperText="Default: ¥10,000"
                       fullWidth
                     />
                     <TextField
-                      size="small" label="Wakaf Kelipatan per m² (JPY)" type="number" value={publicConfigInput.packageMultiplePrice}
-                      onChange={(e) => updatePublicConfigInput('packageMultiplePrice', e.target.value)}
+                      size="small" label="Paket 1 Slot Makam (JPY)" type="number" value={publicConfigInput.package1SlotPrice}
+                      onChange={(e) => updatePublicConfigInput('package1SlotPrice', e.target.value)}
+                      helperText="Default: ¥320,000"
                       fullWidth
                     />
                   </Box>
