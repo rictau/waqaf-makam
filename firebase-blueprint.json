@@ -1,0 +1,76 @@
+{
+  "entities": {
+    "Donation": {
+      "title": "Donation",
+      "description": "A donation record for the configured masjid project.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the donor (or 'Hamba Allah' if anonymous)."
+        },
+        "amount": {
+          "type": "number",
+          "description": "The donation amount in JPY."
+        },
+        "date": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The date and time the donation was submitted."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "verified"],
+          "description": "The verification status of the donation."
+        },
+        "loc": {
+          "type": "string",
+          "description": "The location/city of the donor."
+        },
+        "phone": {
+          "type": "string",
+          "description": "The donor's phone number (private)."
+        },
+        "isAnonymous": {
+          "type": "boolean",
+          "description": "Whether the donor wants to remain anonymous."
+        },
+        "proofUrl": {
+          "type": "string",
+          "description": "A reference or URL to the proof of transfer (optional for now)."
+        },
+        "package": {
+          "type": "string",
+          "description": "The donation package selected (e.g., 'Wakaf 1 m²')."
+        }
+      },
+      "required": ["name", "amount", "date", "status"]
+    },
+    "Stats": {
+      "title": "Stats",
+      "description": "Global statistics for the fundraising campaign.",
+      "type": "object",
+      "properties": {
+        "totalNeed": {
+          "type": "number",
+          "description": "The total goal amount in JPY."
+        },
+        "baseVerified": {
+          "type": "number",
+          "description": "The initial verified amount from previous campaigns."
+        }
+      },
+      "required": ["totalNeed", "baseVerified"]
+    }
+  },
+  "firestore": {
+    "/donations/{donationId}": {
+      "schema": "Donation",
+      "description": "Collection of all donations."
+    },
+    "/stats/global": {
+      "schema": "Stats",
+      "description": "Global statistics for the campaign."
+    }
+  }
+}

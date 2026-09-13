@@ -1,0 +1,104 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: donations
+    // Document ID: auto-generated
+    // Fields:
+    //   - name: string (required) - Donor name or 'Hamba Allah'
+    //   - amount: number (required) - Donation amount in JPY
+    //   - date: timestamp (required) - Date of donation
+    //   - status: string (required, ['pending', 'verified']) - Verification status
+    //   - loc: string (optional) - Donor location
+    //   - phone: string (optional) - Donor phone number (PII)
+    //   - isAnonymous: bool (optional) - Whether to hide the name
+    //   - proofUrl: string (optional) - URL to proof of transfer
+    //   - remarks: string (optional) - Admin notes
+    //
+    // Collection: stats
+    // Document ID: global
+    // Fields:
+    //   - totalNeed: number (required) - Goal amount
+    //   - baseVerified: number (required) - Initial verified amount
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isSuperAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.email == 'rictau.jp@gmail.com' ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin'
+      );
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        isSuperAdmin() ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+      );
+    }
+
+    function donationsOpen() {
+      let stats = get(/databases/$(database)/documents/stats/global).data;
+      return !('isClosed' in stats && stats.isClosed == true) &&
+             (!('donationDeadline' in stats) || request.time < stats.donationDeadline);
+    }
+
+    function isValidDonation(data) {
+      return data.keys().hasAll(['name', 'amount', 'date', 'status']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.amount is number && data.amount > 0 &&
+             data.date is timestamp &&
+             data.status in ['pending', 'verified'] &&
+             (!('loc' in data) || (data.loc is string && data.loc.size() < 100)) &&
+             (!('phone' in data) || (data.phone is string && data.phone.size() < 50)) &&
+             (!('isAnonymous' in data) || data.isAnonymous is bool) &&
+             (!('proofUrl' in data) || (data.proofUrl is string && data.proofUrl.size() < 1000)) &&
+             (!('package' in data) || (data.package is string && data.package.size() < 100)) &&
+             (!('remarks' in data) || (data.remarks is string && data.remarks.size() < 1000));
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /donations/{donationId} {
+      // Public can read donations for the list
+      allow read: if true;
+      
+      // Anyone can create a donation (submit form) while donations are open.
+      // Admins can always create (manual entry / re-opening case).
+      allow create: if isValidDonation(request.resource.data)
+                    && request.resource.data.status == 'pending'
+                    && (donationsOpen() || isAdmin());
+      
+      // Only admins can update or delete donations
+      allow update: if isAdmin() && isValidDonation(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /stats/{statId} {
+      // Public can read stats
+      allow read: if true;
+      
+      // All admins can configure program settings
+      allow write: if isAdmin();
+    }
+
+    match /users/{userId} {
+      // Only the user themselves or an admin can read/write their own user document
+      allow read, write: if request.auth.uid == userId || isAdmin();
+    }
+  }
+}

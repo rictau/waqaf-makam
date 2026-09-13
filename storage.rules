@@ -1,0 +1,13 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /proofs/{fileName} {
+      // Anyone can read proof images
+      allow read: if true;
+
+      // Anyone can upload a proof file, but only if it's an image or PDF and less than or equal to 10MB
+      allow write: if request.resource.size <= 10 * 1024 * 1024
+                   && (request.resource.contentType.matches('image/.*') || request.resource.contentType == 'application/pdf');
+    }
+  }
+}
