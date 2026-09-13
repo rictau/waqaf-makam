@@ -1,118 +1,107 @@
 import React from 'react';
-import { Box, Typography, Paper, Divider, Avatar } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { MessageCircle, Instagram, Mail } from 'lucide-react';
-import { useTheme } from '@mui/material/styles';
+import { c, eyebrow, radius } from '../../design';
+import { Eyebrow, Mono, PullQuote, splitQuote } from '../common/primitives';
 import type { PublicConfig } from '../../types';
 
 interface FooterProps {
   publicConfig: PublicConfig;
 }
 
+const committee = [
+  { region: 'Ibaraki / Kanto', name: 'Cak Anas', phone: '+81 90-9684-5955', href: 'https://wa.me/819096845955' },
+  { region: 'Tokyo & Sekitarnya', name: 'Fauzan', phone: '+81 80-4830-1988', href: 'https://wa.me/818048301988' },
+];
+
+/**
+ * Colophon. The committee is a contact record list and the channels are plain
+ * labelled links — not a three-up grid of icon tiles over one-word captions.
+ */
 export const Footer: React.FC<FooterProps> = ({ publicConfig }) => {
-  const theme = useTheme();
+  const channels = [
+    { icon: <MessageCircle size={14} />, label: 'WhatsApp', href: publicConfig.contactLinks.WHATSAPP },
+    { icon: <Instagram size={14} />, label: 'Instagram', href: publicConfig.contactLinks.INSTAGRAM },
+    { icon: <Mail size={14} />, label: 'Email', href: publicConfig.contactLinks.EMAIL },
+  ];
+
+  const { quote, citation } = splitQuote(publicConfig.wakafHadith);
 
   return (
-    <Box sx={{ mt: 2, pb: 6, px: 3 }}>
-      <Divider sx={{ mb: 3, opacity: 0.5 }} />
+    <Box component="footer" sx={{ mt: 3, pt: 3, pb: 5, px: 2.5, borderTop: `1px solid ${c.ruleStrong}` }}>
+      <PullQuote cite={citation} sx={{ mb: 3 }}>
+        “{quote}”
+      </PullQuote>
 
-      {/* Quote Banner */}
-      <Box sx={{ p: 2, mb: 3, borderRadius: 3, bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', textAlign: 'center' }}>
-        <Typography variant="caption" sx={{ fontStyle: 'italic', color: 'text.secondary', display: 'block', lineHeight: 1.5, mb: 0.5 }}>
-          "{publicConfig.wakafHadith.replace(/^"|"$/g, '')}"
-        </Typography>
-        <Typography variant="caption" sx={{ fontWeight: 800, color: 'primary.main', fontSize: '0.65rem' }}>
-          HR. MUSLIM NO. 1631
-        </Typography>
-      </Box>
-      
-      <Box sx={{ textAlign: 'center', mb: 2 }}>
-        <Typography variant="caption" sx={{ fontWeight: 900, color: 'primary.main', textTransform: 'uppercase', letterSpacing: 1.5, display: 'block', mb: 0.5, fontSize: '0.65rem' }}>
-          Konfirmasi Donasi & Layanan Informasi
-        </Typography>
-        <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, fontSize: '0.72rem' }}>
-          Panitia Wakaf Pemakaman Muslim Honjo:
+      <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 2, pb: 1, mb: 1.5, borderBottom: `1px solid ${c.ruleStrong}` }}>
+        <Eyebrow tone="ink">Konfirmasi & Informasi</Eyebrow>
+        <Typography sx={{ fontSize: '0.625rem', fontWeight: 600, color: c.inkFaint, textAlign: 'right' }}>
+          Panitia Wakaf
         </Typography>
       </Box>
 
-      {/* PIC Quick Contact Cards */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1.5, mb: 3 }}>
-        <Paper
-          component="a"
-          href="https://wa.me/819096845955"
-          target="_blank"
-          elevation={0}
-          sx={{
-            p: 1.5, borderRadius: 2.5, border: '1px solid', borderColor: 'divider',
-            textDecoration: 'none', textAlign: 'center', bgcolor: 'background.paper',
-            transition: 'all 0.2s', '&:hover': { borderColor: 'primary.main', transform: 'translateY(-2px)' }
-          }}
-        >
-          <Typography variant="caption" sx={{ fontWeight: 800, color: 'primary.main', display: 'block' }}>
-            Ibaraki / Kanto
-          </Typography>
-          <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', display: 'block', mt: 0.25 }}>
-            Cak Anas
-          </Typography>
-          <Typography variant="caption" sx={{ fontSize: '0.65rem', color: 'text.disabled' }}>
-            +81 90-9684-5955
-          </Typography>
-        </Paper>
-
-        <Paper
-          component="a"
-          href="https://wa.me/818048301988"
-          target="_blank"
-          elevation={0}
-          sx={{
-            p: 1.5, borderRadius: 2.5, border: '1px solid', borderColor: 'divider',
-            textDecoration: 'none', textAlign: 'center', bgcolor: 'background.paper',
-            transition: 'all 0.2s', '&:hover': { borderColor: 'primary.main', transform: 'translateY(-2px)' }
-          }}
-        >
-          <Typography variant="caption" sx={{ fontWeight: 800, color: 'primary.main', display: 'block' }}>
-            Tokyo & Sekitarnya
-          </Typography>
-          <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', display: 'block', mt: 0.25 }}>
-            Fauzan
-          </Typography>
-          <Typography variant="caption" sx={{ fontSize: '0.65rem', color: 'text.disabled' }}>
-            +81 80-4830-1988
-          </Typography>
-        </Paper>
-      </Box>
-
-      {/* Social Links */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1.5, mb: 3 }}>
-        {[
-          { icon: <MessageCircle size={18} />, label: 'WhatsApp', href: publicConfig.contactLinks.WHATSAPP, color: '#25D366' },
-          { icon: <Instagram size={18} />, label: 'Instagram', href: publicConfig.contactLinks.INSTAGRAM, color: '#E4405F' },
-          { icon: <Mail size={18} />, label: 'Email', href: publicConfig.contactLinks.EMAIL, color: theme.palette.primary.main }
-        ].map((item, i) => (
-          <Paper 
-            key={i}
-            component="a" 
-            href={item.href}
+      <Box sx={{ border: `1px solid ${c.rule}`, borderRadius: radius.lg, bgcolor: c.paper, overflow: 'hidden', mb: 2.5 }}>
+        {committee.map((person, i) => (
+          <Box
+            key={person.href}
+            component="a"
+            href={person.href}
             target="_blank"
-            elevation={0}
-            sx={{ 
-              display: 'flex', flexDirection: 'column', alignItems: 'center', p: 1.5, 
-              borderRadius: 2.5, border: '1px solid', borderColor: 'divider', 
-              textDecoration: 'none', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', 
-              bgcolor: 'background.paper',
-              '&:hover': { bgcolor: 'rgba(19, 56, 39, 0.03)', transform: 'translateY(-3px)', borderColor: 'primary.light' } 
+            rel="noreferrer"
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 2,
+              px: 2,
+              py: 1.375,
+              textDecoration: 'none',
+              borderTop: i === 0 ? 'none' : `1px solid ${c.rule}`,
+              borderLeft: '2px solid transparent',
+              transition: 'background-color 150ms ease, border-color 150ms ease',
+              '&:hover': { bgcolor: c.forestTint, borderLeftColor: c.forest },
             }}
           >
-            <Box sx={{ color: item.color, mb: 0.5, display: 'flex' }}>
-              {item.icon}
+            <Box sx={{ minWidth: 0 }}>
+              <Eyebrow sx={{ fontSize: '0.5625rem' }}>{person.region}</Eyebrow>
+              <Typography sx={{ fontSize: '0.8125rem', fontWeight: 700, color: c.ink, mt: 0.25 }}>
+                {person.name}
+              </Typography>
             </Box>
-            <Typography variant="caption" sx={{ fontWeight: 800, color: 'text.primary', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-              {item.label}
-            </Typography>
-          </Paper>
+            <Mono sx={{ color: c.inkMuted, fontSize: '0.75rem', flexShrink: 0 }}>{person.phone}</Mono>
+          </Box>
         ))}
       </Box>
 
-      <Typography variant="caption" sx={{ display: 'block', textAlign: 'center', color: 'text.disabled', fontSize: '0.65rem', fontWeight: 600 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2.5 }}>
+        {channels.map((channel, i) => (
+          <React.Fragment key={channel.label}>
+            {i > 0 && <Box sx={{ width: '1px', height: 14, bgcolor: c.rule, mx: 1.5 }} />}
+            <Box
+              component="a"
+              href={channel.href}
+              target="_blank"
+              rel="noreferrer"
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 0.625,
+                textDecoration: 'none',
+                color: c.inkMuted,
+                transition: 'color 150ms ease',
+                '&:hover': { color: c.forest },
+              }}
+            >
+              {channel.icon}
+              <Box component="span" sx={{ ...eyebrow, fontSize: '0.5625rem', color: 'inherit' }}>
+                {channel.label}
+              </Box>
+            </Box>
+          </React.Fragment>
+        ))}
+      </Box>
+
+      <Typography sx={{ textAlign: 'center', fontSize: '0.625rem', fontWeight: 600, color: c.inkFaint, letterSpacing: '0.02em' }}>
         {publicConfig.footerCredit}
       </Typography>
     </Box>

@@ -1,7 +1,8 @@
 import React, { useRef } from 'react';
-import { Box, Typography, Button, Avatar, CircularProgress, Collapse } from '@mui/material';
-import { Upload, FileImage, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { useTheme } from '@mui/material/styles';
+import { Box, Typography, Button, CircularProgress } from '@mui/material';
+import { Upload, AlertCircle, FileCheck2 } from 'lucide-react';
+import { c, eyebrow, radius, tnum } from '../../../design';
+import { Eyebrow } from '../../common/primitives';
 
 interface ConfirmUploadProps {
   uploadFile: File | null;
@@ -11,8 +12,12 @@ interface ConfirmUploadProps {
   handleUploadSubmit: () => void;
 }
 
+/**
+ * Proof of transfer + submit. The drop target is a grounded, high-contrast
+ * surface with a single dashed edge to signal "put a file here" — no floating
+ * circle icon, no lift, no glow.
+ */
 export const ConfirmUpload: React.FC<ConfirmUploadProps> = ({ uploadFile, setUploadFile, uploadState, formError, handleUploadSubmit }) => {
-  const theme = useTheme();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -52,95 +57,103 @@ export const ConfirmUpload: React.FC<ConfirmUploadProps> = ({ uploadFile, setUpl
   };
 
   return (
-    <Box>
-      <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary', textTransform: 'uppercase', letterSpacing: 1, mb: 1.5, ml: 1 }}>
-        Konfirmasi Pembayaran
-      </Typography>
+    <Box component="section">
+      <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', pb: 1, mb: 1.5, borderBottom: `1px solid ${c.ruleStrong}` }}>
+        <Eyebrow tone="ink">Konfirmasi Pembayaran</Eyebrow>
+        <Typography sx={{ fontSize: '0.625rem', fontWeight: 600, color: c.inkFaint }}>Langkah 4</Typography>
+      </Box>
 
-      <Collapse in={!!formError}>
-        <Box sx={{ mb: 2, p: 1.5, bgcolor: 'error.light', color: 'error.main', borderRadius: 2, display: 'flex', alignItems: 'center', border: '1px solid', borderColor: 'error.main', opacity: 0.9 }}>
-          <AlertCircle size={16} style={{ marginRight: 10, flexShrink: 0 }} />
-          <Typography variant="caption" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+      {formError && (
+        <Box
+          role="alert"
+          sx={{ mb: 1.5, px: 1.5, py: 1.25, bgcolor: c.dangerTint, borderLeft: `3px solid ${c.danger}`, borderRadius: `0 ${radius.md} ${radius.md} 0`, display: 'flex', gap: 1 }}
+        >
+          <Box sx={{ color: c.danger, display: 'flex', pt: '1px', flexShrink: 0 }}>
+            <AlertCircle size={15} />
+          </Box>
+          <Typography sx={{ fontSize: '0.75rem', fontWeight: 600, color: c.danger, lineHeight: 1.45 }}>
             {formError}
           </Typography>
         </Box>
-      </Collapse>
+      )}
 
-      <Box
-        sx={{
-          bgcolor: 'background.paper', borderRadius: 3, border: '2px dashed',
-          borderColor: uploadFile ? 'success.main' : 'divider', overflow: 'hidden',
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          '&:hover': { borderColor: uploadFile ? 'success.main' : 'primary.main', transform: 'translateY(-2px)' },
-          boxShadow: uploadFile ? '0 8px 24px rgba(46, 125, 50, 0.08)' : 'none'
-        }}
-      >
-        <input
-          type="file" className="hidden" ref={fileInputRef} onChange={handleFileChange} accept="image/*,.pdf"
-        />
-        {!uploadFile ? (
-          <Button
-            fullWidth onClick={() => fileInputRef.current?.click()}
-            sx={{ py: 4, flexDirection: 'column', color: 'text.secondary', textTransform: 'none', '&:hover': { bgcolor: 'rgba(18, 76, 58, 0.02)' } }}
-          >
-            <Avatar sx={{ bgcolor: 'background.default', mb: 2, width: 48, height: 48, border: '1px solid', borderColor: 'divider' }}>
-              <Upload size={22} color={theme.palette.primary.main} />
-            </Avatar>
-            <Typography variant="subtitle1" sx={{ color: 'text.primary', fontWeight: 800 }}>
-              Klik untuk Pilih Bukti Transfer
+      <input type="file" hidden ref={fileInputRef} onChange={handleFileChange} accept="image/*,.pdf" />
+
+      {!uploadFile ? (
+        <Box
+          component="button"
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          sx={{
+            width: '100%',
+            textAlign: 'left',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+            px: 2,
+            py: 2,
+            cursor: 'pointer',
+            bgcolor: c.paper,
+            border: `1px dashed ${c.ruleStrong}`,
+            borderRadius: radius.lg,
+            transition: 'border-color 150ms ease, background-color 150ms ease',
+            '&:hover': { borderColor: c.forest, bgcolor: c.forestTint },
+            '&:active': { transform: 'scale(0.995)' },
+          }}
+        >
+          <Box sx={{ color: c.forest, display: 'flex', flexShrink: 0 }}>
+            <Upload size={20} strokeWidth={2} />
+          </Box>
+          <Box sx={{ minWidth: 0 }}>
+            <Typography sx={{ fontSize: '0.875rem', fontWeight: 700, color: c.ink }}>
+              Pilih bukti transfer
             </Typography>
-            <Typography variant="caption" sx={{ mt: 0.5, color: 'text.secondary', fontWeight: 500, px: 2 }}>
-              Gunakan JPG, PNG, atau PDF (Maks. 10MB).<br />
-              <span style={{ color: theme.palette.error.main, fontWeight: 700 }}>Penting:</span> Mohon jangan gunakan format HEIC.
+            <Typography sx={{ fontSize: '0.6875rem', color: c.inkMuted, mt: 0.25, lineHeight: 1.45 }}>
+              JPG, PNG atau PDF · maks. 10 MB · <Box component="span" sx={{ color: c.danger, fontWeight: 700 }}>bukan HEIC</Box>
             </Typography>
-          </Button>
-        ) : (
-          <Box sx={{ p: 2.5 }}>
-            <Box sx={{ bgcolor: 'rgba(46, 125, 50, 0.05)', p: 2, borderRadius: 2.5, display: 'flex', alignItems: 'center', mb: 2.5, border: '1px solid', borderColor: 'success.light' }}>
-              <Box sx={{ mr: 2, color: 'success.main', display: 'flex' }}>
-                <CheckCircle2 size={24} />
-              </Box>
-              <Box sx={{ minWidth: 0, flex: 1 }}>
-                <Typography variant="body2" noWrap sx={{ fontWeight: 800, color: 'text.primary' }}>
-                  {uploadFile.name}
-                </Typography>
-                <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
-                  {formatFileSize(uploadFile.size)}
-                </Typography>
-              </Box>
-              <Button
-                size="small" variant="text" onClick={handleClearFile}
-                disabled={uploadState === 'uploading'}
-                sx={{ ml: 1, fontWeight: 700, color: 'text.secondary', textTransform: 'uppercase', fontSize: '0.65rem' }}
-              >
-                Ganti
-              </Button>
+          </Box>
+        </Box>
+      ) : (
+        <Box sx={{ bgcolor: c.paper, border: `1px solid ${c.ruleStrong}`, borderRadius: radius.lg, overflow: 'hidden' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, px: 2, py: 1.5, borderBottom: `1px solid ${c.rule}` }}>
+            <Box sx={{ color: c.verified, display: 'flex', flexShrink: 0 }}>
+              <FileCheck2 size={18} />
             </Box>
+            <Box sx={{ minWidth: 0, flex: 1 }}>
+              <Typography noWrap sx={{ fontSize: '0.8125rem', fontWeight: 700, color: c.ink }}>
+                {uploadFile.name}
+              </Typography>
+              <Typography sx={{ fontSize: '0.6875rem', color: c.inkMuted, ...tnum }}>
+                {formatFileSize(uploadFile.size)}
+              </Typography>
+            </Box>
+            <Button
+              size="small" variant="text" onClick={handleClearFile}
+              disabled={uploadState === 'uploading'}
+              sx={{ ...eyebrow, fontSize: '0.5625rem', color: c.inkMuted, px: 1, flexShrink: 0 }}
+            >
+              Ganti
+            </Button>
+          </Box>
 
+          <Box sx={{ p: 1.5 }}>
             <Button
               variant="contained"
               fullWidth
-              size="large"
               onClick={handleUploadSubmit}
               disabled={uploadState === 'uploading'}
-              sx={{
-                py: 1.5, borderRadius: 2, fontWeight: 900, fontSize: '0.9rem',
-                textTransform: 'uppercase', letterSpacing: 1,
-                boxShadow: '0 8px 20px rgba(18, 76, 58, 0.2)',
-                '&:hover': { boxShadow: '0 12px 28px rgba(18, 76, 58, 0.3)' }
-              }}
+              sx={{ py: 1.375, ...eyebrow, fontSize: '0.75rem', color: c.paper }}
             >
               {uploadState === 'uploading' ? (
-                <CircularProgress size={24} color="inherit" thickness={6} />
+                <CircularProgress size={18} color="inherit" thickness={5} />
               ) : 'Kirim Donasi Sekarang'}
             </Button>
-
-            <Typography variant="caption" sx={{ display: 'block', textAlign: 'center', mt: 1.5, color: 'text.disabled', fontWeight: 600 }}>
+            <Typography sx={{ mt: 1, textAlign: 'center', fontSize: '0.6875rem', color: c.inkFaint }}>
               Pastikan data yang Anda masukkan sudah benar
             </Typography>
           </Box>
-        )}
-      </Box>
+        </Box>
+      )}
     </Box>
   );
 };

@@ -1,6 +1,7 @@
 import React from 'react';
-import { Paper, Box, Typography, useTheme } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { Heart, Users, ShieldCheck } from 'lucide-react';
+import { c, eyebrow } from '../../design';
 import type { AppTab } from '../../types';
 
 interface BottomNavProps {
@@ -10,8 +11,12 @@ interface BottomNavProps {
   showDonaturTab?: boolean;
 }
 
+/**
+ * Solid navigation bar: opaque surface, one structural top rule, and labels
+ * that are always visible (the old version hid them until active, which moved
+ * the icons on every tab change). Active state is a forest top marker.
+ */
 export const BottomNavigation: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, isAdminUser, showDonaturTab = true }) => {
-  const theme = useTheme();
   const donorTab: Array<{ id: AppTab; label: string; icon: typeof Heart; adminOnly?: boolean }> = showDonaturTab
     ? [{ id: 'donatur', label: 'Donatur', icon: Users }]
     : [];
@@ -22,18 +27,19 @@ export const BottomNavigation: React.FC<BottomNavProps> = ({ activeTab, setActiv
   ];
 
   return (
-    <Paper 
-      elevation={0}
-      sx={{ 
-        flexShrink: 0, zIndex: 40,
-        bgcolor: 'rgba(255, 255, 255, 0.85)', backdropFilter: 'blur(24px) saturate(180%)', 
-        borderTop: '1px solid', borderColor: 'divider', 
-        pb: 'max(env(safe-area-inset-bottom), 12px)',
-        boxShadow: '0 -4px 20px rgba(0,0,0,0.03)'
+    <Box
+      component="nav"
+      aria-label="Navigasi utama"
+      sx={{
+        flexShrink: 0,
+        zIndex: 40,
+        bgcolor: c.paper,
+        borderTop: `1px solid ${c.ruleStrong}`,
+        pb: 'max(env(safe-area-inset-bottom), 8px)',
       }}
     >
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 60, px: 2, gap: 1 }}>
-        {tabs.filter(tab => !tab.adminOnly || isAdminUser).map((tab) => {
+      <Box sx={{ display: 'flex', alignItems: 'stretch', height: 56 }}>
+        {tabs.filter(tab => !tab.adminOnly || isAdminUser).map((tab, i) => {
           const isActive = activeTab === tab.id;
           const Icon = tab.icon;
 
@@ -41,35 +47,35 @@ export const BottomNavigation: React.FC<BottomNavProps> = ({ activeTab, setActiv
             <Box
               key={tab.id}
               component="button"
+              type="button"
+              aria-current={isActive ? 'page' : undefined}
               onClick={() => setActiveTab(tab.id)}
-              sx={{ 
-                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, 
-                py: 1, px: 2, border: 'none', bgcolor: 'transparent', cursor: 'pointer', 
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', 
-                position: 'relative', borderRadius: 6,
-                color: isActive ? 'primary.main' : 'text.disabled',
-                '&:hover': { color: isActive ? 'primary.main' : 'text.secondary', bgcolor: isActive ? 'rgba(18, 76, 58, 0.05)' : 'rgba(0,0,0,0.02)' } 
+              sx={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 0.5,
+                border: 'none',
+                borderLeft: i === 0 ? 'none' : `1px solid ${c.rule}`,
+                borderTop: `2px solid ${isActive ? c.forest : 'transparent'}`,
+                bgcolor: isActive ? c.forestTint : 'transparent',
+                color: isActive ? c.forest : c.inkMuted,
+                cursor: 'pointer',
+                transition: 'background-color 150ms ease, color 150ms ease, border-color 150ms ease',
+                '&:hover': { color: c.forest, bgcolor: isActive ? c.forestTint : 'rgba(20,58,40,0.035)' },
+                '&:active': { transform: 'scale(0.99)' },
               }}
-              style={{ backgroundColor: isActive ? theme.palette.primary.main + '10' : undefined }}
             >
-              <Box sx={{ transition: 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)', transform: isActive ? 'scale(1.15)' : 'scale(1)', display: 'flex' }}>
-                <Icon size={18} strokeWidth={isActive ? 3 : 2} />
-              </Box>
-              
-              <Typography 
-                variant="caption" 
-                sx={{ 
-                  fontWeight: 900, textTransform: 'uppercase', letterSpacing: 1, 
-                  fontSize: '0.65rem', display: isActive ? 'block' : 'none',
-                  animateIn: 'fade-in', duration: 200
-                }}
-              >
+              <Icon size={17} strokeWidth={isActive ? 2.5 : 2} />
+              <Typography component="span" sx={{ ...eyebrow, fontSize: '0.5625rem', color: 'inherit' }}>
                 {tab.label}
               </Typography>
             </Box>
           );
         })}
       </Box>
-    </Paper>
+    </Box>
   );
 };

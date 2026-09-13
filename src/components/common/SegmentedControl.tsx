@@ -1,6 +1,6 @@
 import React from 'react';
-import { Typography } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
+import { Box } from '@mui/material';
+import { c, eyebrow, radius } from '../../design';
 
 export interface SegmentedControlOption {
   id: string;
@@ -8,36 +8,66 @@ export interface SegmentedControlOption {
   icon?: React.ReactNode;
 }
 
-export const SegmentedControl = ({ 
-  options, 
-  active, 
-  onChange 
-}: { 
-  options: SegmentedControlOption[], 
-  active: string, 
-  onChange: (v: string) => void 
-}) => {
-  const theme = useTheme();
-  return (
-    <div className="flex bg-slate-100 p-0.5 rounded-lg w-full border border-slate-200/50">
-      {options.map((opt) => (
-        <button
+/**
+ * Flat segmented control: one shared 1px frame, dividers between segments,
+ * the active segment lifted by surface colour rather than a shadow.
+ */
+export const SegmentedControl = ({
+  options,
+  active,
+  onChange,
+  ariaLabel,
+}: {
+  options: SegmentedControlOption[];
+  active: string;
+  onChange: (v: string) => void;
+  ariaLabel?: string;
+}) => (
+  <Box
+    role="group"
+    aria-label={ariaLabel}
+    sx={{
+      display: 'flex',
+      width: '100%',
+      bgcolor: c.well,
+      border: `1px solid ${c.ruleStrong}`,
+      borderRadius: radius.md,
+      overflow: 'hidden',
+    }}
+  >
+    {options.map((opt, i) => {
+      const isActive = active === opt.id;
+      return (
+        <Box
           key={opt.id}
+          component="button"
+          type="button"
+          aria-pressed={isActive}
           onClick={() => onChange(opt.id)}
-          style={{ 
-            color: active === opt.id ? theme.palette.primary.main : undefined,
-            backgroundColor: active === opt.id ? 'white' : 'transparent'
+          sx={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 0.75,
+            py: 1,
+            px: 1,
+            cursor: 'pointer',
+            border: 'none',
+            borderLeft: i === 0 ? 'none' : `1px solid ${isActive ? c.forest : c.rule}`,
+            bgcolor: isActive ? c.forest : 'transparent',
+            color: isActive ? c.paper : c.inkMuted,
+            transition: 'background-color 150ms ease, color 150ms ease',
+            '&:hover': { color: isActive ? c.paper : c.ink, bgcolor: isActive ? c.forestDeep : 'rgba(20,58,40,0.04)' },
+            '&:active': { transform: 'scale(0.99)' },
           }}
-          className={`flex-1 py-1.5 rounded-md transition-all flex items-center justify-center ${
-            active === opt.id 
-            ? 'shadow-sm border border-slate-200/50' 
-            : 'text-slate-500 hover:text-slate-700'
-          }`}
         >
-          {opt.icon && <span className="mr-1">{opt.icon}</span>}
-          <Typography variant="caption" sx={{ fontWeight: 800, textTransform: 'uppercase' }}>{opt.label}</Typography>
-        </button>
-      ))}
-    </div>
-  );
-};
+          {opt.icon}
+          <Box component="span" sx={{ ...eyebrow, color: 'inherit', fontSize: '0.5625rem', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>
+            {opt.label}
+          </Box>
+        </Box>
+      );
+    })}
+  </Box>
+);

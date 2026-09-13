@@ -7,11 +7,8 @@ import theme from './theme';
 import './index.css';
 import { updateDocumentMetadata } from './utils/metadata';
 
-// Import Poppins font
-import '@fontsource/poppins/300.css';
-import '@fontsource/poppins/400.css';
-import '@fontsource/poppins/500.css';
-import '@fontsource/poppins/700.css';
+// Typefaces (Fraunces display serif + Plus Jakarta Sans) are loaded in index.html
+// so the masthead paints with the right face on first frame.
 
 updateDocumentMetadata({});
 

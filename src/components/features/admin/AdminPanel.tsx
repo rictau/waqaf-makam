@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Box, Typography, Button, Paper, Card, Avatar, Chip, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Switch, FormControlLabel, InputAdornment, Tooltip, Divider } from '@mui/material';
-import { User, Phone, MapPin, Sparkles, ExternalLink, CheckCircle2, Trash2, Wallet, Download, Pencil, Filter, Search, MoreVertical, LayoutDashboard, Clock, Calendar, Target, ChevronDown, ChevronUp } from 'lucide-react';
-import { useTheme } from '@mui/material/styles';
+import { Box, Typography, Button, Card, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Switch, FormControlLabel, InputAdornment, Tooltip, Divider } from '@mui/material';
+import { ExternalLink, CheckCircle2, Trash2, Wallet, Download, Pencil, Filter, Search, Plus } from 'lucide-react';
 import { updateDoc, deleteDoc, doc, setDoc, collection, getDocs, query, orderBy, Timestamp, writeBatch, getDocFromServer } from 'firebase/firestore';
 import { EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import { db, auth } from '../../../firebase';
 import { formatJPY } from '../../../utils/formatters';
+import { c, eyebrow, mono, radius, tnum } from '../../../design';
+import { Eyebrow, Figure, LedgerRow, SectionHeading, StatusTag } from '../../common/primitives';
 import { handleFirestoreError, OperationType } from '../../../utils/errors';
 import type { BankConfig, BankAccountConfig, DonationPackageConfig, DonationRecord, DonationStatus, EditableDonationRecord, PublicConfig } from '../../../types';
 
@@ -56,8 +57,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   isSuperAdmin,
   isClosed
 }) => {
-  const theme = useTheme();
-
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingDonation, setEditingDonation] = useState<EditableDonationRecord | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -730,327 +729,326 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   ]));
 
   return (
-    <Box sx={{ minHeight: '100%', bgcolor: 'background.default' }}>
-      {/* Admin Header */}
-      <Box sx={{ pt: 6, pb: 0, px: 3, bgcolor: 'background.paper', borderBottom: '1px solid', borderColor: 'divider' }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Box sx={{ bgcolor: 'primary.main', color: 'white', p: 1, borderRadius: 1.5, display: 'flex' }}>
-              <LayoutDashboard size={20} />
-            </Box>
-            <Typography variant="h2" sx={{ fontWeight: 900, color: 'text.primary', letterSpacing: -0.5 }}>
-              Admin Panel
+    <Box sx={{ minHeight: '100%', bgcolor: c.well }}>
+      {/* Masthead */}
+      <Box sx={{ pt: 4, px: 2.5, bgcolor: c.paper, borderBottom: `1px solid ${c.ruleStrong}` }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2, mb: 2.5 }}>
+          <Box sx={{ minWidth: 0 }}>
+            <Eyebrow tone="brass">Panel Panitia</Eyebrow>
+            <Typography variant="h2" sx={{ mt: 0.5, color: c.ink }}>Administrasi Wakaf</Typography>
+            <Typography sx={{ mt: 0.5, fontSize: '0.6875rem', fontWeight: 600, color: c.inkFaint, ...tnum }}>
+              {donations.length} data dimuat · {donations.filter((d) => d.status === 'pending').length} menunggu verifikasi
             </Typography>
           </Box>
-          <Box sx={{ display: 'flex', gap: 1 }}>
+          <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>
             {spreadsheetId && spreadsheetId.trim() ? (
               <Tooltip title="Buka Google Sheet">
-                <Button 
+                <Button
                   component="a"
                   href={`https://docs.google.com/spreadsheets/d/${spreadsheetId.trim()}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  size="small" variant="outlined" color="primary"
-                  sx={{ fontWeight: 800, textTransform: 'uppercase', borderRadius: 2, height: 36, px: 2, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                  size="small" variant="outlined"
+                  sx={{ height: 32, px: 1.25, color: c.inkMuted }}
                 >
-                  <ExternalLink size={18} />
+                  <ExternalLink size={16} />
                 </Button>
               </Tooltip>
             ) : (
               <Tooltip title="Ekspor ke CSV">
-                <Button 
-                  size="small" variant="outlined" color="primary" onClick={handleExportCSV}
+                <Button
+                  size="small" variant="outlined" onClick={handleExportCSV}
                   disabled={isExporting}
-                  sx={{ fontWeight: 800, textTransform: 'uppercase', borderRadius: 2, height: 36, px: 2 }}
+                  sx={{ height: 32, px: 1.25, color: c.inkMuted }}
                 >
-                  {isExporting ? '...' : <Download size={18} />}
+                  {isExporting ? <Eyebrow sx={{ fontSize: '0.5625rem' }}>…</Eyebrow> : <Download size={16} />}
                 </Button>
               </Tooltip>
             )}
-            <Button 
-              size="small" variant="contained" color="error" onClick={() => auth.signOut()}
-              sx={{ fontWeight: 800, textTransform: 'uppercase', borderRadius: 2, height: 36, boxShadow: 0 }}
+            <Button
+              size="small" variant="outlined" onClick={() => auth.signOut()}
+              sx={{ height: 32, px: 1.5, ...eyebrow, fontSize: '0.5625rem', color: c.danger, borderColor: c.danger, '&:hover': { borderColor: c.danger, bgcolor: c.dangerTint } }}
             >
               Logout
             </Button>
           </Box>
         </Box>
 
-        {/* Custom Tab Switcher */}
-        <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
-          <Button
-            onClick={() => setAdminTab('donations')}
-            sx={{
-              pb: 1.5,
-              px: 1.5,
-              borderRadius: 0,
-              borderBottom: adminTab === 'donations' ? '3px solid' : '3px solid transparent',
-              borderColor: adminTab === 'donations' ? 'primary.main' : 'transparent',
-              fontWeight: 800,
-              fontSize: '0.8rem',
-              color: adminTab === 'donations' ? 'primary.main' : 'text.secondary',
-              textTransform: 'uppercase',
-              letterSpacing: 1,
-              transition: 'all 0.2s',
-              minWidth: 'auto',
-              '&:hover': { bgcolor: 'transparent', color: 'primary.main' }
-            }}
-          >
-            Ringkasan & Donasi
-          </Button>
-          <Button
-            onClick={() => setAdminTab('settings')}
-            sx={{
-              pb: 1.5,
-              px: 1.5,
-              borderRadius: 0,
-              borderBottom: adminTab === 'settings' ? '3px solid' : '3px solid transparent',
-              borderColor: adminTab === 'settings' ? 'primary.main' : 'transparent',
-              fontWeight: 800,
-              fontSize: '0.8rem',
-              color: adminTab === 'settings' ? 'primary.main' : 'text.secondary',
-              textTransform: 'uppercase',
-              letterSpacing: 1,
-              transition: 'all 0.2s',
-              minWidth: 'auto',
-              '&:hover': { bgcolor: 'transparent', color: 'primary.main' }
-            }}
-          >
-            Pengaturan Program
-          </Button>
+        {/* Tabs — underlined, not pills */}
+        <Box sx={{ display: 'flex' }}>
+          {([
+            { id: 'donations' as const, label: 'Donasi' },
+            { id: 'settings' as const, label: 'Pengaturan' },
+          ]).map((tab) => {
+            const isActive = adminTab === tab.id;
+            return (
+              <Box
+                key={tab.id}
+                component="button"
+                type="button"
+                aria-pressed={isActive}
+                onClick={() => setAdminTab(tab.id)}
+                sx={{
+                  px: 0,
+                  mr: 3,
+                  pb: 1.25,
+                  border: 'none',
+                  bgcolor: 'transparent',
+                  cursor: 'pointer',
+                  borderBottom: `2px solid ${isActive ? c.forest : 'transparent'}`,
+                  color: isActive ? c.forest : c.inkMuted,
+                  transition: 'color 150ms ease, border-color 150ms ease',
+                  '&:hover': { color: c.forest },
+                }}
+              >
+                <Box component="span" sx={{ ...eyebrow, fontSize: '0.625rem', color: 'inherit', whiteSpace: 'nowrap' }}>{tab.label}</Box>
+              </Box>
+            );
+          })}
         </Box>
       </Box>
+
       {adminTab === 'donations' ? (
-        <Box sx={{ p: 2.5, display: 'flex', flexDirection: 'column', gap: 3 }}>
-          {/* Dynamic Phase Dashboard for Admin */}
-          <Paper elevation={0} sx={{ p: 2, border: '1px solid', borderColor: 'primary.light', bgcolor: 'rgba(18, 76, 58, 0.02)', borderRadius: 3 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="caption" sx={{ fontWeight: 800, color: 'primary.main', textTransform: 'uppercase', letterSpacing: 1 }}>
-                <Sparkles size={12} style={{ marginRight: 6, verticalAlign: 'middle' }} />
-                Project Progress Status
-              </Typography>
-              <Chip 
-                label={`${activePhaseLabel || 'Program'} Aktif`} 
-                size="small" 
-                sx={{ fontWeight: 900, fontSize: '0.6rem', height: 20, bgcolor: 'primary.main', color: 'white' }} 
+        <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+          {/* Programme status ledger */}
+          <Box component="section" sx={{ bgcolor: c.paper, border: `1px solid ${c.ruleStrong}`, borderRadius: radius.lg }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, px: 2, py: 1, bgcolor: c.well, borderBottom: `1px solid ${c.ruleStrong}`, borderRadius: `${radius.lg} ${radius.lg} 0 0` }}>
+              <Eyebrow tone="ink" sx={{ fontSize: '0.5625rem' }}>Status Program</Eyebrow>
+              <StatusTag state="verified" label={`${activePhaseLabel || 'Program'} Aktif`} />
+            </Box>
+            <Box sx={{ px: 2, py: 1 }}>
+              <LedgerRow
+                label="Total Terverifikasi"
+                value={<Figure size="1.125rem">{formatJPY(verifiedAmount)}</Figure>}
               />
-            </Box>
-            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
-              <Box>
-                <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.secondary', display: 'block', mb: 0.5 }}>Total Terverifikasi</Typography>
-                <Typography variant="subtitle1" sx={{ fontWeight: 900, color: 'text.primary' }}>{formatJPY(verifiedAmount)}</Typography>
-              </Box>
-              <Box>
-                <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.secondary', display: 'block', mb: 0.5 }}>{activePhaseLabel || 'Progress'}</Typography>
-                <Typography variant="subtitle1" sx={{ fontWeight: 900, color: 'primary.main' }}>
-                  {showSecondaryPhase ? renovationPercentage.toFixed(1) : totalPercentage.toFixed(1)}%
-                </Typography>
-              </Box>
-            </Box>
-            {showSecondaryPhase && (
-              <Box sx={{ mt: 1.5, pt: 1.5, borderTop: '1px dashed', borderColor: 'divider' }}>
-                 <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.secondary' }}>
-                   Shortfall Tahap 2: <span style={{ color: theme.palette.error.main, fontWeight: 900 }}>{formatJPY(renovationShortfall)}</span>
-                 </Typography>
-              </Box>
-            )}
-          </Paper>
-
-          {/* Pending Verification Counts */}
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', p: 2, bgcolor: 'background.paper', borderRadius: 3, border: '1px solid', borderColor: 'divider' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'warning.main' }} />
-              <Typography variant="caption" sx={{ fontWeight: 800, color: 'text.secondary', textTransform: 'uppercase', fontSize: '0.65rem' }}>
-                {donations.filter(d => d.status === 'pending').length} Menunggu Verifikasi
-              </Typography>
-            </Box>
-          </Box>
-
-          {/* Advanced Filters */}
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <TextField 
-              fullWidth size="small" placeholder="Cari Nama, No HP, atau Lokasi..." 
-              value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Search size={18} color={theme.palette.text.disabled} />
-                    </InputAdornment>
-                  ),
-                  sx: { borderRadius: 3, bgcolor: 'background.paper' }
+              <LedgerRow
+                label={activePhaseLabel || 'Progress'}
+                value={<Figure size="1.125rem" tone={c.forest}>{`${(showSecondaryPhase ? renovationPercentage : totalPercentage).toFixed(1)}%`}</Figure>}
+              />
+              <LedgerRow
+                label="Menunggu Verifikasi"
+                value={
+                  <Typography component="span" sx={{ fontSize: '0.875rem', fontWeight: 700, color: c.pending, ...tnum }}>
+                    {donations.filter((d) => d.status === 'pending').length} data
+                  </Typography>
                 }
-              }}
-            />
-            <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-              <TextField 
-                select size="small" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} 
-                sx={{ flex: 1, minWidth: 140, bgcolor: 'background.paper', '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
-                slotProps={{ input: { startAdornment: <InputAdornment position="start"><Filter size={14} /></InputAdornment> } }}
-              >
-                <MenuItem value="all" sx={{ fontWeight: 700, fontSize: '0.8rem' }}>Semua Status</MenuItem>
-                <MenuItem value="verified" sx={{ fontWeight: 700, fontSize: '0.8rem' }}>Verified</MenuItem>
-                <MenuItem value="pending" sx={{ fontWeight: 700, fontSize: '0.8rem' }}>Pending</MenuItem>
-              </TextField>
-              <TextField 
-                select size="small" value={filterPayment} onChange={(e) => setFilterPayment(e.target.value)} 
-                sx={{ flex: 1, minWidth: 160, bgcolor: 'background.paper', '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
-                slotProps={{ input: { startAdornment: <InputAdornment position="start"><Wallet size={14} /></InputAdornment> } }}
-              >
-                <MenuItem value="all" sx={{ fontWeight: 700, fontSize: '0.8rem' }}>Semua Metode</MenuItem>
-                {paymentFilterOptions.map((option) => (
-                  <MenuItem key={option} value={option} sx={{ fontWeight: 700, fontSize: '0.8rem' }}>{option}</MenuItem>
-                ))}
-              </TextField>
+                last={!showSecondaryPhase}
+              />
+              {showSecondaryPhase && (
+                <LedgerRow
+                  label="Shortfall Tahap 2"
+                  value={<Typography component="span" sx={{ fontSize: '0.875rem', fontWeight: 700, color: c.danger, ...tnum }}>{formatJPY(renovationShortfall)}</Typography>}
+                  last
+                />
+              )}
             </Box>
           </Box>
-          
-          {/* Donation List */}
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {filteredDonations.map((donor) => (
-              <Card key={donor.id} elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3, overflow: 'hidden', transition: 'all 0.2s', '&:hover': { borderColor: 'primary.main', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' } }}>
-                <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0 }}>
-                    <Avatar sx={{ bgcolor: 'background.default', color: donor.status === 'verified' ? 'primary.main' : 'warning.main', borderRadius: 2, width: 48, height: 48, border: '1px solid', borderColor: 'divider' }}>
-                       <User size={24} />
-                    </Avatar>
-                    <Box sx={{ minWidth: 0 }}>
-                      <Typography variant="subtitle2" noWrap sx={{ fontWeight: 800, color: 'text.primary' }}>{donor.name}</Typography>
-                      <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', display: 'flex', alignItems: 'center' }}>
-                        <Clock size={10} style={{ marginRight: 4 }} /> {donor.date}
+
+          {/* Search + filters */}
+          <Box component="section">
+            <SectionHeading title="Cari & Filter" meta={`${filteredDonations.length} hasil`} />
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
+              <TextField
+                fullWidth size="small" placeholder="Cari nama, no. HP, atau lokasi…"
+                value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Search size={16} color={c.inkFaint} />
+                      </InputAdornment>
+                    ),
+                  }
+                }}
+              />
+              <Box sx={{ display: 'flex', gap: 1.25, flexWrap: 'wrap' }}>
+                <TextField
+                  select size="small" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
+                  sx={{ flex: 1, minWidth: 140 }}
+                  slotProps={{ input: { startAdornment: <InputAdornment position="start"><Filter size={13} color={c.inkFaint} /></InputAdornment> } }}
+                >
+                  <MenuItem value="all">Semua Status</MenuItem>
+                  <MenuItem value="verified">Terverifikasi</MenuItem>
+                  <MenuItem value="pending">Pending</MenuItem>
+                </TextField>
+                <TextField
+                  select size="small" value={filterPayment} onChange={(e) => setFilterPayment(e.target.value)}
+                  sx={{ flex: 1, minWidth: 160 }}
+                  slotProps={{ input: { startAdornment: <InputAdornment position="start"><Wallet size={13} color={c.inkFaint} /></InputAdornment> } }}
+                >
+                  <MenuItem value="all">Semua Metode</MenuItem>
+                  {paymentFilterOptions.map((option) => (
+                    <MenuItem key={option} value={option}>{option}</MenuItem>
+                  ))}
+                </TextField>
+              </Box>
+            </Box>
+          </Box>
+
+          {/* Donation records */}
+          <Box component="section">
+            <SectionHeading title="Catatan Donasi" meta={`${filteredDonations.length} / ${donations.length}`} />
+            <Box sx={{ bgcolor: c.paper, border: `1px solid ${c.ruleStrong}`, borderRadius: radius.lg, overflow: 'hidden' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 2, py: 0.875, bgcolor: c.well, borderBottom: `1px solid ${c.ruleStrong}` }}>
+                <Eyebrow sx={{ fontSize: '0.5625rem' }}>Donatur</Eyebrow>
+                <Eyebrow sx={{ fontSize: '0.5625rem' }}>Nominal</Eyebrow>
+              </Box>
+
+              {filteredDonations.length === 0 && (
+                <Box sx={{ px: 2, py: 3, textAlign: 'center' }}>
+                  <Eyebrow>Tidak ada data yang cocok</Eyebrow>
+                </Box>
+              )}
+
+              {filteredDonations.map((donor, idx) => (
+                <Box key={donor.id} sx={{ borderTop: idx === 0 ? 'none' : `1px solid ${c.ruleStrong}` }}>
+                  <Box sx={{ px: 2, pt: 1.5, pb: 1.25, display: 'flex', justifyContent: 'space-between', gap: 1.5 }}>
+                    <Box sx={{ display: 'flex', gap: 1.25, minWidth: 0 }}>
+                      <Typography component="span" sx={{ fontFamily: mono, fontSize: '0.6875rem', color: c.inkFaint, pt: '2px', ...tnum }}>
+                        {String(idx + 1).padStart(2, '0')}
+                      </Typography>
+                      <Box sx={{ minWidth: 0 }}>
+                        <Typography noWrap sx={{ fontSize: '0.875rem', fontWeight: 700, color: c.ink, letterSpacing: '-0.01em' }}>
+                          {donor.name}
+                        </Typography>
+                        <Typography sx={{ mt: 0.25, fontSize: '0.6875rem', color: c.inkMuted, ...tnum }}>
+                          {donor.date}
+                        </Typography>
+                      </Box>
+                    </Box>
+                    <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
+                      <Figure size="0.9375rem" sx={{ display: 'block' }}>{formatJPY(donor.amount)}</Figure>
+                      <Box sx={{ mt: 0.5 }}>
+                        <StatusTag
+                          state={donor.status === 'verified' ? 'verified' : 'pending'}
+                          label={donor.status === 'verified' ? 'Terverifikasi' : 'Pending'}
+                        />
+                      </Box>
+                    </Box>
+                  </Box>
+
+                  {/* Record detail — plain label/value pairs, no icon chips */}
+                  <Box sx={{ px: 2, pb: 1.25, display: 'flex', flexWrap: 'wrap', gap: '4px 16px' }}>
+                    {[
+                      { label: 'WhatsApp', value: donor.phone || '—', code: true },
+                      { label: 'Paket', value: donor.package || 'Donasi' },
+                      { label: 'Metode', value: donor.paymentMethod || 'Tunai' },
+                      { label: 'Domisili', value: donor.loc || 'Japan' },
+                    ].map((field) => (
+                      <Box key={field.label} sx={{ minWidth: 0 }}>
+                        <Eyebrow sx={{ fontSize: '0.5rem' }}>{field.label}</Eyebrow>
+                        <Typography sx={{ fontSize: '0.75rem', fontWeight: 600, color: c.ink, fontFamily: field.code ? mono : undefined, ...tnum }}>
+                          {field.value}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+
+                  {donor.remarks && (
+                    <Box sx={{ mx: 2, mb: 1.25, px: 1.25, py: 0.875, bgcolor: c.pendingTint, borderLeft: `3px solid ${c.pending}`, borderRadius: `0 ${radius.md} ${radius.md} 0` }}>
+                      <Eyebrow sx={{ fontSize: '0.5rem', color: c.pending }}>Catatan Admin</Eyebrow>
+                      <Typography sx={{ mt: 0.25, fontSize: '0.75rem', fontWeight: 500, color: c.ink, lineHeight: 1.5 }}>
+                        {donor.remarks}
                       </Typography>
                     </Box>
-                  </Box>
-                  <Box sx={{ textAlign: 'right', ml: 2 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 900, color: 'text.primary', mb: 0.5 }}>{formatJPY(donor.amount)}</Typography>
-                    <Chip 
-                      label={donor.status === 'verified' ? 'Verified' : 'Pending'} 
-                      size="small" 
-                      sx={{ 
-                        height: 20, px: 0.5, fontSize: '0.65rem', fontWeight: 900, textTransform: 'uppercase', 
-                        bgcolor: donor.status === 'verified' ? 'primary.main' : 'warning.main', 
-                        color: 'white' 
-                      }} 
-                    />
+                  )}
+
+                  <Box sx={{ borderTop: `1px solid ${c.rule}`, px: 1, py: 0.75, display: 'flex', gap: 0.75, bgcolor: c.well }}>
+                    <Tooltip title="Edit data">
+                      <Button
+                        onClick={() => handleEditClick(donor)}
+                        variant="outlined" size="small"
+                        sx={{ px: 1, minWidth: 34, color: c.inkMuted }}
+                      >
+                        <Pencil size={15} />
+                      </Button>
+                    </Tooltip>
+
+                    {donor.proofUrl && (
+                      <Button
+                        component="a" href={donor.proofUrl} target="_blank" rel="noreferrer"
+                        variant="outlined" size="small" fullWidth
+                        startIcon={<ExternalLink size={13} />}
+                        sx={{ ...eyebrow, fontSize: '0.5625rem', color: c.inkMuted }}
+                      >
+                        Bukti
+                      </Button>
+                    )}
+
+                    {donor.status === 'pending' && (
+                      <Button
+                        variant="contained" size="small" fullWidth
+                        onClick={async () => {
+                          try {
+                            // Run pre-flight admin check
+                            const isAuthorized = await checkAdminAuthorization();
+                            if (!isAuthorized) return;
+
+                            await updateDoc(doc(db, 'donations', donor.id), { status: 'verified' });
+                            await recalculateStats();
+                          } catch (e) {
+                            console.error('Failed to verify donation:', e);
+                            alert('Gagal memverifikasi donasi. Silakan coba lagi.');
+                            handleFirestoreError(e, OperationType.UPDATE, `donations/${donor.id}`);
+                          }
+                        }}
+                        startIcon={<CheckCircle2 size={13} />}
+                        sx={{ ...eyebrow, fontSize: '0.5625rem', color: c.paper }}
+                      >
+                        Verifikasi
+                      </Button>
+                    )}
+
+                    <Tooltip title="Hapus donasi">
+                      <Button
+                        onClick={async () => {
+                          if (window.confirm('Hapus donasi ini?')) {
+                            try {
+                              // Run pre-flight admin check
+                              const isAuthorized = await checkAdminAuthorization();
+                              if (!isAuthorized) return;
+
+                              await deleteDoc(doc(db, 'donations', donor.id));
+                              await recalculateStats();
+                            } catch (e) {
+                              console.error('Failed to delete donation:', e);
+                              alert('Gagal menghapus donasi. Silakan coba lagi.');
+                              handleFirestoreError(e, OperationType.DELETE, `donations/${donor.id}`);
+                            }
+                          }
+                        }}
+                        variant="outlined" size="small"
+                        sx={{ px: 1, minWidth: 34, color: c.danger, borderColor: c.danger, '&:hover': { borderColor: c.danger, bgcolor: c.dangerTint } }}
+                      >
+                        <Trash2 size={15} />
+                      </Button>
+                    </Tooltip>
                   </Box>
                 </Box>
-                
-                <Box sx={{ px: 2, pb: 2 }}>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, p: 1.5, bgcolor: 'background.default', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', pr: 1, borderRight: '1px solid', borderColor: 'divider' }}>
-                      <Phone size={10} style={{ marginRight: 6, color: theme.palette.text.secondary }} /> 
-                      <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.primary', fontSize: '0.65rem' }}>{donor.phone}</Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', pr: 1, borderRight: '1px solid', borderColor: 'divider' }}>
-                      <Sparkles size={10} style={{ marginRight: 6, color: theme.palette.text.secondary }} /> 
-                      <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.primary', fontSize: '0.65rem' }}>{donor.package || 'Donasi'}</Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <Wallet size={10} style={{ marginRight: 6, color: theme.palette.text.secondary }} /> 
-                      <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.primary', fontSize: '0.65rem' }}>{donor.paymentMethod || 'Tunai'}</Typography>
-                    </Box>
-                  </Box>
-                  {donor.remarks && (
-                    <Box sx={{ mt: 1.5, px: 1.5, py: 1, bgcolor: 'warning.light', opacity: 0.8, borderRadius: 2, border: '1px dashed', borderColor: 'warning.main' }}>
-                      <Typography variant="caption" sx={{ display: 'block', fontWeight: 800, color: 'warning.dark', textTransform: 'uppercase', fontSize: '0.55rem', mb: 0.25 }}>Catatan Admin:</Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.75rem', color: 'text.primary' }}>{donor.remarks}</Typography>
-                    </Box>
-                  )}
-                </Box>
-
-                <Box sx={{ borderTop: '1px solid', borderColor: 'divider', p: 1, display: 'flex', gap: 1, bgcolor: 'background.paper' }}>
-                  <Button 
-                    onClick={() => handleEditClick(donor)} 
-                    variant="outlined" color="inherit" size="small" 
-                    sx={{ borderRadius: 1.5, minWidth: 40, borderColor: 'divider' }}
-                  >
-                    <Pencil size={16} />
-                  </Button>
-                  
-                  {donor.proofUrl && (
-                    <Button 
-                      component="a" href={donor.proofUrl} target="_blank" rel="noreferrer" 
-                      variant="outlined" size="small" fullWidth 
-                      startIcon={<ExternalLink size={14} />} 
-                      sx={{ fontWeight: 800, fontSize: '0.7rem', borderRadius: 1.5, textTransform: 'uppercase' }}
-                    >
-                      Bukti
-                    </Button>
-                  )}
-                  
-                  {donor.status === 'pending' && (
-                    <Button 
-                      variant="contained" size="small" fullWidth 
-                      onClick={async () => { 
-                        try { 
-                          // Run pre-flight admin check
-                          const isAuthorized = await checkAdminAuthorization();
-                          if (!isAuthorized) return;
-
-                          await updateDoc(doc(db, 'donations', donor.id), { status: 'verified' }); 
-                          await recalculateStats();
-                        } catch (e) { 
-                          console.error('Failed to verify donation:', e);
-                          alert('Gagal memverifikasi donasi. Silakan coba lagi.');
-                          handleFirestoreError(e, OperationType.UPDATE, `donations/${donor.id}`); 
-                        } 
-                      }} 
-                      startIcon={<CheckCircle2 size={14} />} 
-                      sx={{ fontWeight: 800, fontSize: '0.7rem', borderRadius: 1.5, textTransform: 'uppercase', boxShadow: 0 }}
-                    >
-                      Verifikasi
-                    </Button>
-                  )}
-                  
-                  <Button 
-                    onClick={async () => { 
-                      if (window.confirm('Hapus donasi ini?')) { 
-                        try { 
-                          // Run pre-flight admin check
-                          const isAuthorized = await checkAdminAuthorization();
-                          if (!isAuthorized) return;
-
-                          await deleteDoc(doc(db, 'donations', donor.id)); 
-                          await recalculateStats();
-                        } catch (e) { 
-                          console.error('Failed to delete donation:', e);
-                          alert('Gagal menghapus donasi. Silakan coba lagi.');
-                          handleFirestoreError(e, OperationType.DELETE, `donations/${donor.id}`); 
-                        } 
-                      } 
-                    }}
-                    variant="outlined" color="error" size="small"
-                    sx={{ borderRadius: 1.5, minWidth: 40, borderColor: 'error.light' }}
-                  >
-                    <Trash2 size={16} />
-                  </Button>
-                </Box>
-              </Card>
-            ))}
+              ))}
+            </Box>
           </Box>
 
-          {/* Load More Button */}
+          {/* Load more */}
           {hasMore && onLoadMore && (
-            <Box sx={{ mt: 2, textAlign: 'center' }}>
-              <Button 
-                variant="outlined" color="primary" onClick={onLoadMore}
-                sx={{ borderRadius: 2, fontWeight: 800, px: 6, py: 1.2, textTransform: 'uppercase', letterSpacing: 1 }}
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+              <Button
+                variant="outlined" onClick={onLoadMore}
+                sx={{ ...eyebrow, fontSize: '0.625rem', color: c.ink, px: 3, py: 1, bgcolor: c.paper }}
               >
                 Muat Lebih Banyak
               </Button>
-              <Typography variant="caption" sx={{ display: 'block', mt: 1.5, color: 'text.secondary', fontWeight: 700 }}>
+              <Typography sx={{ fontSize: '0.625rem', fontWeight: 600, color: c.inkFaint, ...tnum }}>
                 Menampilkan {donations.length} data terbaru
               </Typography>
             </Box>
           )}
         </Box>
       ) : (
-        <Box sx={{ p: 2.5, display: 'flex', flexDirection: 'column', gap: 3 }}>
+        <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
           {/* Group 1: Informasi Umum & Tanggal */}
-          <Card elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 3, bgcolor: 'background.paper' }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'primary.main', textTransform: 'uppercase', mb: 2.5, letterSpacing: 0.5 }}>
-              Informasi Umum & Tanggal
-            </Typography>
+          <Card sx={{ p: 2.25, border: `1px solid ${c.ruleStrong}`, borderRadius: radius.lg, bgcolor: c.paper }}>
+            <SectionHeading title="Informasi Umum & Tanggal" />
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
               <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
                 <TextField
@@ -1112,10 +1110,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           </Card>
 
               {/* Group 2: Fase & Paket Wakaf */}
-              <Card elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 3, bgcolor: 'background.paper' }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'primary.main', textTransform: 'uppercase', mb: 2.5, letterSpacing: 0.5 }}>
-                  Pengaturan Fase & Paket Wakaf
-                </Typography>
+              <Card sx={{ p: 2.25, border: `1px solid ${c.ruleStrong}`, borderRadius: radius.lg, bgcolor: c.paper }}>
+                <SectionHeading title="Pengaturan Fase & Paket Wakaf" />
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
                   <FormControlLabel
                     control={
@@ -1123,7 +1119,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                         checked={enablePhase2}
                         onChange={(e) => setEnablePhase2(e.target.checked)}
                         color="primary"
-                        size="small"
                       />
                     }
                     label={
@@ -1147,9 +1142,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                       />
                     )}
                   </Box>
-                  <Typography variant="caption" sx={{ fontWeight: 800, color: 'text.secondary', textTransform: 'uppercase', mt: 1 }}>
-                    Harga Paket Donasi (JPY)
-                  </Typography>
+                  <Eyebrow sx={{ mt: 0.5 }}>Harga Paket Donasi (JPY)</Eyebrow>
                   <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
                     <TextField
                       size="small" label="Paket Rutin Bulanan (JPY)" type="number" value={publicConfigInput.packageBulananPrice}
@@ -1174,10 +1167,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               </Card>
 
               {/* Group 3: Target & Kurs Konversi */}
-              <Card elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 3, bgcolor: 'background.paper' }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'primary.main', textTransform: 'uppercase', mb: 2.5, letterSpacing: 0.5 }}>
-                  Target Donasi & Keuangan
-                </Typography>
+              <Card sx={{ p: 2.25, border: `1px solid ${c.ruleStrong}`, borderRadius: radius.lg, bgcolor: c.paper }}>
+                <SectionHeading title="Target Donasi & Keuangan" />
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
                   <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
                     <TextField
@@ -1215,28 +1206,22 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               </Card>
 
               {/* Group 4: Rekening & Kontak */}
-              <Card elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 3, bgcolor: 'background.paper' }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'primary.main', textTransform: 'uppercase', mb: 2.5, letterSpacing: 0.5 }}>
-                  Rekening Pembayaran & Kontak
-                </Typography>
+              <Card sx={{ p: 2.25, border: `1px solid ${c.ruleStrong}`, borderRadius: radius.lg, bgcolor: c.paper }}>
+                <SectionHeading title="Rekening Pembayaran & Kontak" />
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
                   
                   {/* Rekening Jepang */}
-                  <Typography variant="body2" sx={{ fontWeight: 800, color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Wallet size={16} /> Daftar Rekening Jepang (JP)
-                  </Typography>
+                  <Eyebrow tone="ink">Daftar Rekening Jepang (JP)</Eyebrow>
                   {banksJP.length === 0 ? (
-                    <Typography variant="caption" sx={{ color: 'text.secondary', fontStyle: 'italic', display: 'block', mb: 1 }}>
-                      Belum ada rekening Jepang dikonfigurasi. Klik tombol di bawah untuk menambahkan.
+                    <Typography sx={{ fontSize: '0.75rem', color: c.inkFaint, mb: 0.5 }}>
+                      Belum ada rekening Jepang dikonfigurasi. Tambahkan dengan tombol di bawah.
                     </Typography>
                   ) : (
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                       {banksJP.map((bank, index) => (
-                        <Card key={bank.id || index} variant="outlined" sx={{ p: 2, bgcolor: 'background.default', borderStyle: 'dashed', borderColor: 'primary.light' }}>
+                        <Card key={bank.id || index} sx={{ p: 1.75, bgcolor: c.well, border: `1px solid ${c.rule}`, borderRadius: radius.md }}>
                           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
-                            <Typography variant="caption" sx={{ fontWeight: 900, color: 'primary.main', textTransform: 'uppercase' }}>
-                              Rekening JP #{index + 1}
-                            </Typography>
+                            <Eyebrow tone="ink" sx={{ fontSize: '0.5625rem' }}>Rekening JP {String(index + 1).padStart(2, '0')}</Eyebrow>
                             <IconButton size="small" color="error" onClick={() => handleRemoveBank('JP', index)}>
                               <Trash2 size={16} />
                             </IconButton>
@@ -1289,9 +1274,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   <Button
                     variant="outlined"
                     size="small"
-                    startIcon={<Wallet size={16} />}
+                    startIcon={<Plus size={14} />}
                     onClick={() => handleAddBank('JP')}
-                    sx={{ alignSelf: 'flex-start', mt: 0.5, mb: 1, borderRadius: 2, fontWeight: 700 }}
+                    sx={{ alignSelf: 'flex-start', mt: 0.5, mb: 1, ...eyebrow, fontSize: '0.5625rem', color: c.ink }}
                   >
                     Tambah Rekening Jepang
                   </Button>
@@ -1299,21 +1284,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   <Divider sx={{ my: 1.5 }} />
 
                   {/* Rekening Indonesia */}
-                  <Typography variant="body2" sx={{ fontWeight: 800, color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Wallet size={16} /> Daftar Rekening Indonesia (ID)
-                  </Typography>
+                  <Eyebrow tone="ink">Daftar Rekening Indonesia (ID)</Eyebrow>
                   {banksID.length === 0 ? (
-                    <Typography variant="caption" sx={{ color: 'text.secondary', fontStyle: 'italic', display: 'block', mb: 1 }}>
-                      Belum ada rekening Indonesia dikonfigurasi. Klik tombol di bawah untuk menambahkan.
+                    <Typography sx={{ fontSize: '0.75rem', color: c.inkFaint, mb: 0.5 }}>
+                      Belum ada rekening Indonesia dikonfigurasi. Tambahkan dengan tombol di bawah.
                     </Typography>
                   ) : (
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                       {banksID.map((bank, index) => (
-                        <Card key={bank.id || index} variant="outlined" sx={{ p: 2, bgcolor: 'background.default', borderStyle: 'dashed', borderColor: 'primary.light' }}>
+                        <Card key={bank.id || index} sx={{ p: 1.75, bgcolor: c.well, border: `1px solid ${c.rule}`, borderRadius: radius.md }}>
                           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
-                            <Typography variant="caption" sx={{ fontWeight: 900, color: 'primary.main', textTransform: 'uppercase' }}>
-                              Rekening ID #{index + 1}
-                            </Typography>
+                            <Eyebrow tone="ink" sx={{ fontSize: '0.5625rem' }}>Rekening ID {String(index + 1).padStart(2, '0')}</Eyebrow>
                             <IconButton size="small" color="error" onClick={() => handleRemoveBank('ID', index)}>
                               <Trash2 size={16} />
                             </IconButton>
@@ -1366,9 +1347,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   <Button
                     variant="outlined"
                     size="small"
-                    startIcon={<Wallet size={16} />}
+                    startIcon={<Plus size={14} />}
                     onClick={() => handleAddBank('ID')}
-                    sx={{ alignSelf: 'flex-start', mt: 0.5, mb: 1, borderRadius: 2, fontWeight: 700 }}
+                    sx={{ alignSelf: 'flex-start', mt: 0.5, mb: 1, ...eyebrow, fontSize: '0.5625rem', color: c.ink }}
                   >
                     Tambah Rekening Indonesia
                   </Button>
@@ -1376,9 +1357,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   <Divider sx={{ my: 1.5 }} />
 
                   {/* Kontak Link */}
-                  <Typography variant="body2" sx={{ fontWeight: 800, color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 1 }}>
-                    Kontak & Media Sosial Program
-                  </Typography>
+                  <Eyebrow tone="ink">Kontak & Media Sosial Program</Eyebrow>
                   <Box sx={{ display: 'flex', gap: 2.5, flexDirection: { xs: 'column', sm: 'row' } }}>
                     <TextField
                       size="small" 
@@ -1413,21 +1392,22 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
               {/* Group 5: Advanced & Reset Program */}
               {isSuperAdmin && (
-                <Card elevation={0} sx={{ p: 3, border: '1px solid', borderColor: 'error.light', borderRadius: 3, bgcolor: 'rgba(211, 47, 47, 0.01)' }}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'error.main', textTransform: 'uppercase', mb: 2.5, letterSpacing: 0.5 }}>
-                    Tindakan Lanjutan (Danger Zone)
-                  </Typography>
+                <Card sx={{ p: 2.25, border: `1px solid ${c.rule}`, borderLeft: `3px solid ${c.danger}`, borderRadius: `0 ${radius.lg} ${radius.lg} 0`, bgcolor: c.paper }}>
+                  <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 2, pb: 1, mb: 1.5, borderBottom: `1px solid ${c.rule}` }}>
+                    <Eyebrow sx={{ color: c.danger }}>Tindakan Lanjutan</Eyebrow>
+                    <Typography sx={{ fontSize: '0.625rem', fontWeight: 600, color: c.danger }}>Tidak dapat dibatalkan</Typography>
+                  </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 3, flexDirection: { xs: 'column', sm: 'row' } }}>
                     <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 600, lineHeight: 1.4 }}>
                       Mulai program baru akan menghapus semua records donasi yang ada dan mengatur total dana terkumpul kembali ke 0. User admin dan konfigurasi program akan tetap dipertahankan.
                     </Typography>
                     <Button
-                      variant="outlined" color="error" size="small"
+                      variant="outlined" size="small"
                       onClick={handleStartNewCampaign}
                       disabled={isResettingCampaign}
-                      sx={{ fontWeight: 800, borderRadius: 2, whiteSpace: 'nowrap', px: 3, py: 1 }}
+                      sx={{ ...eyebrow, fontSize: '0.5625rem', color: c.danger, borderColor: c.danger, whiteSpace: 'nowrap', px: 2.5, py: 1, '&:hover': { borderColor: c.danger, bgcolor: c.dangerTint } }}
                     >
-                      {isResettingCampaign ? 'Resetting...' : 'Reset'}
+                      {isResettingCampaign ? 'Mereset…' : 'Reset Program'}
                     </Button>
                   </Box>
                 </Card>
@@ -1436,11 +1416,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               {/* Save Button */}
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
                 <Button
-                  variant="contained" color="primary" size="large"
+                  variant="contained"
                   onClick={handleSaveSettings} disabled={isSavingSettings}
-                  sx={{ fontWeight: 800, textTransform: 'uppercase', borderRadius: 2, px: 6, py: 1.5, boxShadow: '0 4px 14px 0 rgba(18, 76, 58, 0.2)' }}
+                  sx={{ ...eyebrow, fontSize: '0.6875rem', color: c.paper, px: 4, py: 1.375 }}
                 >
-                  {isSavingSettings ? 'Menyimpan...' : 'Simpan Perubahan'}
+                  {isSavingSettings ? 'Menyimpan…' : 'Simpan Perubahan'}
                 </Button>
               </Box>
         </Box>
@@ -1448,7 +1428,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
       {/* Edit Donation Dialog */}
       <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle sx={{ fontWeight: 900, borderBottom: '1px solid', borderColor: 'divider' }}>Edit Data Donasi</DialogTitle>
+        <DialogTitle sx={{ borderBottom: `1px solid ${c.rule}` }}>Edit Data Donasi</DialogTitle>
         <DialogContent sx={{ pt: 3 }}>
           {editingDonation && (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, mt: 1 }}>
@@ -1467,9 +1447,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             </Box>
           )}
         </DialogContent>
-        <DialogActions sx={{ p: 2.5, borderTop: '1px solid', borderColor: 'divider' }}>
-          <Button onClick={() => setEditDialogOpen(false)} color="inherit" sx={{ fontWeight: 700 }}>Batal</Button>
-          <Button onClick={handleEditSave} variant="contained" color="primary" sx={{ fontWeight: 700, px: 3 }}>Simpan Perubahan</Button>
+        <DialogActions sx={{ p: 2, borderTop: `1px solid ${c.rule}`, bgcolor: c.well }}>
+          <Button onClick={() => setEditDialogOpen(false)} sx={{ ...eyebrow, fontSize: '0.5625rem', color: c.inkMuted }}>Batal</Button>
+          <Button onClick={handleEditSave} variant="contained" sx={{ ...eyebrow, fontSize: '0.5625rem', color: c.paper, px: 2.5 }}>Simpan</Button>
         </DialogActions>
       </Dialog>
 
@@ -1487,8 +1467,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         fullWidth 
         maxWidth="xs"
       >
-        <DialogTitle sx={{ fontWeight: 900, borderBottom: '1px solid', borderColor: 'divider' }}>
-          Konfirmasi Keamanan (Sudo Mode)
+        <DialogTitle sx={{ borderBottom: `1px solid ${c.rule}` }}>
+          Konfirmasi Keamanan
         </DialogTitle>
         <DialogContent sx={{ pt: 3 }}>
           <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 600, mb: 2, lineHeight: 1.5 }}>
@@ -1517,7 +1497,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             }}
           />
         </DialogContent>
-        <DialogActions sx={{ p: 2.5, borderTop: '1px solid', borderColor: 'divider' }}>
+        <DialogActions sx={{ p: 2, borderTop: `1px solid ${c.rule}`, bgcolor: c.well }}>
           <Button 
             onClick={() => {
               setReauthOpen(false);
@@ -1525,18 +1505,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               setReauthAction(null);
               setReauthError('');
             }} 
-            color="inherit" 
             disabled={isVerifyingPassword}
-            sx={{ fontWeight: 700 }}
+            sx={{ ...eyebrow, fontSize: '0.5625rem', color: c.inkMuted }}
           >
             Batal
           </Button>
           <Button 
             onClick={handleSudoSubmit} 
             variant="contained" 
-            color="primary" 
             disabled={isVerifyingPassword}
-            sx={{ fontWeight: 700, px: 3 }}
+            sx={{ ...eyebrow, fontSize: '0.5625rem', color: c.paper, px: 2.5 }}
           >
             {isVerifyingPassword ? 'Memverifikasi...' : 'Konfirmasi'}
           </Button>

@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useTheme } from '@mui/material/styles';
-import { Box, Container, Typography, Chip, Avatar, IconButton, Button, CircularProgress } from '@mui/material';
+import { Box, Container, Typography, Button, CircularProgress } from '@mui/material';
 import { doc, getDocFromServer } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { ArrowRight, Check, Landmark, Info } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 import { db, auth, storage } from './firebase';
+import { c, eyebrow, radius } from './design';
+import { Eyebrow, Figure, LedgerRow, StatusTag } from './components/common/primitives';
 import { handleFirestoreError, OperationType } from './utils/errors';
 import { formatIDR, formatJPY } from './utils/formatters';
 
@@ -25,7 +26,6 @@ import { useDonations } from './hooks/useDonations';
 import type { AppTab } from './types';
 
 function DonationApp() {
-  const theme = useTheme();
   const getTabFromPath = (): AppTab => {
     const path = window.location.pathname.replace(/\/+$/, '');
     if (path === '/admin') return 'admin';
@@ -279,56 +279,64 @@ function DonationApp() {
   };
 
   return (
-    <Box sx={{ minHeight: '100dvh', display: 'flex', justifyContent: 'center', bgcolor: 'background.default', py: 0 }}>
-      <style dangerouslySetInnerHTML={{__html: `
-        .pb-safe { padding-bottom: max(20px, env(safe-area-inset-bottom)); }
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .ios-blur { backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); }
-      `}} />
-
-      <Container maxWidth="sm" disableGutters sx={{ bgcolor: 'background.paper', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '100dvh', boxShadow: theme.shadows[10], borderRadius: 0 }}>
+    <Box sx={{ minHeight: '100dvh', display: 'flex', justifyContent: 'center', bgcolor: c.canvas }}>
+      {/* The app reads as a printed page on a stone desk: a hard-edged column
+          with warm rules on either side — no floating card, no drop shadow. */}
+      <Container
+        maxWidth="sm"
+        disableGutters
+        sx={{
+          bgcolor: c.paper,
+          position: 'relative',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100dvh',
+          borderRadius: 0,
+          borderLeft: { sm: `1px solid ${c.ruleStrong}` },
+          borderRight: { sm: `1px solid ${c.ruleStrong}` },
+        }}
+      >
         {!hasLoadedStats ? (
-          <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'background.default', px: 3 }}>
-            <CircularProgress size={36} thickness={5} />
+          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center', justifyContent: 'center', bgcolor: c.well, px: 3 }}>
+            <CircularProgress size={24} thickness={4} />
+            <Eyebrow>Memuat data program</Eyebrow>
           </Box>
         ) : (
         <>
         
+        {/* Submission receipt — a record of what was filed, not a celebration screen. */}
         {uploadState === 'success' && (
-          <div className="absolute inset-0 z-50 bg-white flex flex-col items-center justify-center px-6 animate-in fade-in duration-500 text-center">
-            <div style={{ backgroundColor: theme.palette.primary.light + '20', color: theme.palette.primary.main, borderColor: theme.palette.primary.light + '40' }} className="w-16 h-16 rounded-full flex items-center justify-center mb-5 border">
-              <Check className="w-8 h-8" strokeWidth={3} />
-            </div>
-            <h1 className="text-2xl font-bold text-slate-900 mb-2 tracking-tight">Alhamdulillah!</h1>
-            <p className="text-slate-600 mb-6 px-2 text-sm font-medium leading-relaxed">
-              Bukti pembayaran {getPackageName()} Anda telah diterima dan menunggu verifikasi. Jazakumullah Khairan, {isAnonymous ? 'Hamba Allah' : donorName}.
-            </p>
-            <Box sx={{ bgcolor: 'background.default', borderRadius: 3, p: 3, width: '100%', mb: 4, border: '1px solid', borderColor: 'divider' }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid', borderColor: 'divider', pb: 2, mb: 2 }}>
-                <Typography variant="caption" sx={{ fontWeight: 800, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 1, display: 'flex', alignItems: 'center' }}>
-                   <Landmark size={14} style={{ marginRight: 8 }} /> Nominal
-                </Typography>
-                <Typography variant="subtitle1" sx={{ fontWeight: 800, color: 'text.primary' }}>{getTransferAmount()}</Typography>
-              </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="caption" sx={{ fontWeight: 800, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 1, display: 'flex', alignItems: 'center' }}>
-                   <Info size={14} style={{ marginRight: 8 }} /> Status
-                </Typography>
-                <Chip label="Pending" size="small" sx={{ bgcolor: 'secondary.light', color: 'secondary.main', fontWeight: 800, textTransform: 'uppercase', fontSize: '0.75rem', height: 20 }} />
-              </Box>
+          <Box sx={{ position: 'absolute', inset: 0, zIndex: 50, bgcolor: c.paper, display: 'flex', flexDirection: 'column', justifyContent: 'center', px: 3 }}>
+            <Eyebrow tone="brass">Donasi Tercatat</Eyebrow>
+            <Typography variant="h1" sx={{ mt: 1, color: c.ink }}>Alhamdulillah</Typography>
+            <Typography sx={{ mt: 1.25, fontSize: '0.875rem', lineHeight: 1.6, color: c.inkMuted }}>
+              Bukti pembayaran {getPackageName()} Anda telah diterima dan menunggu verifikasi panitia.
+              Jazakumullah Khairan, <Box component="strong" sx={{ color: c.ink }}>{isAnonymous ? 'Hamba Allah' : donorName}</Box>.
+            </Typography>
+
+            <Box sx={{ mt: 3, px: 2, py: 0.5, border: `1px solid ${c.ruleStrong}`, borderRadius: radius.lg, bgcolor: c.well }}>
+              <LedgerRow label="Nominal" value={<Figure size="1.0625rem">{getTransferAmount()}</Figure>} />
+              <LedgerRow label="Paket" value={<Typography component="span" sx={{ fontSize: '0.8125rem', fontWeight: 700, color: c.ink }}>{getPackageName()}</Typography>} />
+              <LedgerRow label="Status" value={<StatusTag state="pending" label="Menunggu Verifikasi" />} last />
             </Box>
-            <button onClick={resetForm} style={{ backgroundColor: theme.palette.secondary.main }} className="w-full text-slate-900 font-bold py-3 rounded-xl shadow-lg active:scale-95 transition-all flex justify-center items-center text-sm">
-              Lihat Daftar Donatur <ArrowRight className="w-3 h-3 ml-2" />
-            </button>
-          </div>
+
+            <Button
+              onClick={resetForm}
+              variant="contained"
+              endIcon={<ArrowRight size={14} />}
+              sx={{ mt: 3, py: 1.375, ...eyebrow, fontSize: '0.75rem', color: c.paper }}
+            >
+              Lihat Daftar Donatur
+            </Button>
+          </Box>
         )}
 
         <Box ref={scrollRef} sx={{ flex: 1, overflowY: 'auto', position: 'relative', zIndex: 10 }}>
           {activeTab === 'donasi' && (
-            <Box sx={{ animateIn: 'fade-in', duration: 300 }}>
+            <Box>
               <Header user={user} isAdminUser={isAdminUser} onAdminClick={() => navigateToTab('admin')} publicConfig={publicConfig} />
-              <Box sx={{ px: 2, py: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box sx={{ px: 2, py: 2.5, display: 'flex', flexDirection: 'column', gap: 3 }}>
                 <StatsCard 
                   danaTerkumpulAmount={danaTerkumpulAmount} 
                   terverifikasiAmount={terverifikasiAmount} 
@@ -341,21 +349,19 @@ function DonationApp() {
                   jpyToIdrRate={stats.jpyToIdrRate ?? 113}
                 />
                 {isDonationClosed && !isAdminUser ? (
-                  <Box sx={{ p: 3, borderRadius: 3, border: '1px dashed', borderColor: 'warning.main', bgcolor: 'warning.light', textAlign: 'center' }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 900, color: 'warning.dark', mb: 0.5 }}>
-                      {publicConfig.donationClosedTitle}
-                    </Typography>
-                    <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', display: 'block' }}>
+                  <Box sx={{ px: 2, py: 2, bgcolor: c.pendingTint, borderLeft: `3px solid ${c.pending}`, borderRadius: `0 ${radius.md} ${radius.md} 0` }}>
+                    <Eyebrow sx={{ color: c.pending }}>{publicConfig.donationClosedTitle}</Eyebrow>
+                    <Typography sx={{ mt: 0.75, fontSize: '0.8125rem', lineHeight: 1.55, color: c.inkMuted }}>
                       {publicConfig.donationClosedText}
                     </Typography>
                   </Box>
                 ) : (
                   <>
                     {isDonationClosed && isAdminUser && (
-                      <Box sx={{ p: 1.5, borderRadius: 2, border: '1px dashed', borderColor: 'warning.main', bgcolor: 'warning.light' }}>
-                        <Typography variant="caption" sx={{ fontWeight: 800, color: 'warning.dark', textTransform: 'uppercase' }}>
-                          Donasi ditutup (mode admin: form tetap terlihat)
-                        </Typography>
+                      <Box sx={{ px: 1.5, py: 1.125, bgcolor: c.pendingTint, borderLeft: `3px solid ${c.pending}`, borderRadius: `0 ${radius.md} ${radius.md} 0` }}>
+                        <Eyebrow sx={{ color: c.pending, fontSize: '0.5625rem' }}>
+                          Donasi ditutup — mode admin: form tetap terlihat
+                        </Eyebrow>
                       </Box>
                     )}
                     <PackageSelection selectedPackage={selectedPackage} setSelectedPackage={setSelectedPackage} multiplier={multiplier} setMultiplier={setMultiplier} infaqAmount={infaqAmount} setInfaqAmount={setInfaqAmount} getTransferAmount={getTransferAmount} setFormError={setFormError} wakafHadith={publicConfig.wakafHadith} packages={publicConfig.packages} uniqueCode={publicConfig.uniqueCode} />
@@ -399,26 +405,25 @@ function DonationApp() {
           )}
 
           {activeTab === 'admin' && !isAdminUser && (
-            <Box sx={{ minHeight: '100%', bgcolor: 'background.default' }}>
+            <Box sx={{ minHeight: '100%', bgcolor: c.well }}>
               <Header user={user} isAdminUser={isAdminUser} onAdminClick={() => navigateToTab('admin')} publicConfig={publicConfig} />
-              <Box sx={{ p: 3 }}>
-                <Box sx={{ p: 3, borderRadius: 3, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', textAlign: 'center' }}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 900, color: 'text.primary', mb: 1 }}>
-                    {adminRoleStatus === 'checking' ? 'Checking Admin Access...' : 'Admin Login Required'}
+              <Box sx={{ p: 2.5 }}>
+                <Box sx={{ p: 2.25, bgcolor: c.paper, border: `1px solid ${c.ruleStrong}`, borderRadius: radius.lg }}>
+                  <Eyebrow tone="brass">Akses Terbatas</Eyebrow>
+                  <Typography variant="h3" sx={{ mt: 0.75, color: c.ink }}>
+                    {adminRoleStatus === 'checking' ? 'Memeriksa akses admin…' : 'Login admin diperlukan'}
                   </Typography>
-                  <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 600, lineHeight: 1.6 }}>
+                  <Typography sx={{ mt: 1, fontSize: '0.8125rem', lineHeight: 1.6, color: c.inkMuted }}>
                     {user
-                      ? <>Signed in as <strong>{user.email}</strong>, but this browser session is not currently recognized as admin.</>
-                      : <>Click the user icon above and sign in with an account that has the Firestore role <strong>admin</strong>.</>}
+                      ? <>Masuk sebagai <strong>{user.email}</strong>, namun sesi ini belum dikenali sebagai admin.</>
+                      : <>Ketuk ikon akun di atas dan masuk dengan akun yang memiliki role Firestore <strong>admin</strong>.</>}
                   </Typography>
                   {user && (
-                    <Box sx={{ mt: 2, p: 1.5, borderRadius: 2, bgcolor: 'background.default', border: '1px solid', borderColor: 'divider', textAlign: 'left' }}>
-                      <Typography variant="caption" sx={{ display: 'block', fontWeight: 800, color: 'text.secondary' }}>Email: {user.email || '-'}</Typography>
-                      <Typography variant="caption" sx={{ display: 'block', fontWeight: 800, color: 'text.secondary', wordBreak: 'break-all' }}>UID: {user.uid}</Typography>
+                    <Box sx={{ mt: 2, px: 1.5, py: 0.5, bgcolor: c.well, border: `1px solid ${c.rule}`, borderRadius: radius.md }}>
+                      <LedgerRow label="Email" value={<Typography component="span" sx={{ fontSize: '0.75rem', fontWeight: 600, color: c.ink, wordBreak: 'break-all' }}>{user.email || '-'}</Typography>} last={!adminRoleError} />
+                      <LedgerRow label="UID" value={<Typography component="span" sx={{ fontSize: '0.75rem', fontWeight: 600, color: c.ink, wordBreak: 'break-all' }}>{user.uid}</Typography>} last={!adminRoleError} />
                       {adminRoleError && (
-                        <Typography variant="caption" sx={{ display: 'block', mt: 1, fontWeight: 800, color: 'error.main', wordBreak: 'break-word' }}>
-                          Role check error: {adminRoleError}
-                        </Typography>
+                        <LedgerRow label="Error" value={<Typography component="span" sx={{ fontSize: '0.75rem', fontWeight: 600, color: c.danger, wordBreak: 'break-word' }}>{adminRoleError}</Typography>} last />
                       )}
                     </Box>
                   )}
@@ -428,9 +433,9 @@ function DonationApp() {
                       color="error"
                       size="small"
                       onClick={() => auth.signOut()}
-                      sx={{ mt: 2, fontWeight: 800, borderRadius: 2 }}
+                      sx={{ mt: 2, ...eyebrow, fontSize: '0.5625rem', color: c.danger, borderColor: c.danger }}
                     >
-                      Logout and Sign In Again
+                      Logout & Masuk Ulang
                     </Button>
                   )}
                 </Box>

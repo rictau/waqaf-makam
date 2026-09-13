@@ -44,7 +44,8 @@ Platform donasi dan verifikasi wakaf transparan berbasis **React 19** dan **Fire
 ## Technology Stack & Architecture
 
 - **Core Framework**: [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/) + [Vite](https://vitejs.dev/)
-- **Styling**: [Material-UI (MUI)](https://mui.com/) - Professional design system with custom theming.
+- **Styling**: [Material-UI (MUI)](https://mui.com/) with a custom "warm editorial ledger" theme — warm stone surfaces, deep forest ink, brass accents, hairline 1px rules and flat surfaces (no shadows, blur or hover lifts). Design tokens live in [`src/design.ts`](src/design.ts) and are applied globally in [`src/theme.ts`](src/theme.ts); shared typographic primitives (eyebrow labels, ledger rows, figures, status tags, pull quotes) live in [`src/components/common/primitives.tsx`](src/components/common/primitives.tsx).
+- **Typography**: [Fraunces](https://fonts.google.com/specimen/Fraunces) (display serif for headlines and money figures) paired with [Plus Jakarta Sans](https://fonts.google.com/specimen/Plus+Jakarta+Sans) (UI/body), plus a system monospace for account numbers. All amounts use tabular figures.
 - **Icons**: [Lucide React](https://lucide.dev/)
 - **Database**: Firebase Firestore (NoSQL)
 - **Auth**: Firebase Authentication
