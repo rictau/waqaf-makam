@@ -7,10 +7,10 @@ import type { GlobalStats, PublicConfig, PhaseProgress } from '../types';
 
 const defaultPublicConfig: PublicConfig = {
   masjidName: "Pemakaman Muslim Honjo",
-  shortName: "KMII x IVC",
+  shortName: "KMII Jepang",
   campaignTitle: "Wakaf Tanah Makam Muslim untuk WNI di Jepang",
   locationText: "Pemakaman Muslim Honjo, Saitama, Jepang",
-  footerCredit: "KMII Jepang x Indonesian Volunteer Community",
+  footerCredit: "KMII Jepang",
   donorListTitle: "Daftar Donatur",
   donorListSubtitleDate: "21 September 2026",
   wakafHadith: '"Apabila seorang manusia meninggal dunia, maka terputuslah semua amalnya kecuali tiga perkara: sedekah jariyah, ilmu yang bermanfaat, dan anak saleh yang mendoakannya." (HR. Muslim No. 1631)',
@@ -146,7 +146,7 @@ export function useStats() {
   useEffect(() => {
     if (!hasLoadedStats) return;
     updateDocumentMetadata({
-      title: "Wakaf Tanah Makam Muslim - KMII Jepang x IVC",
+      title: `Wakaf Tanah Makam Muslim - ${publicConfig.shortName || 'KMII Jepang'}`,
       description: publicConfig.wakafHadith.replace(/^"|"$/g, ''),
       image: publicConfig.logos[0]?.src || '/kmii-logo.png',
       url: window.location.origin

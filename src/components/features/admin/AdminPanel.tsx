@@ -86,6 +86,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     masjidName: publicConfig.masjidName,
     shortName: publicConfig.shortName,
     locationText: publicConfig.locationText,
+    footerCredit: publicConfig.footerCredit,
     donorListSubtitleDate: publicConfig.donorListSubtitleDate,
     phase1Label: publicConfig.phases[0]?.shortLabel || '',
     phase2Label: publicConfig.phases[1]?.shortLabel || '',
@@ -119,6 +120,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       masjidName: publicConfig.masjidName,
       shortName: publicConfig.shortName,
       locationText: publicConfig.locationText,
+      footerCredit: publicConfig.footerCredit,
       donorListSubtitleDate: publicConfig.donorListSubtitleDate,
       phase1Label: publicConfig.phases[0]?.shortLabel || '',
       phase2Label: publicConfig.phases[1]?.shortLabel || '',
@@ -468,7 +470,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             shortName: publicConfigInput.shortName,
             campaignTitle: `Wakaf Pembangunan ${publicConfigInput.masjidName}`,
             locationText: publicConfigInput.locationText,
-            footerCredit: publicConfig.footerCredit,
+            footerCredit: publicConfigInput.footerCredit.trim() || publicConfig.footerCredit,
             donorListTitle: publicConfig.donorListTitle,
             donorListSubtitleDate: publicConfigInput.donorListSubtitleDate.trim() || publicConfig.donorListSubtitleDate,
             wakafHadith: publicConfig.wakafHadith,
@@ -1063,11 +1065,19 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   sx={{ maxWidth: { sm: 180 } }}
                 />
               </Box>
-              <TextField
-                size="small" label="Lokasi" value={publicConfigInput.locationText}
-                onChange={(e) => updatePublicConfigInput('locationText', e.target.value)}
-                fullWidth
-              />
+              <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
+                <TextField
+                  size="small" label="Lokasi" value={publicConfigInput.locationText}
+                  onChange={(e) => updatePublicConfigInput('locationText', e.target.value)}
+                  fullWidth
+                />
+                <TextField
+                  size="small" label="Teks Kredit Footer" value={publicConfigInput.footerCredit}
+                  onChange={(e) => updatePublicConfigInput('footerCredit', e.target.value)}
+                  helperText="Tampil di bagian paling bawah halaman footer"
+                  fullWidth
+                />
+              </Box>
               <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
                 <TextField
                   size="small" 
