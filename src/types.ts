@@ -90,6 +90,14 @@ export interface CampaignPhaseConfig {
   subtext?: string;
 }
 
+export interface ContactPersonConfig {
+  id: string;
+  name: string;
+  region: string;
+  phone: string;
+  href?: string;
+}
+
 export interface PublicConfig {
   masjidName: string;
   shortName: string;
@@ -108,6 +116,8 @@ export interface PublicConfig {
   banks: BankConfig;
   contactLinks: ContactLinksConfig;
   uniqueCode: number;
+  showNarahubung?: boolean;
+  narahubung?: ContactPersonConfig[];
 }
 
 export type PhaseProgress = CampaignPhaseConfig & {

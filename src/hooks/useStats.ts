@@ -99,7 +99,12 @@ const defaultPublicConfig: PublicConfig = {
     INSTAGRAM: "https://instagram.com/kmiijepang",
     EMAIL: "mailto:kmiijp@gmail.com"
   },
-  uniqueCode: 0
+  uniqueCode: 0,
+  showNarahubung: true,
+  narahubung: [
+    { id: '1', region: 'Ibaraki / Kanto', name: 'Cak Anas', phone: '+81 90-9684-5955', href: 'https://wa.me/819096845955' },
+    { id: '2', region: 'Tokyo & Sekitarnya', name: 'Fauzan', phone: '+81 80-4830-1988', href: 'https://wa.me/818048301988' },
+  ]
 };
 
 export function useStats() {
@@ -136,6 +141,12 @@ export function useStats() {
     return {
       ...defaultPublicConfig,
       ...stats.publicConfig,
+      showNarahubung: stats.publicConfig.showNarahubung !== undefined
+        ? stats.publicConfig.showNarahubung
+        : defaultPublicConfig.showNarahubung,
+      narahubung: stats.publicConfig.narahubung !== undefined
+        ? stats.publicConfig.narahubung
+        : defaultPublicConfig.narahubung,
       contactLinks: {
         ...defaultPublicConfig.contactLinks,
         ...(stats.publicConfig.contactLinks || {})

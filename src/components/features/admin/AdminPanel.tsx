@@ -8,7 +8,7 @@ import { formatJPY } from '../../../utils/formatters';
 import { c, eyebrow, mono, radius, tnum } from '../../../design';
 import { Eyebrow, Figure, LedgerRow, SectionHeading, StatusTag } from '../../common/primitives';
 import { handleFirestoreError, OperationType } from '../../../utils/errors';
-import type { BankConfig, BankAccountConfig, DonationPackageConfig, DonationRecord, DonationStatus, EditableDonationRecord, PublicConfig } from '../../../types';
+import type { BankConfig, BankAccountConfig, ContactPersonConfig, DonationPackageConfig, DonationRecord, DonationStatus, EditableDonationRecord, PublicConfig } from '../../../types';
 
 interface AdminPanelProps {
   donations: DonationRecord[];
@@ -101,6 +101,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   });
   const [banksJP, setBanksJP] = useState<BankAccountConfig[]>(publicConfig.banks?.JP || []);
   const [banksID, setBanksID] = useState<BankAccountConfig[]>(publicConfig.banks?.ID || []);
+  const [showNarahubung, setShowNarahubung] = useState(publicConfig.showNarahubung !== false);
+  const [narahubungList, setNarahubungList] = useState<ContactPersonConfig[]>(publicConfig.narahubung || []);
   
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [isResettingCampaign, setIsResettingCampaign] = useState(false);
@@ -135,6 +137,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     });
     setBanksJP(publicConfig.banks?.JP || []);
     setBanksID(publicConfig.banks?.ID || []);
+    setShowNarahubung(publicConfig.showNarahubung !== false);
+    setNarahubungList(publicConfig.narahubung || []);
     setEnablePhase2(Boolean(publicConfig.phases.length > 1));
   }, [publicConfig]);
 
@@ -217,6 +221,31 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const handleRemoveBank = (region: 'JP' | 'ID', index: number) => {
     const setBanks = region === 'JP' ? setBanksJP : setBanksID;
     setBanks((prev) => prev.filter((_, idx) => idx !== index));
+  };
+
+  const handleAddNarahubung = () => {
+    setNarahubungList((prev) => [
+      ...prev,
+      {
+        id: `contact_${prev.length + 1}_${Date.now()}`,
+        name: '',
+        region: '',
+        phone: '',
+        href: ''
+      }
+    ]);
+  };
+
+  const handleUpdateNarahubung = (index: number, field: keyof ContactPersonConfig, value: string) => {
+    setNarahubungList((prev) => {
+      const copy = [...prev];
+      copy[index] = { ...copy[index], [field]: value };
+      return copy;
+    });
+  };
+
+  const handleRemoveNarahubung = (index: number) => {
+    setNarahubungList((prev) => prev.filter((_, idx) => idx !== index));
   };
 
   const checkAdminAuthorization = async (): Promise<boolean> => {
@@ -349,6 +378,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           throw new Error(`Semua kolom (Bank, Rekening, Nama Pemilik) pada Rekening Indonesia #${idx + 1} wajib diisi.`);
         }
       });
+      if (showNarahubung) {
+        narahubungList.forEach((person, idx) => {
+          if (!person.name.trim()) {
+            throw new Error(`Nama pada Narahubung #${idx + 1} wajib diisi.`);
+          }
+          if (!person.phone.trim()) {
+            throw new Error(`Nomor telepon / WhatsApp pada Narahubung #${idx + 1} wajib diisi.`);
+          }
+        });
+      }
     } catch (e: any) {
       alert(e.message || 'Gagal menyimpan pengaturan. Silakan periksa kembali data Anda.');
       return;
@@ -483,7 +522,23 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               WHATSAPP: normalizedWhatsapp || '',
               INSTAGRAM: normalizedInstagram || '',
               EMAIL: normalizedEmail || ''
-            }
+            },
+            showNarahubung,
+            narahubung: narahubungList.map((person, index) => {
+              const cleanPhone = person.phone.trim();
+              let cleanHref = person.href?.trim() || '';
+              if (!cleanHref && cleanPhone) {
+                const digits = cleanPhone.replace(/[^0-9]/g, '');
+                if (digits) cleanHref = `https://wa.me/${digits}`;
+              }
+              return {
+                id: person.id || `contact_${index + 1}`,
+                name: person.name.trim(),
+                region: person.region?.trim() || '',
+                phone: cleanPhone,
+                href: cleanHref
+              };
+            })
           }
         };
 
@@ -1395,6 +1450,101 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     helperText="Masukkan username Instagram (opsional diawali @) atau link lengkap"
                     fullWidth
                   />
+
+                  <Divider sx={{ my: 2 }} />
+
+                  {/* Narahubung Panitia (Footer) */}
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                    <Box>
+                      <Eyebrow tone="ink">Narahubung Panitia (Footer)</Eyebrow>
+                      <Typography sx={{ fontSize: '0.75rem', color: c.inkMuted, mt: 0.25 }}>
+                        Tampilkan atau sembunyikan kontak panitia di bagian footer website publik.
+                      </Typography>
+                    </Box>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={showNarahubung}
+                          onChange={(e) => setShowNarahubung(e.target.checked)}
+                          color="primary"
+                        />
+                      }
+                      label={<Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, color: c.ink }}>{showNarahubung ? 'Tampilkan' : 'Sembunyikan'}</Typography>}
+                      labelPlacement="start"
+                      sx={{ m: 0 }}
+                    />
+                  </Box>
+
+                  {showNarahubung && (
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+                      {narahubungList.length === 0 ? (
+                        <Typography sx={{ fontSize: '0.75rem', color: c.inkFaint }}>
+                          Belum ada narahubung dikonfigurasi. Tambahkan dengan tombol di bawah.
+                        </Typography>
+                      ) : (
+                        narahubungList.map((person, index) => (
+                          <Card key={person.id || index} sx={{ p: 1.75, bgcolor: c.well, border: `1px solid ${c.rule}`, borderRadius: radius.md }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+                              <Eyebrow tone="ink" sx={{ fontSize: '0.5625rem' }}>Narahubung {String(index + 1).padStart(2, '0')}</Eyebrow>
+                              <IconButton size="small" color="error" onClick={() => handleRemoveNarahubung(index)}>
+                                <Trash2 size={16} />
+                              </IconButton>
+                            </Box>
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                              <Box sx={{ display: 'flex', gap: 1.5, flexDirection: { xs: 'column', sm: 'row' } }}>
+                                <TextField
+                                  size="small"
+                                  label="Nama Narahubung"
+                                  placeholder="Contoh: Cak Anas"
+                                  value={person.name}
+                                  onChange={(e) => handleUpdateNarahubung(index, 'name', e.target.value)}
+                                  fullWidth
+                                  required
+                                />
+                                <TextField
+                                  size="small"
+                                  label="Wilayah / Jabatan"
+                                  placeholder="Contoh: Ibaraki / Kanto"
+                                  value={person.region}
+                                  onChange={(e) => handleUpdateNarahubung(index, 'region', e.target.value)}
+                                  fullWidth
+                                />
+                              </Box>
+                              <Box sx={{ display: 'flex', gap: 1.5, flexDirection: { xs: 'column', sm: 'row' } }}>
+                                <TextField
+                                  size="small"
+                                  label="Nomor Telepon / WhatsApp"
+                                  placeholder="Contoh: +81 90-9684-5955"
+                                  value={person.phone}
+                                  onChange={(e) => handleUpdateNarahubung(index, 'phone', e.target.value)}
+                                  fullWidth
+                                  required
+                                />
+                                <TextField
+                                  size="small"
+                                  label="Link WhatsApp / Kontak (Opsional)"
+                                  placeholder="Contoh: https://wa.me/819096845955"
+                                  value={person.href || ''}
+                                  onChange={(e) => handleUpdateNarahubung(index, 'href', e.target.value)}
+                                  helperText="Otomatis dibuat dari nomor telepon jika dikosongkan"
+                                  fullWidth
+                                />
+                              </Box>
+                            </Box>
+                          </Card>
+                        ))
+                      )}
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<Plus size={14} />}
+                        onClick={handleAddNarahubung}
+                        sx={{ alignSelf: 'flex-start', mt: 0.5, ...eyebrow, fontSize: '0.5625rem', color: c.ink }}
+                      >
+                        Tambah Narahubung
+                      </Button>
+                    </Box>
+                  )}
                 </Box>
               </Card>
 
