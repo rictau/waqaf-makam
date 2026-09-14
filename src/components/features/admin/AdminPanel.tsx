@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Box, Typography, Button, Card, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Switch, FormControlLabel, InputAdornment, Tooltip, Divider } from '@mui/material';
 import { ExternalLink, CheckCircle2, Trash2, Wallet, Download, Pencil, Filter, Search, Plus } from 'lucide-react';
-import { updateDoc, deleteDoc, doc, setDoc, collection, getDocs, query, orderBy, Timestamp, writeBatch, getDocFromServer } from 'firebase/firestore';
+import { updateDoc, deleteDoc, doc, setDoc, collection, getDocs, query, orderBy, Timestamp, writeBatch, getDocFromServer, deleteField } from 'firebase/firestore';
 import { EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import { db, auth } from '../../../firebase';
 import { formatJPY } from '../../../utils/formatters';
@@ -453,49 +453,39 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           }
         }
 
-        const settingsPayload: {
-          donationDeadline: Timestamp;
-          totalNeed: number;
-          baseVerified: number;
-          renovationNeed?: number;
-          jpyToIdrRate: number;
-          spreadsheetId?: string;
-          publicConfig: PublicConfig;
-        } = {
+        const cleanSpreadsheetId = spreadsheetIdInput.trim();
+
+        const settingsPayload: any = {
           donationDeadline: Timestamp.fromDate(deadlineDate),
           totalNeed: totalNeedNum,
           baseVerified: baseVerifiedNum,
           jpyToIdrRate: jpyToIdrRateNum,
-          spreadsheetId: spreadsheetIdInput.trim() || undefined,
+          renovationNeed: enablePhase2 ? renovationNeedNum : 0,
+          ...(cleanSpreadsheetId ? { spreadsheetId: cleanSpreadsheetId } : { spreadsheetId: deleteField() }),
           publicConfig: {
-            masjidName: publicConfigInput.masjidName,
-            shortName: publicConfigInput.shortName,
-            campaignTitle: `Wakaf Pembangunan ${publicConfigInput.masjidName}`,
-            locationText: publicConfigInput.locationText,
-            footerCredit: publicConfigInput.footerCredit.trim() || publicConfig.footerCredit,
-            donorListTitle: publicConfig.donorListTitle,
-            donorListSubtitleDate: publicConfigInput.donorListSubtitleDate.trim() || publicConfig.donorListSubtitleDate,
-            wakafHadith: publicConfig.wakafHadith,
-            cashPaymentText: publicConfig.cashPaymentText,
-            donationClosedTitle: publicConfig.donationClosedTitle,
-            donationClosedText: publicConfig.donationClosedText,
-            logos: publicConfig.logos,
-            uniqueCode: publicConfig.uniqueCode,
+            masjidName: publicConfigInput.masjidName || '',
+            shortName: publicConfigInput.shortName || '',
+            campaignTitle: `Wakaf Pembangunan ${publicConfigInput.masjidName || ''}`,
+            locationText: publicConfigInput.locationText || '',
+            footerCredit: publicConfigInput.footerCredit?.trim() || publicConfig.footerCredit || '',
+            donorListTitle: publicConfig.donorListTitle || '',
+            donorListSubtitleDate: publicConfigInput.donorListSubtitleDate?.trim() || publicConfig.donorListSubtitleDate || '',
+            wakafHadith: publicConfig.wakafHadith || '',
+            cashPaymentText: publicConfig.cashPaymentText || '',
+            donationClosedTitle: publicConfig.donationClosedTitle || '',
+            donationClosedText: publicConfig.donationClosedText || '',
+            logos: publicConfig.logos || [],
+            uniqueCode: publicConfig.uniqueCode || 0,
             phases,
             packages,
             banks,
             contactLinks: {
-              WHATSAPP: normalizedWhatsapp,
-              INSTAGRAM: normalizedInstagram,
-              EMAIL: normalizedEmail
+              WHATSAPP: normalizedWhatsapp || '',
+              INSTAGRAM: normalizedInstagram || '',
+              EMAIL: normalizedEmail || ''
             }
           }
         };
-        if (enablePhase2) {
-          settingsPayload.renovationNeed = renovationNeedNum;
-        } else {
-          settingsPayload.renovationNeed = 0;
-        }
 
         await setDoc(doc(db, 'stats', 'global'), settingsPayload, { merge: true });
         alert('Pengaturan berhasil diperbarui!');
