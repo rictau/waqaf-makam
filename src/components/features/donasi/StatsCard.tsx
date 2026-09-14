@@ -15,6 +15,7 @@ interface StatsCardProps {
   phaseProgress: PhaseProgress[];
   activePhase?: PhaseProgress;
   jpyToIdrRate: number;
+  donationDeadline?: Date | null;
 }
 
 /** Flat progress rail: verified fill, pending fill, quarter ticks. No glow, no shimmer. */
@@ -54,11 +55,15 @@ export const StatsCard: React.FC<StatsCardProps> = ({
   lastUpdate,
   phaseProgress,
   activePhase,
-  jpyToIdrRate
+  jpyToIdrRate,
+  donationDeadline,
 }) => {
   const verifiedPercentage = danaTerkumpulAmount > 0 ? (terverifikasiAmount / danaTerkumpulAmount) * totalPercentage : 0;
   const pendingPercentage = Math.max(0, totalPercentage - verifiedPercentage);
   const pendingAmount = Math.max(0, danaTerkumpulAmount - terverifikasiAmount);
+  const formattedDeadline = donationDeadline && !isNaN(donationDeadline.getTime())
+    ? donationDeadline.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+    : '31 Maret 2027';
 
   const [currentJST, setCurrentJST] = useState('');
   useEffect(() => {
@@ -198,7 +203,7 @@ export const StatsCard: React.FC<StatsCardProps> = ({
         <Box sx={{ mx: 2.25, mb: 2.25, pl: 1.5, borderLeft: `2px solid ${c.brassBright}` }}>
           <Typography sx={{ fontSize: '0.75rem', lineHeight: 1.55, color: c.inkMuted }}>
             Target <strong style={{ color: c.ink }}>¥20.000.000</strong> · sudah DP <strong style={{ color: c.ink }}>¥2.000.000</strong> ·
-            batas pelunasan <strong style={{ color: c.ink }}>31 Maret 2027</strong> (± ¥530.000 / bulan).
+            target pelunasan <strong style={{ color: c.ink }}>{formattedDeadline}</strong>.
           </Typography>
           <Typography sx={{ fontSize: '0.75rem', lineHeight: 1.55, color: c.inkMuted, mt: 0.75 }}>
             <Box component="span" sx={{ ...eyebrow, fontSize: '0.5625rem', color: c.brass, display: 'block', mb: 0.25 }}>
@@ -225,9 +230,9 @@ export const StatsCard: React.FC<StatsCardProps> = ({
         }}
       >
         <Box>
-          <Eyebrow>Batas Pelunasan</Eyebrow>
+          <Eyebrow>Target Pelunasan</Eyebrow>
           <Typography sx={{ fontSize: '0.875rem', fontWeight: 700, color: c.ink, mt: 0.25, ...tnum }}>
-            31 Maret 2027
+            {formattedDeadline}
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.75, pl: 2, borderLeft: `1px solid ${c.rule}` }}>

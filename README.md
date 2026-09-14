@@ -13,7 +13,7 @@ Platform donasi dan verifikasi wakaf transparan berbasis **React 19** dan **Fire
 - **Target Dana**: **¥20.000.000**
 - **Sudah Terbayar (DP 22 Agustus 2026)**: **¥2.000.000** (10% terkumpul)
 - **Sisa Kebutuhan**: **¥18.000.000**
-- **Batas Pelunasan**: **31 Maret 2027** (Estimasi kebutuhan: ± ¥530.000 / bulan)
+- **Target Pelunasan**: **31 Maret 2027**
 
 ---
 

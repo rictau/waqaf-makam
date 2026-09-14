@@ -31,7 +31,7 @@ const defaultPublicConfig: PublicConfig = {
       completedLabel: "Lunas (100%)",
       completedDate: "",
       completionAnnouncement: "Alhamdulillah, pembebasan lahan pemakaman telah lunas.",
-      subtext: "10 kapling (~300 m² / 120 slot). Batas pelunasan 31 Maret 2027."
+      subtext: "10 kapling (~300 m² / 120 slot). Target pelunasan 31 Maret 2027."
     }
   ],
   packages: [

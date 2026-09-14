@@ -373,7 +373,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           completedLabel: "Lunas (100%)",
           completedDate: "",
           completionAnnouncement: "Alhamdulillah, pembebasan lahan pemakaman telah lunas.",
-          subtext: "10 kapling (~300 m² / 120 slot). Batas pelunasan 31 Maret 2027."
+          subtext: "10 kapling (~300 m² / 120 slot). Target pelunasan 31 Maret 2027."
         };
         
         const secondPhaseBase = publicConfig.phases[1] || {
@@ -1087,7 +1087,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   fullWidth
                 />
                 <TextField
-                  size="small" label="Tanggal Akhir Program" type="datetime-local"
+                  size="small" label="Target Pelunasan Program" type="datetime-local"
                   value={deadlineInput} onChange={(e) => setDeadlineInput(e.target.value)}
                   slotProps={{ inputLabel: { shrink: true } }}
                   fullWidth
