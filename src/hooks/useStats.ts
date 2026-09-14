@@ -148,7 +148,6 @@ export function useStats() {
     updateDocumentMetadata({
       title: `Wakaf Tanah Makam Muslim - ${publicConfig.shortName || 'KMII Jepang'}`,
       description: publicConfig.wakafHadith.replace(/^"|"$/g, ''),
-      image: publicConfig.logos[0]?.src || '/kmii-logo.png',
       url: window.location.origin
     });
   }, [hasLoadedStats, publicConfig]);

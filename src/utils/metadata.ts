@@ -17,7 +17,7 @@ const toAbsoluteUrl = (value: string) => {
 export const updateDocumentMetadata = ({
   title = defaultTitle,
   description = defaultDescription,
-  image = '/kmii-logo.png',
+  image,
   url = siteUrl
 }: {
   title?: string;
@@ -26,15 +26,21 @@ export const updateDocumentMetadata = ({
   url?: string;
 }) => {
   const absoluteUrl = toAbsoluteUrl(url);
-  const absoluteImage = toAbsoluteUrl(image);
 
   document.title = title;
   setMeta('meta[name="description"]', description);
   setMeta('meta[property="og:url"]', absoluteUrl);
   setMeta('meta[property="og:title"]', title);
   setMeta('meta[property="og:description"]', description);
-  setMeta('meta[property="og:image"]', absoluteImage);
   setMeta('meta[name="twitter:title"]', title);
   setMeta('meta[name="twitter:description"]', description);
-  setMeta('meta[name="twitter:image"]', absoluteImage);
+
+  if (image) {
+    const absoluteImage = toAbsoluteUrl(image);
+    setMeta('meta[property="og:image"]', absoluteImage);
+    setMeta('meta[name="twitter:image"]', absoluteImage);
+  } else {
+    document.querySelector('meta[property="og:image"]')?.remove();
+    document.querySelector('meta[name="twitter:image"]')?.remove();
+  }
 };
