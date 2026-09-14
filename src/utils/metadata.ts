@@ -17,7 +17,7 @@ const toAbsoluteUrl = (value: string) => {
 export const updateDocumentMetadata = ({
   title = defaultTitle,
   description = defaultDescription,
-  image,
+  image = '/og-preview.png',
   url = siteUrl
 }: {
   title?: string;
