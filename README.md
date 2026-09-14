@@ -18,10 +18,10 @@ Platform donasi dan verifikasi wakaf transparan berbasis **React 19** dan **Fire
 ---
 
 ## Paket Donasi
-1. **Target Bersama**: `¥3.000 / Bulan` (Target 1.000 jamaah × ¥3.000/bulan s/d Maret 2027)
-2. **Donasi Sekali Bayar**: `¥10.000` (Target 1.800 jamaah × ¥10.000 = Tanah Lunas)
+1. **Paket Bersama**: `¥3.000` (Partisipasi gotong royong pembebasan lahan)
+2. **Paket Reguler**: `¥10.000` (Donasi percepatan pelunasan lahan makam)
 3. **Wakaf 1 Slot**: `¥320.000` (Administrasi & perawatan termasuk. Mendapat sertifikat wakaf.)
-4. **Seikhlasnya**: Nominal Bebas (Amal Jariyah)
+4. **Amal Jariyah**: Nominal Bebas (Sedikit atau banyak, insya Allah berpahala amal jariyah)
 - **Interactive Payment Selection**: Donors select transfer destinations (e.g., *JP Post*, or *Bank Muamalat*). Includes copy-to-clipboard functionality for account numbers.
 - **Secure File Handling**: Automatic upload of transfer receipts (Images & PDF) securely piped to Firebase Storage. Supports files up to **10MB**.
 - **Privacy-First Public Ledger**: Recent donor list safely masks phone numbers and offers anonymous ("Hamba Allah") options.

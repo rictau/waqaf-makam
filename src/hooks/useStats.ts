@@ -37,19 +37,19 @@ const defaultPublicConfig: PublicConfig = {
   packages: [
     {
       id: 'bulanan',
-      label: '¥3.000 / Bulan',
+      label: '¥3.000',
       priceJPY: 3000,
-      priceLabel: '¥3,000 (~Rp 339,000) / Bulan',
-      badge: 'Target Bersama',
-      subtext: 'Target: 1.000 jamaah × ¥3.000/bln s/d Maret 2027'
+      priceLabel: '¥3,000 (~Rp 339,000)',
+      badge: 'Paket Bersama',
+      subtext: 'Partisipasi gotong royong pembebasan lahan pemakaman.'
     },
     {
       id: 'sekali',
       label: '¥10.000',
       priceJPY: 10000,
       priceLabel: '¥10,000 (~Rp 1,130,000)',
-      badge: 'Sekali Bayar',
-      subtext: 'Target: 1.800 jamaah × ¥10.000 = Tanah Lunas'
+      badge: 'Paket Reguler',
+      subtext: 'Donasi percepatan pelunasan lahan pemakaman muslim.'
     },
     {
       id: '1slot',

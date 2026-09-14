@@ -148,8 +148,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     const priceBulanan = Number(publicConfigInput.packageBulananPrice);
     const priceSekali = Number(publicConfigInput.packageSekaliPrice);
     const price1Slot = Number(publicConfigInput.package1SlotPrice);
-    if (isNaN(priceBulanan) || priceBulanan <= 0) throw new Error('Harga Paket Bulanan harus angka positif.');
-    if (isNaN(priceSekali) || priceSekali <= 0) throw new Error('Harga Paket Sekali Bayar harus angka positif.');
+    if (isNaN(priceBulanan) || priceBulanan <= 0) throw new Error('Harga Paket Bersama harus angka positif.');
+    if (isNaN(priceSekali) || priceSekali <= 0) throw new Error('Harga Paket Reguler harus angka positif.');
     if (isNaN(price1Slot) || price1Slot <= 0) throw new Error('Harga Paket 1 Slot Makam harus angka positif.');
 
     const rate = Number(jpyToIdrRateInput) || 113;
@@ -159,10 +159,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         const idr = Math.round(priceBulanan * rate);
         return {
           ...pkg,
-          label: `${yenLabel(priceBulanan)} / Bulan`,
+          label: yenLabel(priceBulanan),
           priceJPY: priceBulanan,
-          priceLabel: `${yenLabel(priceBulanan)} (~Rp ${idr.toLocaleString('id-ID')}) / Bulan`,
-          subtext: `Target: 1.000 jamaah × ${yenLabel(priceBulanan)}/bln s/d Maret 2027`
+          priceLabel: `${yenLabel(priceBulanan)} (~Rp ${idr.toLocaleString('id-ID')})`,
+          badge: 'Paket Bersama',
+          subtext: 'Partisipasi gotong royong pembebasan lahan pemakaman.'
         };
       }
       if (pkg.id === 'sekali') {
@@ -172,7 +173,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           label: yenLabel(priceSekali),
           priceJPY: priceSekali,
           priceLabel: `${yenLabel(priceSekali)} (~Rp ${idr.toLocaleString('id-ID')})`,
-          subtext: `Target: 1.800 jamaah × ${yenLabel(priceSekali)} = Tanah Lunas`
+          badge: 'Paket Reguler',
+          subtext: 'Donasi percepatan pelunasan lahan pemakaman muslim.'
         };
       }
       if (pkg.id === '1slot') {
@@ -1154,13 +1156,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   <Eyebrow sx={{ mt: 0.5 }}>Harga Paket Donasi (JPY)</Eyebrow>
                   <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
                     <TextField
-                      size="small" label="Paket Rutin Bulanan (JPY)" type="number" value={publicConfigInput.packageBulananPrice}
+                      size="small" label="Paket Bersama (JPY)" type="number" value={publicConfigInput.packageBulananPrice}
                       onChange={(e) => updatePublicConfigInput('packageBulananPrice', e.target.value)}
-                      helperText="Default: ¥3,000 / bln"
+                      helperText="Default: ¥3,000"
                       fullWidth
                     />
                     <TextField
-                      size="small" label="Paket Sekali Bayar (JPY)" type="number" value={publicConfigInput.packageSekaliPrice}
+                      size="small" label="Paket Reguler (JPY)" type="number" value={publicConfigInput.packageSekaliPrice}
                       onChange={(e) => updatePublicConfigInput('packageSekaliPrice', e.target.value)}
                       helperText="Default: ¥10,000"
                       fullWidth
