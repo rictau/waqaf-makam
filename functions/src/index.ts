@@ -53,10 +53,41 @@ export const sendVerificationEmail = functions.runWith({ secrets: ['RESEND_API_K
         const safeSecretariatName = escapeHtml(secretariatName);
         const safeLocationDetail = escapeHtml(locationDetail);
 
+        const verifiedDate = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+        const donorName = after.name || 'Hamba Allah';
+        const donorLoc = after.loc || '-';
+        const donorPackage = after.package || '-';
+        const donationAmount = formatJPY(after.amount);
+        const paymentMethod = after.paymentMethod || '-';
+
+        const textBody = [
+          `Bukti Verifikasi Donasi - ${masjidName}`,
+          ``,
+          `Assalamu'alaikum Warahmatullahi Wabarakatuh,`,
+          ``,
+          `Jazakumullah Khairan Katsiran atas donasi Anda yang sangat berharga. Kami menginformasikan bahwa donasi Anda telah berhasil diverifikasi oleh panitia dan telah tercatat secara resmi di sistem kami.`,
+          ``,
+          `Rincian Donasi:`,
+          `- Nama Donatur: ${donorName}`,
+          `- Domisili: ${donorLoc}`,
+          `- Program / Paket: ${donorPackage}`,
+          `- Nominal Donasi: ${donationAmount}`,
+          `- Metode Transfer: ${paymentMethod}`,
+          `- Tanggal Verifikasi: ${verifiedDate}`,
+          ``,
+          `Semoga Allah Subhaanahu wa Ta'ala menerima amalan ini, menjadikannya sebagai sedekah jariyah yang pahalanya mengalir tiada henti, serta melimpahkan keberkahan bagi Anda dan keluarga. Aamiin Ya Rabbal 'Alamin.`,
+          ``,
+          `---`,
+          `${secretariatName}`,
+          `Lokasi: ${locationDetail}`,
+        ].join('\n');
+
         const data = await resend.emails.send({
           from: `${emailBrandName} <${EMAIL_CONFIG.fromEmail}>`,
-          to: email,    
+          to: email,
+          reply_to: EMAIL_CONFIG.fromEmail,
           subject: verifiedSubject,
+          text: textBody,
           html: `
             <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 25px; border: 1px solid #eaeaea; border-radius: 12px; background-color: #ffffff; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
               <h2 style="color: #4F46E5; text-align: center; margin-bottom: 5px; font-weight: 800;">Bukti Verifikasi Donasi</h2>
@@ -72,7 +103,7 @@ export const sendVerificationEmail = functions.runWith({ secrets: ['RESEND_API_K
                   <tr><td style="padding: 10px 5px; color: #4b5563; border-bottom: 1px solid #e5e7eb;"><strong>Program / Paket</strong></td><td style="padding: 10px 5px; color: #111827; border-bottom: 1px solid #e5e7eb;">: ${escapeHtml(after.package)}</td></tr>
                   <tr><td style="padding: 10px 5px; color: #4b5563; border-bottom: 1px solid #e5e7eb;"><strong>Nominal Donasi</strong></td><td style="padding: 10px 5px; color: #4F46E5; border-bottom: 1px solid #e5e7eb; font-weight: 700; font-size: 16px;">: ${formatJPY(after.amount)}</td></tr>
                   <tr><td style="padding: 10px 5px; color: #4b5563; border-bottom: 1px solid #e5e7eb;"><strong>Metode Transfer</strong></td><td style="padding: 10px 5px; color: #111827; border-bottom: 1px solid #e5e7eb;">: ${escapeHtml(after.paymentMethod)}</td></tr>
-                  <tr><td style="padding: 10px 5px; color: #4b5563;"><strong>Tanggal Verifikasi</strong></td><td style="padding: 10px 5px; color: #111827;">: ${new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</td></tr>
+                  <tr><td style="padding: 10px 5px; color: #4b5563;"><strong>Tanggal Verifikasi</strong></td><td style="padding: 10px 5px; color: #111827;">: ${verifiedDate}</td></tr>
                 </table>
               </div>
 
@@ -82,10 +113,13 @@ export const sendVerificationEmail = functions.runWith({ secrets: ['RESEND_API_K
               
               <p style="font-size: 13px; color: #6b7280; line-height: 1.5;">
                 <strong style="color: #374151;">${safeSecretariatName}</strong><br>
-                Lokasi Masjid: ${safeLocationDetail}<br><br>
+                Lokasi: ${safeLocationDetail}<br><br>
               </p>
             </div>
-          `
+          `,
+          headers: {
+            'X-Entity-Ref-ID': context.params.donationId,
+          },
         });
         console.log('Email sent successfully:', data);
       } catch (error) {
@@ -120,10 +154,38 @@ export const sendPendingEmail = functions.runWith({ secrets: ['RESEND_API_KEY'] 
       const safeMasjidName = escapeHtml(masjidName);
       const safeSecretariatName = escapeHtml(secretariatName);
 
+      const donorName = data.name || 'Hamba Allah';
+      const donorPackage = data.package || '-';
+      const donationAmount = formatJPY(data.amount);
+      const paymentMethod = data.paymentMethod || '-';
+
+      const textBody = [
+        `Menunggu Verifikasi Administrasi - ${masjidName}`,
+        ``,
+        `Assalamu'alaikum Warahmatullahi Wabarakatuh,`,
+        ``,
+        `Formulir komitmen donasi Anda telah berhasil kami terima. Saat ini kontribusi Anda berstatus Pending (Menunggu Verifikasi) oleh panitia pembangunan.`,
+        ``,
+        `Rincian Donasi:`,
+        `- Nama Donatur: ${donorName}`,
+        `- Program / Paket: ${donorPackage}`,
+        `- Nominal Donasi: ${donationAmount}`,
+        `- Metode Pembayaran: ${paymentMethod}`,
+        ``,
+        `Staf kami akan segera melakukan pengecekan mutasi bank/tanda terima. Anda akan mendapatkan email balasan otomatis (Tanda Terima) begitu dana telah dinyatakan terverifikasi.`,
+        ``,
+        `Jazakumullah Khairan Katsiran atas partisipasi dan antusiasme Anda.`,
+        ``,
+        `---`,
+        `${secretariatName}`,
+      ].join('\n');
+
       const result = await resend.emails.send({
         from: `${emailBrandName} <${EMAIL_CONFIG.fromEmail}>`,
-        to: email,    
+        to: email,
+        reply_to: EMAIL_CONFIG.fromEmail,
         subject: pendingSubject,
+        text: textBody,
         html: `
           <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 25px; border: 1px solid #eaeaea; border-radius: 12px; background-color: #ffffff; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
             <h2 style="color: #F59E0B; text-align: center; margin-bottom: 5px; font-weight: 800;">Menunggu Verifikasi Administrasi</h2>
@@ -150,7 +212,10 @@ export const sendPendingEmail = functions.runWith({ secrets: ['RESEND_API_KEY'] 
               <strong style="color: #374151;">${safeSecretariatName}</strong><br>
             </p>
           </div>
-        `
+        `,
+        headers: {
+          'X-Entity-Ref-ID': context.params.donationId,
+        },
       });
       console.log('Pending Email sent successfully:', result);
     } catch (error) {
