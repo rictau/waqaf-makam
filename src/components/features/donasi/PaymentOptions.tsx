@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Box, Typography } from '@mui/material';
-import { Landmark, Globe2, Wallet, Copy, Check } from 'lucide-react';
+import { Copy, Check } from 'lucide-react';
 import { SegmentedControl } from '../../common/SegmentedControl';
-import { c, eyebrow, radius, tnum } from '../../../design';
+import { c, eyebrow, radius } from '../../../design';
 import { Eyebrow, Figure, Mono } from '../../common/primitives';
 import type { PublicConfig } from '../../../types';
 
@@ -62,14 +62,18 @@ export const PaymentOptions: React.FC<PaymentOptionsProps> = ({ selectedBank, se
         </Typography>
       </Box>
 
-      <Box sx={{ border: `1px solid ${c.ruleStrong}`, borderTop: 'none', borderRadius: `0 0 ${radius.lg} ${radius.lg}`, bgcolor: c.paper, overflow: 'hidden' }}>
+      <Box
+        role={accounts.length > 0 ? 'radiogroup' : undefined}
+        aria-label={accounts.length > 0 ? 'Rekening tujuan transfer' : undefined}
+        sx={{ border: `1px solid ${c.ruleStrong}`, borderTop: 'none', borderRadius: `0 0 ${radius.lg} ${radius.lg}`, bgcolor: c.paper, overflow: 'hidden' }}
+      >
         <Box sx={{ p: 1.25, borderBottom: `1px solid ${c.rule}` }}>
           <SegmentedControl
             ariaLabel="Metode pembayaran"
             options={[
-              { id: 'jp', label: 'Bank Jepang', icon: <Landmark size={13} /> },
-              { id: 'id', label: 'Bank Indonesia', icon: <Globe2 size={13} /> },
-              { id: 'cash', label: 'Tunai', icon: <Wallet size={13} /> }
+              { id: 'jp', label: 'Bank Jepang' },
+              { id: 'id', label: 'Bank Indonesia' },
+              { id: 'cash', label: 'Tunai' }
             ]}
             active={selectedBank}
             onChange={setSelectedBank}
@@ -80,7 +84,7 @@ export const PaymentOptions: React.FC<PaymentOptionsProps> = ({ selectedBank, se
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2, py: 1, bgcolor: c.well, borderBottom: `1px solid ${c.ruleStrong}` }}>
             <Eyebrow sx={{ fontSize: '0.6875rem' }}>Rekening Tujuan</Eyebrow>
             <Typography sx={{ fontSize: '0.6875rem', fontWeight: 600, color: c.inkFaint }}>
-              Salin untuk kemudahan transfer
+              Pilih salah satu
             </Typography>
           </Box>
         )}
@@ -92,54 +96,100 @@ export const PaymentOptions: React.FC<PaymentOptionsProps> = ({ selectedBank, se
           return (
             <Box
               key={bank.id}
+              role="radio"
+              aria-checked={isActive}
+              tabIndex={0}
+              onClick={() => handleSelectAccount(bank.account, bank.id)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleSelectAccount(bank.account, bank.id);
+                }
+              }}
               sx={{
                 p: 2,
+                cursor: 'pointer',
                 borderTop: index === 0 ? 'none' : `1px solid ${c.rule}`,
                 borderLeft: `3px solid ${isActive ? c.forest : 'transparent'}`,
                 bgcolor: isActive ? c.forestTint : 'transparent',
                 transition: 'background-color 150ms ease, border-color 150ms ease',
+                '&:hover': { bgcolor: isActive ? c.forestTint : 'rgba(20,58,40,0.035)' },
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1.5 }}>
-                <Eyebrow tone={isActive ? 'brass' : 'muted'} sx={{ fontSize: '0.625rem', minWidth: 0 }}>
-                  {bank.label}
-                </Eyebrow>
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.25 }}>
+                {/* Radio indicator, matching the package list */}
                 <Box
-                  component="button"
-                  type="button"
-                  onClick={() => onCopy(bank.account, bank.id)}
                   sx={{
-                    display: 'inline-flex',
+                    width: 18,
+                    height: 18,
+                    mt: '1px',
+                    flexShrink: 0,
+                    borderRadius: '50%',
+                    border: `1.5px solid ${isActive ? c.forest : c.ruleStrong}`,
+                    bgcolor: isActive ? c.forest : 'transparent',
+                    display: 'flex',
                     alignItems: 'center',
-                    gap: 0.625,
-                    px: 1.25,
-                    py: 0.625,
-                    minHeight: 32,
-                    cursor: 'pointer',
-                    borderRadius: radius.sm,
-                    border: `1px solid ${isCopied ? c.verified : c.ruleStrong}`,
-                    bgcolor: isCopied ? '#e9f0ea' : c.well,
-                    color: isCopied ? c.verified : c.ink,
-                    ...eyebrow,
-                    fontSize: '0.625rem',
-                    letterSpacing: '0.08em',
-                    transition: 'all 150ms ease',
-                    '&:hover': { borderColor: c.forest, color: c.forest },
-                    '&:active': { transform: 'scale(0.98)' },
+                    justifyContent: 'center',
+                    transition: 'background-color 150ms ease, border-color 150ms ease',
                   }}
                 >
-                  {isCopied ? <Check size={13} strokeWidth={3} /> : <Copy size={13} />}
-                  <span>{isCopied ? 'Disalin' : 'Salin Nomor'}</span>
+                  {isActive && <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: c.paper }} />}
+                </Box>
+
+                <Box sx={{ minWidth: 0, flex: 1 }}>
+                  <Eyebrow tone={isActive ? 'brass' : 'muted'} sx={{ fontSize: '0.625rem' }}>
+                    {bank.label}
+                  </Eyebrow>
+
+                  <Mono sx={{ display: 'block', mt: 0.75, fontSize: '1.125rem', fontWeight: 600, color: isActive ? c.forest : c.ink }}>
+                    {bank.account}
+                  </Mono>
+
+                  <Typography sx={{ mt: 0.375, fontSize: '0.6875rem', fontWeight: 500, color: c.inkMuted, whiteSpace: 'pre-line', lineHeight: 1.45 }}>
+                    {bank.name}
+                  </Typography>
+
+                  {/* Selection state on the left, copy as its own action on the right */}
+                  <Box sx={{ mt: 1.25, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1.5 }}>
+                    <Box component="span" sx={{ ...eyebrow, fontSize: '0.5625rem', color: isActive ? c.forest : c.inkFaint }}>
+                      {isActive ? 'Rekening Terpilih' : 'Ketuk untuk pilih'}
+                    </Box>
+                    <Box
+                      component="button"
+                      type="button"
+                      aria-label={`Salin nomor rekening ${bank.label}`}
+                      onClick={(e: React.MouseEvent) => {
+                        e.stopPropagation();
+                        onCopy(bank.account, bank.id);
+                      }}
+                      sx={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 0.625,
+                        px: 1.25,
+                        py: 0.625,
+                        minHeight: 34,
+                        flexShrink: 0,
+                        cursor: 'pointer',
+                        borderRadius: radius.sm,
+                        border: `1px solid ${isCopied ? c.verified : c.ruleStrong}`,
+                        bgcolor: isCopied ? '#e9f0ea' : c.well,
+                        color: isCopied ? c.verified : c.ink,
+                        ...eyebrow,
+                        fontSize: '0.625rem',
+                        letterSpacing: '0.08em',
+                        whiteSpace: 'nowrap',
+                        transition: 'border-color 150ms ease, background-color 150ms ease, color 150ms ease',
+                        '&:hover': { borderColor: c.forest, color: c.forest },
+                        '&:active': { transform: 'scale(0.98)' },
+                      }}
+                    >
+                      {isCopied ? <Check size={13} strokeWidth={3} /> : <Copy size={13} />}
+                      <span>{isCopied ? 'Disalin' : 'Salin Nomor'}</span>
+                    </Box>
+                  </Box>
                 </Box>
               </Box>
-
-              <Mono sx={{ display: 'block', mt: 0.75, fontSize: '1.125rem', fontWeight: 600, color: isActive ? c.forest : c.ink }}>
-                {bank.account}
-              </Mono>
-
-              <Typography sx={{ mt: 0.375, fontSize: '0.6875rem', fontWeight: 500, color: c.inkMuted, whiteSpace: 'pre-line', lineHeight: 1.45 }}>
-                {bank.name}
-              </Typography>
             </Box>
           );
         })}

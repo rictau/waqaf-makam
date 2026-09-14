@@ -1,6 +1,5 @@
 import React from 'react';
 import { Box, Typography, TextField, InputAdornment } from '@mui/material';
-import { Check } from 'lucide-react';
 import { c, eyebrow, mono, radius, tnum } from '../../../design';
 import { Eyebrow, Figure, PullQuote, splitQuote } from '../../common/primitives';
 import type { DonationPackageConfig } from '../../../types';

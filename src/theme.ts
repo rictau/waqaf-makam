@@ -133,12 +133,14 @@ const theme = createTheme({
           minHeight: 32,
           padding: "4px 10px",
         },
-        contained: {
+        containedPrimary: {
           backgroundColor: c.forest,
           color: c.paper,
           "&:hover": { backgroundColor: c.forestDeep },
         },
         containedError: {
+          backgroundColor: c.danger,
+          color: "#ffffff",
           "&:hover": { backgroundColor: "#6d1f1f" },
         },
         outlined: {

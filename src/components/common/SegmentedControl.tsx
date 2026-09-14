@@ -45,7 +45,8 @@ export const SegmentedControl = ({
           aria-pressed={isActive}
           onClick={() => onChange(opt.id)}
           sx={{
-            flex: 1,
+            flex: '1 1 0',
+            minWidth: 0,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
