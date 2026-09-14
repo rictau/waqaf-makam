@@ -97,7 +97,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     instagram: publicConfig.contactLinks.INSTAGRAM,
     email: publicConfig.contactLinks.EMAIL,
     donationClosedTitle: publicConfig.donationClosedTitle || '',
-    donationClosedText: publicConfig.donationClosedText || ''
+    donationClosedText: publicConfig.donationClosedText || '',
+    cashPaymentText: publicConfig.cashPaymentText || 'Donasi tunai dapat diserahkan langsung atau dikonfirmasikan kepada panitia melalui direct message (DM) Instagram @kmiijepang.'
   });
   const [banksJP, setBanksJP] = useState<BankAccountConfig[]>(publicConfig.banks?.JP || []);
   const [banksID, setBanksID] = useState<BankAccountConfig[]>(publicConfig.banks?.ID || []);
@@ -133,7 +134,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       instagram: publicConfig.contactLinks.INSTAGRAM,
       email: publicConfig.contactLinks.EMAIL,
       donationClosedTitle: publicConfig.donationClosedTitle || '',
-      donationClosedText: publicConfig.donationClosedText || ''
+      donationClosedText: publicConfig.donationClosedText || '',
+      cashPaymentText: publicConfig.cashPaymentText || 'Donasi tunai dapat diserahkan langsung atau dikonfirmasikan kepada panitia melalui direct message (DM) Instagram @kmiijepang.'
     });
     setBanksJP(publicConfig.banks?.JP || []);
     setBanksID(publicConfig.banks?.ID || []);
@@ -510,7 +512,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             donorListTitle: publicConfig.donorListTitle || '',
             donorListSubtitleDate: publicConfigInput.donorListSubtitleDate?.trim() || publicConfig.donorListSubtitleDate || '',
             wakafHadith: publicConfig.wakafHadith || '',
-            cashPaymentText: publicConfig.cashPaymentText || '',
+            cashPaymentText: publicConfigInput.cashPaymentText?.trim() || 'Donasi tunai dapat diserahkan langsung atau dikonfirmasikan kepada panitia melalui direct message (DM) Instagram @kmiijepang.',
             donationClosedTitle: publicConfig.donationClosedTitle || '',
             donationClosedText: publicConfig.donationClosedText || '',
             logos: publicConfig.logos || [],
@@ -1416,6 +1418,22 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   >
                     Tambah Rekening Indonesia
                   </Button>
+
+                  <Divider sx={{ my: 1.5 }} />
+
+                  {/* Instruksi Pembayaran Tunai */}
+                  <Eyebrow tone="ink">Instruksi Pembayaran Tunai</Eyebrow>
+                  <TextField
+                    size="small"
+                    label="Teks Instruksi Pembayaran Tunai"
+                    placeholder="Contoh: Donasi tunai dapat diserahkan langsung atau dikonfirmasikan kepada panitia melalui..."
+                    value={publicConfigInput.cashPaymentText}
+                    onChange={(e) => updatePublicConfigInput('cashPaymentText', e.target.value)}
+                    multiline
+                    rows={2}
+                    helperText="Tampil saat donatur memilih metode pembayaran Tunai di halaman donasi"
+                    fullWidth
+                  />
 
                   <Divider sx={{ my: 1.5 }} />
 

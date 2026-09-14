@@ -14,7 +14,7 @@ const defaultPublicConfig: PublicConfig = {
   donorListTitle: "Daftar Donatur",
   donorListSubtitleDate: "21 September 2026",
   wakafHadith: '"Apabila seorang manusia meninggal dunia, maka terputuslah semua amalnya kecuali tiga perkara: sedekah jariyah, ilmu yang bermanfaat, dan anak saleh yang mendoakannya." (HR. Muslim No. 1631)',
-  cashPaymentText: "Donasi tunai dapat diserahkan langsung atau dikonfirmasikan kepada panitia: Cak Anas (Ibaraki: +81 90-9684-5955) atau Fauzan (Tokyo: +81 80-4830-1988).",
+  cashPaymentText: "Donasi tunai dapat diserahkan langsung atau dikonfirmasikan kepada panitia melalui direct message (DM) Instagram @kmiijepang.",
   donationClosedTitle: "Periode Donasi Telah Ditutup",
   donationClosedText: "Jazakumullah Khairan atas dukungan seluruh donatur. Untuk informasi lebih lanjut, silakan hubungi panitia.",
   logos: [

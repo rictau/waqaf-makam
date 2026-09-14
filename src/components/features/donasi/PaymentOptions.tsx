@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Box, Typography } from '@mui/material';
-import { Copy, Check } from 'lucide-react';
+import { Box, Typography, Button } from '@mui/material';
+import { Copy, Check, Instagram } from 'lucide-react';
 import { SegmentedControl } from '../../common/SegmentedControl';
 import { c, eyebrow, radius } from '../../../design';
 import { Eyebrow, Figure, Mono } from '../../common/primitives';
@@ -197,9 +197,30 @@ export const PaymentOptions: React.FC<PaymentOptionsProps> = ({ selectedBank, se
         {selectedBank === 'cash' && (
           <Box sx={{ px: 2, py: 2.5 }}>
             <Eyebrow tone="ink" sx={{ fontSize: '0.8125rem', mb: 1 }}>Pembayaran Tunai</Eyebrow>
-            <Typography sx={{ fontSize: '0.875rem', lineHeight: 1.6, color: c.ink }}>
+            <Typography sx={{ fontSize: '0.875rem', lineHeight: 1.6, color: c.ink, mb: publicConfig.contactLinks.INSTAGRAM ? 1.5 : 0 }}>
               {publicConfig.cashPaymentText.replace('{masjidName}', publicConfig.masjidName)}
             </Typography>
+            {publicConfig.contactLinks.INSTAGRAM && (
+              <Button
+                component="a"
+                href={publicConfig.contactLinks.INSTAGRAM}
+                target="_blank"
+                rel="noreferrer"
+                size="small"
+                variant="outlined"
+                startIcon={<Instagram size={14} />}
+                sx={{
+                  ...eyebrow,
+                  fontSize: '0.625rem',
+                  color: c.ink,
+                  borderColor: c.ruleStrong,
+                  mb: 0.5,
+                  '&:hover': { borderColor: c.forest, bgcolor: c.forestTint }
+                }}
+              >
+                DM Instagram Panitia
+              </Button>
+            )}
             <Box sx={{ mt: 2, p: 1.75, bgcolor: c.well, borderLeft: `3px solid ${c.brassBright}`, borderRadius: radius.sm }}>
               <Typography sx={{ fontSize: '0.8125rem', lineHeight: 1.55, color: c.ink, fontWeight: 500 }}>
                 Mohon lampirkan foto tanda terima atau foto bersama panitia saat serah terima tunai pada bagian
