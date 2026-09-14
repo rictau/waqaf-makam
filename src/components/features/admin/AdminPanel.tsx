@@ -553,12 +553,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         return;
       }
 
-      const headers = ['Tanggal', 'Status', 'Nama', 'Nominal (JPY)', 'Metode Pembayaran', 'Program/Paket', 'No. HP/WA', 'Domisili', 'Email', 'Remarks'];
+      const headers = ['Tanggal', 'Status', 'Nama', 'Nominal (JPY)', 'Mata Uang Asal', 'Nominal Asal', 'Metode Pembayaran', 'Program/Paket', 'No. HP/WA', 'Domisili', 'Email', 'Remarks'];
       const rows = donationsToExport.map((d) => [
         `"${d.date || ''}"`,
         `"${d.status || ''}"`,
         `"${d.name || ''}"`,
         `"${d.amount || ''}"`,
+        `"${d.originalCurrency || 'JPY'}"`,
+        `"${d.originalAmount || d.amount || ''}"`,
         `"${d.paymentMethod || ''}"`,
         `"${d.package || ''}"`,
         `"'${d.phone || ''}"`, 
@@ -922,6 +924,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     </Box>
                     <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
                       <Figure size="0.9375rem" sx={{ display: 'block' }}>{formatJPY(donor.amount)}</Figure>
+                      {donor.originalCurrency === 'IDR' && donor.originalAmount && (
+                        <Typography sx={{ fontSize: '0.625rem', color: c.inkFaint, mt: 0.25, ...tnum }}>
+                          ≈ Rp {Number(donor.originalAmount).toLocaleString('id-ID')}
+                        </Typography>
+                      )}
                       <Box sx={{ mt: 0.5 }}>
                         <StatusTag
                           state={donor.status === 'verified' ? 'verified' : 'pending'}

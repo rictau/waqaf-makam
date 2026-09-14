@@ -6,3 +6,7 @@ export const formatIDR = (amountJPY: number, jpyToIdrRate: number = 113) => {
   const idr = amountJPY * jpyToIdrRate;
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(idr);
 };
+
+export const formatDirectIDR = (amountIDR: number) => {
+  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amountIDR);
+};

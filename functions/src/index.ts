@@ -57,7 +57,9 @@ export const sendVerificationEmail = functions.runWith({ secrets: ['RESEND_API_K
         const donorName = after.name || 'Hamba Allah';
         const donorLoc = after.loc || '-';
         const donorPackage = after.package || '-';
-        const donationAmount = formatJPY(after.amount);
+        const donationAmount = after.originalCurrency === 'IDR' && after.originalAmount
+          ? `${formatJPY(after.amount)} (Rp ${Number(after.originalAmount).toLocaleString('id-ID')})`
+          : formatJPY(after.amount);
         const paymentMethod = after.paymentMethod || '-';
 
         const textBody = [
@@ -101,7 +103,7 @@ export const sendVerificationEmail = functions.runWith({ secrets: ['RESEND_API_K
                   <tr><td style="padding: 10px 5px; color: #4b5563; border-bottom: 1px solid #e5e7eb; width: 40%;"><strong>Nama Donatur</strong></td><td style="padding: 10px 5px; color: #111827; border-bottom: 1px solid #e5e7eb; font-weight: 600;">: ${escapeHtml(after.name, 'Hamba Allah')}</td></tr>
                   <tr><td style="padding: 10px 5px; color: #4b5563; border-bottom: 1px solid #e5e7eb;"><strong>Domisili</strong></td><td style="padding: 10px 5px; color: #111827; border-bottom: 1px solid #e5e7eb;">: ${escapeHtml(after.loc)}</td></tr>
                   <tr><td style="padding: 10px 5px; color: #4b5563; border-bottom: 1px solid #e5e7eb;"><strong>Program / Paket</strong></td><td style="padding: 10px 5px; color: #111827; border-bottom: 1px solid #e5e7eb;">: ${escapeHtml(after.package)}</td></tr>
-                  <tr><td style="padding: 10px 5px; color: #4b5563; border-bottom: 1px solid #e5e7eb;"><strong>Nominal Donasi</strong></td><td style="padding: 10px 5px; color: #4F46E5; border-bottom: 1px solid #e5e7eb; font-weight: 700; font-size: 16px;">: ${formatJPY(after.amount)}</td></tr>
+                  <tr><td style="padding: 10px 5px; color: #4b5563; border-bottom: 1px solid #e5e7eb;"><strong>Nominal Donasi</strong></td><td style="padding: 10px 5px; color: #4F46E5; border-bottom: 1px solid #e5e7eb; font-weight: 700; font-size: 16px;">: ${formatJPY(after.amount)}${after.originalCurrency === 'IDR' && after.originalAmount ? ` <span style="font-size: 13px; font-weight: normal; color: #6b7280;">(Rp ${Number(after.originalAmount).toLocaleString('id-ID')})</span>` : ''}</td></tr>
                   <tr><td style="padding: 10px 5px; color: #4b5563; border-bottom: 1px solid #e5e7eb;"><strong>Metode Transfer</strong></td><td style="padding: 10px 5px; color: #111827; border-bottom: 1px solid #e5e7eb;">: ${escapeHtml(after.paymentMethod)}</td></tr>
                   <tr><td style="padding: 10px 5px; color: #4b5563;"><strong>Tanggal Verifikasi</strong></td><td style="padding: 10px 5px; color: #111827;">: ${verifiedDate}</td></tr>
                 </table>
@@ -156,7 +158,9 @@ export const sendPendingEmail = functions.runWith({ secrets: ['RESEND_API_KEY'] 
 
       const donorName = data.name || 'Hamba Allah';
       const donorPackage = data.package || '-';
-      const donationAmount = formatJPY(data.amount);
+      const donationAmount = data.originalCurrency === 'IDR' && data.originalAmount
+        ? `${formatJPY(data.amount)} (Rp ${Number(data.originalAmount).toLocaleString('id-ID')})`
+        : formatJPY(data.amount);
       const paymentMethod = data.paymentMethod || '-';
 
       const textBody = [
@@ -198,7 +202,7 @@ export const sendPendingEmail = functions.runWith({ secrets: ['RESEND_API_KEY'] 
               <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
                 <tr><td style="padding: 10px 5px; color: #4b5563; border-bottom: 1px solid #e5e7eb; width: 40%;"><strong>Nama Donatur</strong></td><td style="padding: 10px 5px; color: #111827; border-bottom: 1px solid #e5e7eb; font-weight: 600;">: ${escapeHtml(data.name, 'Hamba Allah')}</td></tr>
                 <tr><td style="padding: 10px 5px; color: #4b5563; border-bottom: 1px solid #e5e7eb;"><strong>Program / Paket</strong></td><td style="padding: 10px 5px; color: #111827; border-bottom: 1px solid #e5e7eb;">: ${escapeHtml(data.package)}</td></tr>
-                <tr><td style="padding: 10px 5px; color: #4b5563; border-bottom: 1px solid #e5e7eb;"><strong>Nominal Donasi</strong></td><td style="padding: 10px 5px; color: #F59E0B; border-bottom: 1px solid #e5e7eb; font-weight: 700; font-size: 16px;">: ${formatJPY(data.amount)}</td></tr>
+                <tr><td style="padding: 10px 5px; color: #4b5563; border-bottom: 1px solid #e5e7eb;"><strong>Nominal Donasi</strong></td><td style="padding: 10px 5px; color: #F59E0B; border-bottom: 1px solid #e5e7eb; font-weight: 700; font-size: 16px;">: ${formatJPY(data.amount)}${data.originalCurrency === 'IDR' && data.originalAmount ? ` <span style="font-size: 13px; font-weight: normal; color: #6b7280;">(Rp ${Number(data.originalAmount).toLocaleString('id-ID')})</span>` : ''}</td></tr>
                 <tr><td style="padding: 10px 5px; color: #4b5563;"><strong>Metode Pembayaran</strong></td><td style="padding: 10px 5px; color: #111827;">: ${escapeHtml(data.paymentMethod)}</td></tr>
               </table>
             </div>

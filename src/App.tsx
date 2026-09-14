@@ -8,7 +8,7 @@ import { db, auth, storage } from './firebase';
 import { c, eyebrow, radius } from './design';
 import { Eyebrow, Figure, LedgerRow, StatusTag } from './components/common/primitives';
 import { handleFirestoreError, OperationType } from './utils/errors';
-import { formatIDR, formatJPY } from './utils/formatters';
+import { formatIDR, formatJPY, formatDirectIDR } from './utils/formatters';
 
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { Header } from './components/layout/Header';
@@ -38,6 +38,7 @@ function DonationApp() {
   // Donation Selection
   const [selectedPackage, setSelectedPackage] = useState('bulanan');
   const [infaqAmount, setInfaqAmount] = useState('');
+  const [infaqCurrency, setInfaqCurrency] = useState<'JPY' | 'IDR'>('JPY');
   const [multiplier, setMultiplier] = useState('2');
   const [formError, setFormError] = useState<string | null>(null);
   
@@ -170,6 +171,17 @@ function DonationApp() {
     setFormError(null);
   };
 
+  const handleInfaqCurrencyChange = (curr: 'JPY' | 'IDR') => {
+    setInfaqCurrency(curr);
+    if (curr === 'IDR') {
+      setSelectedBank('id');
+      setSelectedAccountId(null);
+    } else {
+      setSelectedBank('jp');
+      setSelectedAccountId(null);
+    }
+  };
+
   const getPackageName = () => {
     const pkg = publicConfig.packages.find(p => p.id === selectedPackage);
     if (pkg?.id === 'kelipatan') return `Wakaf ${multiplier} m²`;
@@ -177,27 +189,47 @@ function DonationApp() {
   };
 
   const getTransferAmount = () => {
-    let jpy = 0;
+    const rate = stats.jpyToIdrRate ?? 113;
     const pkg = publicConfig.packages.find(p => p.id === selectedPackage);
     
+    if (pkg?.id === 'infaq') {
+      const raw = Number(infaqAmount);
+      if (!infaqAmount || isNaN(raw) || raw <= 0) return 'Nominal Bebas';
+      
+      if (infaqCurrency === 'IDR') {
+        if (selectedBank === 'id') {
+          return formatDirectIDR(raw);
+        } else {
+          // If paying via Japanese bank or Cash, convert IDR to JPY
+          const jpy = Math.round(raw / rate);
+          return formatJPY(jpy);
+        }
+      } else {
+        // infaqCurrency === 'JPY'
+        if (selectedBank === 'id') {
+          return formatIDR(raw, rate);
+        } else {
+          return formatJPY(raw);
+        }
+      }
+    }
+
+    let jpy = 0;
     if (pkg?.priceJPY !== undefined) {
       jpy = pkg.priceJPY;
     } else if (pkg?.id === 'kelipatan') {
       jpy = Number(multiplier) * (pkg.priceJPY || 50000);
-    } else if (pkg?.id === 'infaq') {
-      jpy = Number(infaqAmount);
     }
 
     if (isNaN(jpy)) jpy = 0;
 
-    if (jpy === 0 && selectedPackage === 'infaq') return 'Nominal Bebas';
-    if (selectedBank === 'id') return formatIDR(jpy, stats.jpyToIdrRate ?? 113);
+    if (selectedBank === 'id') return formatIDR(jpy, rate);
     return formatJPY(jpy);
   };
 
   const resetForm = () => {
     setUploadState('idle'); setUploadFile(null); setDonorName(''); setDonorPhone('');
-    setDonorCity(''); setIsAnonymous(false); setInfaqAmount(''); setDonorEmail('');
+    setDonorCity(''); setIsAnonymous(false); setInfaqAmount(''); setInfaqCurrency('JPY'); setDonorEmail('');
     navigateToTab('donatur');
     if(scrollRef.current) scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -207,6 +239,12 @@ function DonationApp() {
     if (selectedPackage === 'infaq') {
       const amountNum = Number(infaqAmount);
       if (!infaqAmount || isNaN(amountNum) || amountNum <= 0) return setFormError("Mohon masukkan nominal donasi yang valid.");
+      if (infaqCurrency === 'IDR' && amountNum < 10000) {
+        return setFormError("Minimal donasi Rupiah adalah Rp 10.000.");
+      }
+      if (infaqCurrency === 'JPY' && amountNum < 100) {
+        return setFormError("Minimal donasi Yen adalah ¥100.");
+      }
     }
     if (selectedPackage === 'kelipatan') {
       const mulNum = Number(multiplier);
@@ -241,14 +279,47 @@ function DonationApp() {
         proofUrl = await getDownloadURL(snapshot.ref);
       }
 
+      const rate = stats.jpyToIdrRate ?? 113;
       const pkg = publicConfig.packages.find(p => p.id === selectedPackage);
       let jpyAmount = 0;
+      let originalCurrency: 'JPY' | 'IDR' = 'JPY';
+      let originalAmount = 0;
+
       if (pkg?.priceJPY !== undefined) {
         jpyAmount = pkg.priceJPY;
+        if (selectedBank === 'id') {
+          originalCurrency = 'IDR';
+          originalAmount = jpyAmount * rate;
+        } else {
+          originalCurrency = 'JPY';
+          originalAmount = jpyAmount;
+        }
       } else if (pkg?.id === 'kelipatan') {
         jpyAmount = Number(multiplier) * (pkg.priceJPY || 50000);
+        if (selectedBank === 'id') {
+          originalCurrency = 'IDR';
+          originalAmount = jpyAmount * rate;
+        } else {
+          originalCurrency = 'JPY';
+          originalAmount = jpyAmount;
+        }
       } else if (pkg?.id === 'infaq') {
-        jpyAmount = Number(infaqAmount);
+        const rawNum = Number(infaqAmount);
+        if (infaqCurrency === 'IDR') {
+          originalCurrency = 'IDR';
+          originalAmount = rawNum;
+          jpyAmount = Math.max(1, Math.round(rawNum / rate));
+        } else {
+          if (selectedBank === 'id') {
+            originalCurrency = 'IDR';
+            originalAmount = rawNum * rate;
+            jpyAmount = rawNum;
+          } else {
+            originalCurrency = 'JPY';
+            originalAmount = rawNum;
+            jpyAmount = rawNum;
+          }
+        }
       }
       
       let paymentMethod = 'Tunai';
@@ -269,7 +340,9 @@ function DonationApp() {
         isAnonymous: isAnonymous,
         proofUrl: proofUrl,
         package: getPackageName(),
-        paymentMethod
+        paymentMethod,
+        originalCurrency,
+        originalAmount,
       });
 
       setUploadState('success');
@@ -368,7 +441,22 @@ function DonationApp() {
                         </Eyebrow>
                       </Box>
                     )}
-                    <PackageSelection selectedPackage={selectedPackage} setSelectedPackage={setSelectedPackage} multiplier={multiplier} setMultiplier={setMultiplier} infaqAmount={infaqAmount} setInfaqAmount={setInfaqAmount} getTransferAmount={getTransferAmount} setFormError={setFormError} wakafHadith={publicConfig.wakafHadith} packages={publicConfig.packages} uniqueCode={publicConfig.uniqueCode} />
+                    <PackageSelection
+                      selectedPackage={selectedPackage}
+                      setSelectedPackage={setSelectedPackage}
+                      multiplier={multiplier}
+                      setMultiplier={setMultiplier}
+                      infaqAmount={infaqAmount}
+                      setInfaqAmount={setInfaqAmount}
+                      infaqCurrency={infaqCurrency}
+                      setInfaqCurrency={handleInfaqCurrencyChange}
+                      jpyToIdrRate={stats.jpyToIdrRate ?? 113}
+                      getTransferAmount={getTransferAmount}
+                      setFormError={setFormError}
+                      wakafHadith={publicConfig.wakafHadith}
+                      packages={publicConfig.packages}
+                      uniqueCode={publicConfig.uniqueCode}
+                    />
                     <DonorForm isAnonymous={isAnonymous} setIsAnonymous={setIsAnonymous} donorName={donorName} setDonorName={setDonorName} donorPhone={donorPhone} setDonorPhone={setDonorPhone} donorCity={donorCity} setDonorCity={setDonorCity} donorEmail={donorEmail} setDonorEmail={setDonorEmail} />
                     <PaymentOptions selectedBank={selectedBank} setSelectedBank={handleBankChange} getTransferAmount={getTransferAmount} handleSelectAccount={handleSelectAccount} selectedAccountId={selectedAccountId} publicConfig={publicConfig} />
                     <ConfirmUpload uploadFile={uploadFile} setUploadFile={setUploadFile} uploadState={uploadState} formError={formError} handleUploadSubmit={handleUploadSubmit} />

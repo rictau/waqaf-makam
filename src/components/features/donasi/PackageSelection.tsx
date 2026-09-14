@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Typography, TextField, InputAdornment } from '@mui/material';
 import { c, eyebrow, mono, radius, tnum } from '../../../design';
 import { Eyebrow, Figure, PullQuote, splitQuote } from '../../common/primitives';
+import { SegmentedControl } from '../../common/SegmentedControl';
 import type { DonationPackageConfig } from '../../../types';
 
 interface PackageSelectionProps {
@@ -11,6 +12,9 @@ interface PackageSelectionProps {
   setMultiplier: (val: string) => void;
   infaqAmount: string;
   setInfaqAmount: (val: string) => void;
+  infaqCurrency: 'JPY' | 'IDR';
+  setInfaqCurrency: (curr: 'JPY' | 'IDR') => void;
+  jpyToIdrRate: number;
   getTransferAmount: () => string;
   setFormError: (err: string | null) => void;
   wakafHadith: string;
@@ -36,6 +40,9 @@ export const PackageSelection: React.FC<PackageSelectionProps> = ({
   setMultiplier,
   infaqAmount,
   setInfaqAmount,
+  infaqCurrency,
+  setInfaqCurrency,
+  jpyToIdrRate,
   getTransferAmount,
   setFormError,
   wakafHadith,
@@ -158,24 +165,83 @@ export const PackageSelection: React.FC<PackageSelectionProps> = ({
               )}
 
               {isActive && pkg.id === 'infaq' && (
-                <Box sx={{ px: 2, pb: 2, pt: 1, bgcolor: c.well, borderTop: `1px solid ${c.rule}` }}>
+                <Box sx={{ px: 2, pb: 2, pt: 1.5, bgcolor: c.well, borderTop: `1px solid ${c.rule}` }}>
+                  <Box sx={{ mb: 1.5 }}>
+                    <SegmentedControl
+                      ariaLabel="Mata uang donasi"
+                      options={[
+                        { id: 'JPY', label: '🇯🇵 Yen Jepang (¥)' },
+                        { id: 'IDR', label: '🇮🇩 Rupiah (Rp)' }
+                      ]}
+                      active={infaqCurrency}
+                      onChange={(curr) => {
+                        setInfaqCurrency(curr as 'JPY' | 'IDR');
+                        setInfaqAmount('');
+                        setFormError(null);
+                      }}
+                    />
+                  </Box>
+
                   <TextField
-                    fullWidth type="number" placeholder="Contoh: 10000" value={infaqAmount}
+                    fullWidth
+                    type="number"
+                    placeholder={infaqCurrency === 'JPY' ? 'Contoh: 10000' : 'Contoh: 500000'}
+                    value={infaqAmount}
                     onChange={(e) => {
                       setInfaqAmount(e.target.value.replace(/[^0-9]/g, ''));
                       setFormError(null);
                     }}
-                    label="Nominal Donasi (¥)"
+                    label={infaqCurrency === 'JPY' ? 'Nominal Donasi (¥)' : 'Nominal Donasi (Rp)'}
                     slotProps={{
                       input: {
-                        startAdornment: <InputAdornment position="start"><Typography sx={{ fontSize: '0.9375rem', fontWeight: 700, color: c.inkMuted }}>¥</Typography></InputAdornment>,
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <Typography sx={{ fontSize: '0.9375rem', fontWeight: 700, color: c.inkMuted }}>
+                              {infaqCurrency === 'JPY' ? '¥' : 'Rp'}
+                            </Typography>
+                          </InputAdornment>
+                        ),
                       }
                     }}
-                    sx={{ mt: 1 }}
+                    sx={{ mt: 0.5 }}
                   />
-                  <Typography sx={{ mt: 1, fontSize: '0.75rem', lineHeight: 1.5, color: c.inkMuted }}>
-                    Masukkan nominal dalam Yen Jepang (JPY). Estimasi konversi ke Rupiah dihitung otomatis.
-                  </Typography>
+
+                  {infaqAmount && Number(infaqAmount) > 0 ? (
+                    <Box
+                      sx={{
+                        mt: 1.25,
+                        p: 1.25,
+                        bgcolor: c.paper,
+                        borderRadius: radius.sm,
+                        border: `1px solid ${c.rule}`,
+                        display: 'flex',
+                        alignItems: 'baseline',
+                        justifyContent: 'space-between'
+                      }}
+                    >
+                      <Box>
+                        <Eyebrow sx={{ fontSize: '0.5625rem' }}>
+                          {infaqCurrency === 'JPY' ? 'Estimasi Rupiah' : 'Estimasi Yen'}
+                        </Eyebrow>
+                        <Typography sx={{ fontSize: '0.625rem', color: c.inkFaint, mt: 0.25, ...tnum }}>
+                          Kurs 1 JPY ≈ Rp {jpyToIdrRate.toLocaleString('id-ID')}
+                        </Typography>
+                      </Box>
+                      <Figure size="1rem" tone={c.forest}>
+                        {infaqCurrency === 'JPY'
+                          ? `≈ ${new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(Number(infaqAmount) * jpyToIdrRate)}`
+                          : `≈ ¥${Math.round(Number(infaqAmount) / jpyToIdrRate).toLocaleString('ja-JP')}`
+                        }
+                      </Figure>
+                    </Box>
+                  ) : (
+                    <Typography sx={{ mt: 1, fontSize: '0.75rem', lineHeight: 1.5, color: c.inkMuted }}>
+                      {infaqCurrency === 'JPY'
+                        ? `Masukkan nominal dalam Yen Jepang (JPY). Estimasi kurs: 1 JPY ≈ Rp ${jpyToIdrRate.toLocaleString('id-ID')}.`
+                        : `Masukkan nominal dalam Rupiah (IDR). Estimasi kurs: 1 JPY ≈ Rp ${jpyToIdrRate.toLocaleString('id-ID')}.`
+                      }
+                    </Typography>
+                  )}
                 </Box>
               )}
             </Box>

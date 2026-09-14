@@ -47,7 +47,9 @@ export function useDonations({ isAdminMode }: UseDonationsProps) {
           proofUrl: data.proofUrl,
           package: data.package,
           paymentMethod: data.paymentMethod,
-          remarks: data.remarks
+          remarks: data.remarks,
+          originalCurrency: data.originalCurrency,
+          originalAmount: data.originalAmount ? Number(data.originalAmount) : undefined,
         };
       });
       setDonations(docs);
@@ -71,6 +73,8 @@ export function useDonations({ isAdminMode }: UseDonationsProps) {
     proofUrl: string;
     package: string;
     paymentMethod: string;
+    originalCurrency?: 'JPY' | 'IDR';
+    originalAmount?: number;
   }) => {
     try {
       return await addDoc(collection(db, 'donations'), {

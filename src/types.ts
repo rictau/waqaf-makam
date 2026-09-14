@@ -20,6 +20,8 @@ export interface DonationRecord {
   package?: string;
   paymentMethod?: PaymentMethod;
   remarks?: string;
+  originalCurrency?: 'JPY' | 'IDR';
+  originalAmount?: number;
 }
 
 export type EditableDonationRecord = Omit<DonationRecord, 'amount'> & {
