@@ -4,7 +4,7 @@ const setMeta = (selector: string, value: string) => {
 
 const siteUrl = 'https://honjo.kmii.jp';
 const defaultTitle = 'Wakaf Tanah Makam Muslim - KMII Jepang';
-const defaultDescription = 'Bersama Wujudkan Pemakaman Muslim untuk WNI di Jepang - Pemakaman Muslim Honjo. Amal jariyah abadi bersama KMII Jepang.';
+const defaultDescription = 'Bersama Wujudkan Pemakaman Muslim untuk WNI di Jepang';
 
 const toAbsoluteUrl = (value: string) => {
   try {

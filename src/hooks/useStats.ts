@@ -147,7 +147,7 @@ export function useStats() {
     if (!hasLoadedStats) return;
     updateDocumentMetadata({
       title: `Wakaf Tanah Makam Muslim - ${publicConfig.shortName || 'KMII Jepang'}`,
-      description: publicConfig.wakafHadith.replace(/^"|"$/g, ''),
+      description: 'Bersama Wujudkan Pemakaman Muslim untuk WNI di Jepang',
       url: window.location.origin
     });
   }, [hasLoadedStats, publicConfig]);
