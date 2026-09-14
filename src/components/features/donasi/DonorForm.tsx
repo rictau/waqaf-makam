@@ -93,7 +93,7 @@ export const DonorForm: React.FC<DonorFormProps> = ({
     <Box component="section">
       <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', pb: 1, mb: 1.5, borderBottom: `1px solid ${c.ruleStrong}` }}>
         <Eyebrow tone="ink">Data Donatur</Eyebrow>
-        <Typography sx={{ fontSize: '0.625rem', fontWeight: 600, color: c.inkFaint }}>Wajib diisi</Typography>
+        <Typography sx={{ fontSize: '0.625rem', fontWeight: 600, color: c.inkFaint }}>Langkah 2</Typography>
       </Box>
 
       <Box sx={{ border: `1px solid ${c.rule}`, borderRadius: radius.lg, bgcolor: c.paper, overflow: 'hidden' }}>

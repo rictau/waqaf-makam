@@ -55,7 +55,7 @@ export const PackageSelection: React.FC<PackageSelectionProps> = ({
       <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', pb: 1, mb: 1.5, borderBottom: `1px solid ${c.ruleStrong}` }}>
         <Eyebrow tone="ink">Pilih Nominal Wakaf</Eyebrow>
         <Typography sx={{ fontSize: '0.625rem', fontWeight: 600, color: c.inkFaint }}>
-          {packages.length} pilihan
+          Langkah 1
         </Typography>
       </Box>
 

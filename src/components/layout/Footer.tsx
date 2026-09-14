@@ -34,7 +34,7 @@ export const Footer: React.FC<FooterProps> = ({ publicConfig }) => {
       </PullQuote>
 
       <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 2, pb: 1, mb: 1.5, borderBottom: `1px solid ${c.ruleStrong}` }}>
-        <Eyebrow tone="ink">Konfirmasi & Informasi</Eyebrow>
+        <Eyebrow tone="ink">Narahubung</Eyebrow>
         <Typography sx={{ fontSize: '0.625rem', fontWeight: 600, color: c.inkFaint, textAlign: 'right' }}>
           Panitia Wakaf
         </Typography>
