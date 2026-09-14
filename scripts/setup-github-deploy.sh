@@ -126,11 +126,17 @@ gcloud iam workload-identity-pools providers create-oidc "${PROVIDER_ID}" \
 
 echo
 echo "==> Allowing ${GITHUB_REPO} to impersonate ${SA_NAME}..."
-gcloud iam service-accounts add-iam-policy-binding "${SA_EMAIL}" \
-  --project "${PROJECT_ID}" \
-  --role="roles/iam.workloadIdentityUser" \
-  --member="principalSet://iam.googleapis.com/projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/${POOL_ID}/attribute.repository/${GITHUB_REPO}" \
-  --quiet > /dev/null
+for i in {1..5}; do
+  if gcloud iam service-accounts add-iam-policy-binding "${SA_EMAIL}" \
+    --project "${PROJECT_ID}" \
+    --role="roles/iam.workloadIdentityUser" \
+    --member="principalSet://iam.googleapis.com/projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/${POOL_ID}/attribute.repository/${GITHUB_REPO}" \
+    --quiet > /dev/null 2>&1; then
+    break
+  fi
+  echo "    Waiting for service account to propagate in IAM (attempt ${i}/5)..."
+  sleep 3
+done
 
 PROVIDER_RESOURCE="projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/${POOL_ID}/providers/${PROVIDER_ID}"
 
