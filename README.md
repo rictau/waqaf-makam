@@ -107,14 +107,45 @@ The codebase has a clean separation of concerns:
 
 ## Deployment
 
-Deploy both frontend and backend logic to Firebase:
+### Automatic (recommended)
+
+Every push to `main` builds and deploys via GitHub Actions
+(`.github/workflows/firebase-deploy.yml`) — Hosting, Firestore rules and
+indexes, Storage rules, and Functions.
+
+Authentication uses **Workload Identity Federation**, so no service account
+key is ever created or stored in the repository. GitHub mints a short-lived
+OIDC token per run and exchanges it for scoped Google credentials.
+
+One-time setup, run from a machine with `gcloud` and Owner on the project:
 
 ```bash
-# Build the application
-npm run build
+gcloud auth login
+./scripts/setup-github-deploy.sh
+```
 
-# Deploy to Firebase
+The script prints the GitHub secrets and variables to configure. It is
+idempotent — safe to re-run.
+
+You can also trigger a deploy manually from the **Actions** tab
+("Deploy to Firebase" → *Run workflow*) and choose which targets to deploy,
+which is useful for rules-only changes:
+
+```
+hosting            # frontend only
+firestore,storage  # security rules only
+functions          # backend only
+```
+
+### Manual
+
+```bash
+npm run build
 npx firebase deploy
 ```
 
 *Note: Outbound networking in Cloud Functions requires the Firebase **Blaze Plan** (Pay-as-you-go).*
+
+*The `RESEND_API_KEY` used by `sendVerificationEmail` is a Google Secret
+Manager secret bound by name at deploy time, so neither CI nor this repository
+ever handles its value.*
