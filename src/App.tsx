@@ -218,6 +218,9 @@ function DonationApp() {
     if (!isAnonymous && !donorName) return setFormError("Mohon masukkan nama donatur atau pilih Anonim.");
     if (!donorEmail || !donorEmail.includes('@')) return setFormError("Mohon masukkan alamat email yang valid.");
     if (!donorPhone) return setFormError("Mohon masukkan nomor WhatsApp.");
+    if (!donorPhone.startsWith('81') || donorPhone.length < 10) {
+      return setFormError("Nomor WhatsApp harus diawali kode negara Jepang 81 (contoh: 818012345678).");
+    }
     if (!donorCity) return setFormError("Mohon masukkan domisili.");
     if (selectedBank !== 'cash' && !selectedAccountId) return setFormError("Mohon pilih rekening tujuan transfer terlebih dahulu.");
     if (!uploadFile) return setFormError("Mohon pilih bukti pembayaran (Foto/PDF).");

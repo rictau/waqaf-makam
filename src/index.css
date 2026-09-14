@@ -32,6 +32,18 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  input,
+  textarea,
+  select,
+  button {
+    font-family: inherit;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    font-family: inherit;
+  }
+
   /* Numbers are data: keep columns aligned everywhere. */
   table,
   [data-tnum] {

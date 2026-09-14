@@ -163,6 +163,24 @@ const theme = createTheme({
       },
     },
 
+    MuiInputBase: {
+      styleOverrides: {
+        root: {
+          fontFamily: sans,
+          color: c.ink,
+        },
+        input: {
+          fontFamily: sans,
+          fontSize: "0.875rem",
+          "&::placeholder": {
+            fontFamily: sans,
+            color: c.inkFaint,
+            opacity: 1,
+          },
+        },
+      },
+    },
+
     MuiOutlinedInput: {
       styleOverrides: {
         root: {

@@ -58,13 +58,19 @@ const FieldRow: React.FC<{
 const fieldSx = {
   flex: 1,
   minWidth: 0,
+  fontFamily: sans,
   '& .MuiInputBase-input': {
     p: '4px 0',
     fontFamily: sans,
-    fontSize: '0.9375rem',
-    fontWeight: 600,
+    fontSize: '0.875rem',
+    fontWeight: 500,
     color: c.ink,
-    '&::placeholder': { color: c.inkFaint, opacity: 1, fontWeight: 400 },
+    '&::placeholder': {
+      fontFamily: sans,
+      color: c.inkFaint,
+      opacity: 1,
+      fontWeight: 400,
+    },
     '&.Mui-disabled': { color: c.inkMuted, WebkitTextFillColor: c.inkMuted },
   },
 };
@@ -108,11 +114,18 @@ export const DonorForm: React.FC<DonorFormProps> = ({
           />
         </FieldRow>
 
-        <FieldRow id="donor-phone" label="WhatsApp" valid={donorPhone.length > 7}>
+        <FieldRow id="donor-phone" label="WhatsApp" valid={donorPhone.startsWith('81') && donorPhone.length >= 10}>
           <InputBase
-            id="donor-phone" fullWidth type="tel" inputMode="numeric" placeholder="0812…" sx={fieldSx}
+            id="donor-phone" fullWidth type="tel" inputMode="numeric" placeholder="Cth: 818012345678" sx={fieldSx}
             value={donorPhone}
-            onChange={(e) => setDonorPhone(e.target.value.replace(/[^0-9]/g, ''))}
+            onChange={(e) => {
+              let val = e.target.value.replace(/[^0-9]/g, '');
+              // Intelligently auto-convert Japanese domestic leading 0 (080/090/070) to 81
+              if (val.startsWith('0') && val.length >= 2) {
+                val = '81' + val.slice(1);
+              }
+              setDonorPhone(val);
+            }}
           />
         </FieldRow>
 
