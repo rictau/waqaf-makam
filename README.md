@@ -68,7 +68,7 @@ The codebase has a clean separation of concerns:
 1. **Clone & Install:**
    ```bash
    git clone <repo-url>
-   cd mosque-dev
+   cd waqaf-makam
    npm install
    ```
 
@@ -76,9 +76,9 @@ The codebase has a clean separation of concerns:
    Create a `.env.local` file at the root with your Firebase credentials:
    ```env
    VITE_FIREBASE_API_KEY="your_api_key"
-   VITE_FIREBASE_AUTH_DOMAIN="mosque-dev.firebaseapp.com"
-   VITE_FIREBASE_PROJECT_ID="mosque-dev"
-   VITE_FIREBASE_STORAGE_BUCKET="mosque-dev.firebasestorage.app"
+   VITE_FIREBASE_AUTH_DOMAIN="waqaf-makam.firebaseapp.com"
+   VITE_FIREBASE_PROJECT_ID="waqaf-makam"
+   VITE_FIREBASE_STORAGE_BUCKET="waqaf-makam.firebasestorage.app"
    VITE_FIREBASE_MESSAGING_SENDER_ID="your_sender_id"
    VITE_FIREBASE_APP_ID="your_app_id"
    ```

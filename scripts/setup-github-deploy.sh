@@ -29,6 +29,26 @@ echo "==> Repo:     ${GITHUB_REPO}"
 echo "==> Service account: ${SA_EMAIL}"
 echo
 
+# Fail early and legibly if there is no active account. Without this, the first
+# real API call dies with a generic "you do not currently have an active
+# account" several steps in, which reads like a script bug rather than a
+# one-command fix. In Cloud Shell this usually means the session has not been
+# authorized yet -- click "Authorize" when prompted, or run `gcloud auth login`.
+ACTIVE_ACCOUNT="$(gcloud auth list --filter=status:ACTIVE --format='value(account)' 2>/dev/null || true)"
+if [ -z "${ACTIVE_ACCOUNT}" ]; then
+  cat <<'EOF'
+ERROR: no active gcloud account.
+
+  Run:  gcloud auth login
+
+  then re-run this script. In Cloud Shell you may instead see an "Authorize"
+  button appear the first time a command needs credentials -- click it.
+EOF
+  exit 1
+fi
+echo "==> Authenticated as: ${ACTIVE_ACCOUNT}"
+echo
+
 gcloud config set project "${PROJECT_ID}"
 
 PROJECT_NUMBER="$(gcloud projects describe "${PROJECT_ID}" --format='value(projectNumber)')"
