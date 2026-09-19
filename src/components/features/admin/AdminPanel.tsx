@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Typography, Button, Card, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Switch, FormControlLabel, InputAdornment, Tooltip, Divider, CircularProgress } from '@mui/material';
-import { ExternalLink, CheckCircle2, Trash2, Wallet, Download, Pencil, Filter, Search, Plus, Upload } from 'lucide-react';
+import { ExternalLink, CheckCircle2, Trash2, Wallet, Download, Pencil, Filter, Search, Plus, Upload, QrCode } from 'lucide-react';
 import { updateDoc, deleteDoc, doc, setDoc, collection, getDocs, query, orderBy, where, Timestamp, writeBatch, getDocFromServer, deleteField } from 'firebase/firestore';
 import { EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -11,6 +11,7 @@ import { Eyebrow, Figure, LedgerRow, SectionHeading, StatusTag } from '../../com
 import { handleFirestoreError, OperationType } from '../../../utils/errors';
 import type { BankConfig, BankAccountConfig, CampaignDocument, CampaignStatus, ContactPersonConfig, DonationPackageConfig, DonationRecord, DonationStatus, EditableDonationRecord, PublicConfig } from '../../../types';
 import { CampaignBuilderDialog } from './CampaignBuilderDialog';
+import { QRCodeDialog } from './QRCodeDialog';
 
 interface AdminPanelProps {
   donations: DonationRecord[];
@@ -67,6 +68,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 }) => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [cloneDialogOpen, setCloneDialogOpen] = useState(false);
+  const [qrDialogOpen, setQrDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingDonation, setEditingDonation] = useState<EditableDonationRecord | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -966,27 +968,38 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             </TextField>
           </Box>
 
-          {isSuperAdmin && (
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              <Button
-                size="small"
-                variant="contained"
-                startIcon={<Plus size={14} />}
-                onClick={() => setCreateDialogOpen(true)}
-                sx={{ ...eyebrow, fontSize: '0.625rem', bgcolor: c.forest, color: c.paper, height: 38, '&:hover': { bgcolor: c.forestDeep } }}
-              >
-                Program Baru
-              </Button>
-              <Button
-                size="small"
-                variant="outlined"
-                onClick={() => setCloneDialogOpen(true)}
-                sx={{ ...eyebrow, fontSize: '0.625rem', color: c.ink, borderColor: c.ruleStrong, height: 38 }}
-              >
-                Duplikasi Program
-              </Button>
-            </Box>
-          )}
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button
+              size="small"
+              variant="outlined"
+              startIcon={<QrCode size={14} />}
+              onClick={() => setQrDialogOpen(true)}
+              sx={{ ...eyebrow, fontSize: '0.625rem', color: c.ink, borderColor: c.ruleStrong, height: 38 }}
+            >
+              QR Code
+            </Button>
+            {isSuperAdmin && (
+              <>
+                <Button
+                  size="small"
+                  variant="contained"
+                  startIcon={<Plus size={14} />}
+                  onClick={() => setCreateDialogOpen(true)}
+                  sx={{ ...eyebrow, fontSize: '0.625rem', bgcolor: c.forest, color: c.paper, height: 38, '&:hover': { bgcolor: c.forestDeep } }}
+                >
+                  Program Baru
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => setCloneDialogOpen(true)}
+                  sx={{ ...eyebrow, fontSize: '0.625rem', color: c.ink, borderColor: c.ruleStrong, height: 38 }}
+                >
+                  Duplikasi Program
+                </Button>
+              </>
+            )}
+          </Box>
         </Box>
 
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2, mb: 2.5 }}>
@@ -1308,6 +1321,32 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         </Box>
       ) : (
         <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+          {/* Quick Action: QR Code & Public Link */}
+          <Card sx={{ p: 2, bgcolor: c.paper, border: `1px solid ${c.rule}`, borderRadius: radius.lg, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box sx={{ p: 1, bgcolor: c.well, borderRadius: radius.md, border: `1px solid ${c.rule}`, display: 'flex' }}>
+                <QrCode size={24} color={c.forest} />
+              </Box>
+              <Box>
+                <Typography sx={{ fontSize: '0.875rem', fontWeight: 700, color: c.ink }}>
+                  QR Code & Materi Cetak Program
+                </Typography>
+                <Typography sx={{ fontSize: '0.75rem', color: c.inkMuted }}>
+                  Generate QR code beresolusi tinggi (PNG) dan flyer standee meja A4 siap cetak untuk program ini.
+                </Typography>
+              </Box>
+            </Box>
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<QrCode size={14} />}
+              onClick={() => setQrDialogOpen(true)}
+              sx={{ ...eyebrow, fontSize: '0.625rem', bgcolor: c.forest, color: c.paper, '&:hover': { bgcolor: c.forestDeep } }}
+            >
+              Buka Generator QR Code
+            </Button>
+          </Card>
+
           {/* Group 0: Status & Visibilitas Program */}
           <Card sx={{ p: 2.25, border: `1px solid ${c.ruleStrong}`, borderRadius: radius.lg, bgcolor: c.paper }}>
             <SectionHeading title="Status & Visibilitas Program" />
@@ -2150,6 +2189,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         cloneFrom={campaigns.find(c => c.id === currentCampaignId) || null}
         basePublicConfig={publicConfig}
         jpyToIdrRate={jpyToIdrRate}
+      />
+
+      <QRCodeDialog
+        open={qrDialogOpen}
+        onClose={() => setQrDialogOpen(false)}
+        campaignId={currentCampaignId || 'pemakaman'}
+        campaignTitle={currentCampaign?.title || publicConfig.campaignTitle}
+        shortName={currentCampaign?.shortName || publicConfig.shortName}
+        locationText={currentCampaign?.publicConfig?.locationText || publicConfig.locationText}
       />
     </Box>
   );
