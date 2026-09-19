@@ -66,6 +66,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 }) => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [cloneDialogOpen, setCloneDialogOpen] = useState(false);
+  const [editCampaignDialogOpen, setEditCampaignDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingDonation, setEditingDonation] = useState<EditableDonationRecord | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -851,6 +852,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 sx={{ ...eyebrow, fontSize: '0.625rem', bgcolor: c.forest, color: c.paper, height: 38, '&:hover': { bgcolor: c.forestDeep } }}
               >
                 Program Baru
+              </Button>
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<Pencil size={13} />}
+                onClick={() => setEditCampaignDialogOpen(true)}
+                sx={{ ...eyebrow, fontSize: '0.625rem', color: c.ink, borderColor: c.ruleStrong, height: 38 }}
+              >
+                Edit Program
               </Button>
               <Button
                 size="small"
@@ -1782,6 +1792,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         onSuccess={(newSlug) => {
           if (onSelectCampaign) onSelectCampaign(newSlug);
         }}
+        basePublicConfig={publicConfig}
+        jpyToIdrRate={jpyToIdrRate}
+      />
+
+      <CampaignBuilderDialog
+        open={editCampaignDialogOpen}
+        onClose={() => setEditCampaignDialogOpen(false)}
+        onSuccess={(slug) => {
+          if (onSelectCampaign) onSelectCampaign(slug);
+        }}
+        editCampaign={campaigns.find(c => c.id === currentCampaignId) || null}
         basePublicConfig={publicConfig}
         jpyToIdrRate={jpyToIdrRate}
       />

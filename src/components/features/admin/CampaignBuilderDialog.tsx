@@ -10,19 +10,21 @@ import {
   Typography,
   Switch,
   FormControlLabel,
-  InputAdornment
+  InputAdornment,
+  MenuItem
 } from '@mui/material';
 import { doc, setDoc, getDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../../../firebase';
 import { c, eyebrow, radius } from '../../../design';
 import { Eyebrow } from '../../common/primitives';
-import type { CampaignDocument, PublicConfig } from '../../../types';
+import type { CampaignDocument, CampaignStatus, PublicConfig } from '../../../types';
 
 interface CampaignBuilderDialogProps {
   open: boolean;
   onClose: () => void;
   onSuccess: (newSlug: string) => void;
   cloneFrom?: CampaignDocument | null;
+  editCampaign?: CampaignDocument | null;
   basePublicConfig: PublicConfig;
   jpyToIdrRate: number;
 }
@@ -32,54 +34,81 @@ export const CampaignBuilderDialog: React.FC<CampaignBuilderDialogProps> = ({
   onClose,
   onSuccess,
   cloneFrom,
+  editCampaign,
   basePublicConfig,
   jpyToIdrRate
 }) => {
-  const isClone = Boolean(cloneFrom);
-  const [slug, setSlug] = useState(isClone ? `${cloneFrom?.id}-copy` : '');
-  const [title, setTitle] = useState(isClone ? `${cloneFrom?.title} (Salinan)` : '');
-  const [shortName, setShortName] = useState(isClone ? cloneFrom?.shortName || '' : '');
-  const [targetJPY, setTargetJPY] = useState(isClone ? String(cloneFrom?.totalNeed || '20000000') : '20000000');
-  const [locationText, setLocationText] = useState(isClone ? cloneFrom?.publicConfig?.locationText || '' : '');
-  const [deadline, setDeadline] = useState(
-    cloneFrom?.donationDeadline?.toDate
-      ? cloneFrom.donationDeadline.toDate().toISOString().slice(0, 10)
-      : new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
-  );
-  const [spreadsheetId, setSpreadsheetId] = useState(isClone ? cloneFrom?.spreadsheetId || '' : '');
-  const [hadith, setHadith] = useState(
-    isClone && cloneFrom?.publicConfig?.wakafHadith
-      ? cloneFrom.publicConfig.wakafHadith
-      : basePublicConfig.wakafHadith
-  );
+  const mode = editCampaign ? 'edit' : cloneFrom ? 'clone' : 'create';
+  const [slug, setSlug] = useState('');
+  const [title, setTitle] = useState('');
+  const [shortName, setShortName] = useState('');
+  const [targetJPY, setTargetJPY] = useState('20000000');
+  const [locationText, setLocationText] = useState('');
+  const [status, setStatus] = useState<CampaignStatus>('active');
+  const [order, setOrder] = useState('1');
+  const [isFeatured, setIsFeatured] = useState(false);
+  const [deadline, setDeadline] = useState('');
+  const [spreadsheetId, setSpreadsheetId] = useState('');
+  const [hadith, setHadith] = useState(basePublicConfig.wakafHadith);
   const [useDefaultBanks, setUseDefaultBanks] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Reset form when opened with cloneFrom
+  // Sync form when dialog opens
   React.useEffect(() => {
     if (open) {
-      if (cloneFrom) {
+      if (editCampaign) {
+        setSlug(editCampaign.id);
+        setTitle(editCampaign.title || '');
+        setShortName(editCampaign.shortName || '');
+        setTargetJPY(String(editCampaign.totalNeed || 20000000));
+        setLocationText(editCampaign.publicConfig?.locationText || '');
+        setStatus(editCampaign.status || 'active');
+        setOrder(String(editCampaign.order ?? 1));
+        setIsFeatured(Boolean(editCampaign.isFeatured));
+        setSpreadsheetId(editCampaign.spreadsheetId || '');
+        setDeadline(
+          editCampaign.donationDeadline?.toDate
+            ? editCampaign.donationDeadline.toDate().toISOString().slice(0, 10)
+            : ''
+        );
+        setHadith(editCampaign.publicConfig?.wakafHadith || basePublicConfig.wakafHadith);
+        setUseDefaultBanks(true);
+      } else if (cloneFrom) {
         setSlug(`${cloneFrom.id}-baru`);
         setTitle(`${cloneFrom.title}`);
         setShortName(cloneFrom.shortName);
         setTargetJPY(String(cloneFrom.totalNeed || 20000000));
         setLocationText(cloneFrom.publicConfig?.locationText || '');
+        setStatus('active');
+        setOrder(String((cloneFrom.order ?? 1) + 1));
+        setIsFeatured(false);
         setSpreadsheetId(cloneFrom.spreadsheetId || '');
+        setDeadline(
+          cloneFrom.donationDeadline?.toDate
+            ? cloneFrom.donationDeadline.toDate().toISOString().slice(0, 10)
+            : new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+        );
         setHadith(cloneFrom.publicConfig?.wakafHadith || basePublicConfig.wakafHadith);
+        setUseDefaultBanks(true);
       } else {
         setSlug('');
         setTitle('');
         setShortName('');
         setTargetJPY('20000000');
         setLocationText('');
+        setStatus('active');
+        setOrder('1');
+        setIsFeatured(false);
         setSpreadsheetId('');
+        setDeadline(new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10));
         setHadith(basePublicConfig.wakafHadith);
+        setUseDefaultBanks(true);
       }
       setErrorMsg('');
       setIsSubmitting(false);
     }
-  }, [open, cloneFrom, basePublicConfig]);
+  }, [open, cloneFrom, editCampaign, basePublicConfig]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,7 +120,7 @@ export const CampaignBuilderDialog: React.FC<CampaignBuilderDialogProps> = ({
       return;
     }
 
-    if (['admin', 'donatur', 'donasi', 'stats', 'users', 'campaigns'].includes(cleanSlug)) {
+    if (mode !== 'edit' && ['admin', 'donatur', 'donasi', 'stats', 'users', 'campaigns'].includes(cleanSlug)) {
       setErrorMsg(`Slug "${cleanSlug}" adalah kata yang dipesan sistem. Gunakan slug lain.`);
       return;
     }
@@ -104,8 +133,56 @@ export const CampaignBuilderDialog: React.FC<CampaignBuilderDialogProps> = ({
 
     setIsSubmitting(true);
     try {
-      // Check if slug already exists
       const docRef = doc(db, 'campaigns', cleanSlug);
+      const deadlineTimestamp = deadline ? Timestamp.fromDate(new Date(`${deadline}T23:59:59+09:00`)) : null;
+
+      if (mode === 'edit') {
+        const existingSnap = await getDoc(docRef);
+        const existingData = existingSnap.exists() ? existingSnap.data() : {};
+        const existingConfig = existingData.publicConfig || editCampaign?.publicConfig || basePublicConfig;
+
+        const updatedPublicConfig: PublicConfig = {
+          ...existingConfig,
+          masjidName: shortName.trim() || title.trim(),
+          shortName: shortName.trim() || 'KMII Jepang',
+          campaignTitle: title.trim(),
+          locationText: locationText.trim() || 'Jepang',
+          wakafHadith: hadith.trim(),
+        };
+
+        const updatePayload = {
+          title: title.trim(),
+          shortName: shortName.trim(),
+          status,
+          isFeatured,
+          order: Number(order) || 1,
+          totalNeed: targetNum,
+          isClosed: status === 'closed',
+          spreadsheetId: spreadsheetId.trim() || null,
+          publicConfig: updatedPublicConfig,
+          donationDeadline: deadlineTimestamp,
+          updatedAt: Timestamp.now()
+        };
+
+        await setDoc(docRef, updatePayload, { merge: true });
+
+        if (cleanSlug === 'pemakaman') {
+          await setDoc(doc(db, 'stats', 'global'), {
+            totalNeed: targetNum,
+            spreadsheetId: spreadsheetId.trim() || null,
+            publicConfig: updatedPublicConfig,
+            donationDeadline: deadlineTimestamp,
+            isClosed: status === 'closed',
+            lastUpdate: Timestamp.now()
+          }, { merge: true });
+        }
+
+        onSuccess(cleanSlug);
+        onClose();
+        return;
+      }
+
+      // Check if slug already exists for create/clone
       const existing = await getDoc(docRef);
       if (existing.exists()) {
         setErrorMsg(`Program dengan slug "${cleanSlug}" sudah ada. Gunakan slug lain.`);
@@ -113,7 +190,7 @@ export const CampaignBuilderDialog: React.FC<CampaignBuilderDialogProps> = ({
         return;
       }
 
-      // Inherit publicConfig
+      // Inherit publicConfig for new campaign
       const clonedConfig = cloneFrom?.publicConfig || basePublicConfig;
       const newPublicConfig: PublicConfig = {
         masjidName: shortName.trim() || title.trim(),
@@ -147,15 +224,13 @@ export const CampaignBuilderDialog: React.FC<CampaignBuilderDialogProps> = ({
         ]
       };
 
-      const deadlineTimestamp = deadline ? Timestamp.fromDate(new Date(`${deadline}T23:59:59+09:00`)) : null;
-
       await setDoc(docRef, {
         id: cleanSlug,
         title: title.trim(),
         shortName: shortName.trim(),
         status: 'active',
         isFeatured: false,
-        order: 99,
+        order: Number(order) || 99,
         totalNeed: targetNum,
         renovationNeed: 0,
         baseVerified: 0,
@@ -174,8 +249,8 @@ export const CampaignBuilderDialog: React.FC<CampaignBuilderDialogProps> = ({
       onSuccess(cleanSlug);
       onClose();
     } catch (err) {
-      console.error('Failed to create campaign:', err);
-      setErrorMsg(err instanceof Error ? err.message : 'Gagal membuat program baru.');
+      console.error('Failed to save campaign:', err);
+      setErrorMsg(err instanceof Error ? err.message : 'Gagal menyimpan program.');
     } finally {
       setIsSubmitting(false);
     }
@@ -185,9 +260,15 @@ export const CampaignBuilderDialog: React.FC<CampaignBuilderDialogProps> = ({
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <form onSubmit={handleSubmit}>
         <DialogTitle sx={{ borderBottom: `1px solid ${c.rule}`, pb: 1.5 }}>
-          <Eyebrow tone="brass">{isClone ? 'Duplikasi Program' : 'Buat Program Baru'}</Eyebrow>
+          <Eyebrow tone="brass">
+            {mode === 'edit' ? 'Edit Program' : mode === 'clone' ? 'Duplikasi Program' : 'Buat Program Baru'}
+          </Eyebrow>
           <Typography variant="h2" sx={{ fontSize: '1.25rem', color: c.ink, mt: 0.5 }}>
-            {isClone ? `Duplikasi dari ${cloneFrom?.shortName}` : 'Program Penggalangan Dana Baru'}
+            {mode === 'edit'
+              ? `Pengaturan Program: ${shortName || title}`
+              : mode === 'clone'
+                ? `Duplikasi dari ${cloneFrom?.shortName}`
+                : 'Program Penggalangan Dana Baru'}
           </Typography>
         </DialogTitle>
 
@@ -206,6 +287,7 @@ export const CampaignBuilderDialog: React.FC<CampaignBuilderDialogProps> = ({
               fullWidth
               size="small"
               required
+              disabled={mode === 'edit'}
               placeholder="cth: masjidkoganei"
               value={slug}
               onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
@@ -214,7 +296,11 @@ export const CampaignBuilderDialog: React.FC<CampaignBuilderDialogProps> = ({
                   startAdornment: <InputAdornment position="start">infaq.kmii.jp/</InputAdornment>
                 }
               }}
-              helperText={`Halaman akan dibuka di: infaq.kmii.jp/${slug || 'nama-slug'}`}
+              helperText={
+                mode === 'edit'
+                  ? 'Slug URL tidak dapat diubah agar link donasi yang sudah beredar tidak rusak.'
+                  : `Halaman akan dibuka di: infaq.kmii.jp/${slug || 'nama-slug'}`
+              }
             />
           </Box>
 
@@ -279,6 +365,37 @@ export const CampaignBuilderDialog: React.FC<CampaignBuilderDialogProps> = ({
             </Box>
           </Box>
 
+          {mode === 'edit' && (
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+              <Box>
+                <Eyebrow sx={{ mb: 0.5 }}>Status Program</Eyebrow>
+                <TextField
+                  select
+                  fullWidth
+                  size="small"
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value as CampaignStatus)}
+                >
+                  <MenuItem value="active">Aktif (Menerima Donasi)</MenuItem>
+                  <MenuItem value="closed">Ditutup (Target Tercapai/Selesai)</MenuItem>
+                  <MenuItem value="draft">Draf (Belum Publik)</MenuItem>
+                  <MenuItem value="archived">Diarsipkan</MenuItem>
+                </TextField>
+              </Box>
+              <Box>
+                <Eyebrow sx={{ mb: 0.5 }}>Urutan Tampilan di Katalog</Eyebrow>
+                <TextField
+                  fullWidth
+                  size="small"
+                  type="number"
+                  value={order}
+                  onChange={(e) => setOrder(e.target.value)}
+                  helperText="Angka lebih kecil tampil lebih awal"
+                />
+              </Box>
+            </Box>
+          )}
+
           <Box>
             <Eyebrow sx={{ mb: 0.5 }}>Google Spreadsheet ID (Opsional)</Eyebrow>
             <TextField
@@ -287,7 +404,7 @@ export const CampaignBuilderDialog: React.FC<CampaignBuilderDialogProps> = ({
               placeholder="ID Sheet dari Google Sheets URL"
               value={spreadsheetId}
               onChange={(e) => setSpreadsheetId(e.target.value)}
-              helperText="Biarkan kosong jika ingin menyinkronkan ke sheet nanti."
+              helperText="Setiap program dapat memiliki file Google Sheet mutasi masing-masing."
             />
           </Box>
 
@@ -303,25 +420,49 @@ export const CampaignBuilderDialog: React.FC<CampaignBuilderDialogProps> = ({
             />
           </Box>
 
-          <FormControlLabel
-            control={
-              <Switch
-                checked={useDefaultBanks}
-                onChange={(e) => setUseDefaultBanks(e.target.checked)}
-                color="success"
-              />
-            }
-            label={
-              <Box>
-                <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, color: c.ink }}>
-                  Gunakan Rekening Utama KMII Jepang
-                </Typography>
-                <Typography sx={{ fontSize: '0.6875rem', color: c.inkMuted }}>
-                  Otomatis menggunakan rekening Japan Post Bank dan BSI a.n. KMII Jepang.
-                </Typography>
-              </Box>
-            }
-          />
+          {mode === 'create' && (
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={useDefaultBanks}
+                  onChange={(e) => setUseDefaultBanks(e.target.checked)}
+                  color="success"
+                />
+              }
+              label={
+                <Box>
+                  <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, color: c.ink }}>
+                    Gunakan Rekening Utama KMII Jepang
+                  </Typography>
+                  <Typography sx={{ fontSize: '0.6875rem', color: c.inkMuted }}>
+                    Otomatis menggunakan rekening Japan Post Bank dan BSI a.n. KMII Jepang.
+                  </Typography>
+                </Box>
+              }
+            />
+          )}
+
+          {mode === 'edit' && (
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={isFeatured}
+                  onChange={(e) => setIsFeatured(e.target.checked)}
+                  color="success"
+                />
+              }
+              label={
+                <Box>
+                  <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, color: c.ink }}>
+                    Sorot di Beranda (Featured Program)
+                  </Typography>
+                  <Typography sx={{ fontSize: '0.6875rem', color: c.inkMuted }}>
+                    Program ini akan ditampilkan di posisi teratas portal katalog donasi.
+                  </Typography>
+                </Box>
+              }
+            />
+          )}
         </DialogContent>
 
         <DialogActions sx={{ p: 2, borderTop: `1px solid ${c.rule}` }}>
@@ -341,7 +482,13 @@ export const CampaignBuilderDialog: React.FC<CampaignBuilderDialogProps> = ({
               '&:hover': { bgcolor: c.forestDeep }
             }}
           >
-            {isSubmitting ? 'Menyimpan...' : isClone ? 'Duplikasi & Terbitkan' : 'Buat Program'}
+            {isSubmitting
+              ? 'Menyimpan...'
+              : mode === 'edit'
+                ? 'Simpan Perubahan'
+                : mode === 'clone'
+                  ? 'Duplikasi & Terbitkan'
+                  : 'Buat Program'}
           </Button>
         </DialogActions>
       </form>
