@@ -12,6 +12,7 @@ interface HeaderProps {
   isAdminUser: boolean;
   onAdminClick: () => void;
   publicConfig: PublicConfig;
+  onHomeClick?: () => void;
 }
 
 /**
@@ -19,7 +20,7 @@ interface HeaderProps {
  * over a solid forest title band. The title is a left-aligned display-serif
  * headline — no centred hero, no gradient text, no translucency.
  */
-export const Header: React.FC<HeaderProps> = ({ user, isAdminUser, onAdminClick, publicConfig }) => {
+export const Header: React.FC<HeaderProps> = ({ user, isAdminUser, onAdminClick, publicConfig, onHomeClick }) => {
   const [showLogin, setShowLogin] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -29,7 +30,18 @@ export const Header: React.FC<HeaderProps> = ({ user, isAdminUser, onAdminClick,
       {/* Organisation bar */}
       <Box sx={{ py: 1.25, px: 2, bgcolor: c.paper, borderBottom: `1px solid ${c.rule}`, position: 'relative' }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5,
+              minWidth: 0,
+              cursor: onHomeClick ? 'pointer' : 'default',
+              userSelect: 'none'
+            }}
+            onClick={onHomeClick}
+            title={onHomeClick ? 'Kembali ke Portal Donasi' : undefined}
+          >
             {publicConfig.logos.map((logo, i) => (
               <React.Fragment key={logo.src}>
                 {i > 0 && <Box sx={{ width: '1px', height: 26, bgcolor: c.rule, flexShrink: 0 }} />}

@@ -66,17 +66,8 @@ const parseRoute = (): RouteState => {
 
 function DonationApp() {
   const [routeState, setRouteState] = useState<RouteState>(parseRoute);
-  const { campaigns, activeCampaigns, loading: loadingCampaigns } = useCampaigns();
+  const { campaigns, loading: loadingCampaigns } = useCampaigns();
 
-  // Rule: jika hanya 1 campaign, maka harus otomatis redirect ke /pemakaman
-  useEffect(() => {
-    if (!loadingCampaigns && routeState.isHub) {
-      if (activeCampaigns.length <= 1) {
-        window.history.replaceState(null, '', '/pemakaman');
-        setRouteState({ isHub: false, campaignSlug: 'pemakaman', tab: 'donasi' });
-      }
-    }
-  }, [loadingCampaigns, routeState.isHub, activeCampaigns.length]);
 
   const activeTab = routeState.tab;
   const currentCampaignSlug = routeState.campaignSlug || 'pemakaman';
@@ -158,6 +149,17 @@ function DonationApp() {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [currentCampaignSlug]);
 
+  const navigateToHub = useCallback(() => {
+    setRouteState({ isHub: true, campaignSlug: 'pemakaman', tab: 'donasi' });
+    if (window.location.pathname !== '/') {
+      window.history.pushState(null, '', '/');
+    }
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({ top: 0, behavior: 'instant' });
+    }
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, []);
+
   useEffect(() => {
     const handlePopState = () => setRouteState(parseRoute());
     window.addEventListener('popstate', handlePopState);
@@ -228,7 +230,7 @@ function DonationApp() {
 
   // Dynamic favicon & metadata handling
   useEffect(() => {
-    if (routeState.isHub && activeCampaigns.length > 1) {
+    if (routeState.isHub) {
       updateDynamicFavicon([{ src: '/kmii-logo.png', alt: 'KMII Jepang', height: 38 }]);
       updateDocumentMetadata({
         title: 'KMII Jepang - Portal ZISWAF & Donasi',
@@ -256,7 +258,6 @@ function DonationApp() {
     }
   }, [
     routeState.isHub,
-    activeCampaigns.length,
     publicConfig,
     hasLoadedStats,
     currentCampaignSlug
@@ -465,24 +466,22 @@ function DonationApp() {
         </Box>
       );
     }
-    if (activeCampaigns.length > 1) {
-      return (
-        <CampaignDirectory
-          campaigns={campaigns}
-          onSelectCampaign={(target) => {
-            const parts = target.split('/');
-            const slug = parts[0];
-            const tab: AppTab = parts[1] === 'donatur' ? 'donatur' : 'donasi';
-            window.history.pushState(null, '', `/${target}`);
-            setRouteState({ isHub: false, campaignSlug: slug, tab });
-          }}
-          onAdminClick={() => {
-            window.history.pushState(null, '', '/admin');
-            setRouteState({ isHub: false, campaignSlug: 'pemakaman', tab: 'admin' });
-          }}
-        />
-      );
-    }
+    return (
+      <CampaignDirectory
+        campaigns={campaigns}
+        onSelectCampaign={(target) => {
+          const parts = target.split('/');
+          const slug = parts[0];
+          const tab: AppTab = parts[1] === 'donatur' ? 'donatur' : 'donasi';
+          window.history.pushState(null, '', `/${target}`);
+          setRouteState({ isHub: false, campaignSlug: slug, tab });
+        }}
+        onAdminClick={() => {
+          window.history.pushState(null, '', '/admin');
+          setRouteState({ isHub: false, campaignSlug: 'pemakaman', tab: 'admin' });
+        }}
+      />
+    );
   }
 
   return (
@@ -542,7 +541,7 @@ function DonationApp() {
         <Box ref={scrollRef} sx={{ flex: 1, overflowY: 'auto', position: 'relative', zIndex: 10 }}>
           {activeTab === 'donasi' && (
             <Box>
-              <Header user={user} isAdminUser={isAdminUser} onAdminClick={() => navigateToTab('admin')} publicConfig={publicConfig} />
+              <Header user={user} isAdminUser={isAdminUser} onAdminClick={() => navigateToTab('admin')} publicConfig={publicConfig} onHomeClick={navigateToHub} />
               <Box sx={{ px: 2, py: 2.5, display: 'flex', flexDirection: 'column', gap: 3 }}>
                 {Boolean(publicConfig.imageUrl) && (
                   <Box
@@ -661,7 +660,7 @@ function DonationApp() {
 
           {activeTab === 'admin' && !isAdminUser && (
             <Box sx={{ minHeight: '100%', bgcolor: c.well }}>
-              <Header user={user} isAdminUser={isAdminUser} onAdminClick={() => navigateToTab('admin')} publicConfig={publicConfig} />
+              <Header user={user} isAdminUser={isAdminUser} onAdminClick={() => navigateToTab('admin')} publicConfig={publicConfig} onHomeClick={navigateToHub} />
               <Box sx={{ p: 2.5 }}>
                 <Box sx={{ p: 2.25, bgcolor: c.paper, border: `1px solid ${c.ruleStrong}`, borderRadius: radius.lg }}>
                   <Eyebrow tone="brass">Akses Terbatas</Eyebrow>

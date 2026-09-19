@@ -1,22 +1,26 @@
 import type { PublicLogo } from '../types';
 
 export const updateDynamicFavicon = async (logos?: PublicLogo[]) => {
-  let iconLink = document.querySelector<HTMLLinkElement>("link[rel='icon']");
-  let appleLink = document.querySelector<HTMLLinkElement>("link[rel='apple-touch-icon']");
+  const setFavicon = (href: string) => {
+    document.querySelectorAll<HTMLLinkElement>("link[rel~='icon'], link[rel='apple-touch-icon']").forEach(el => el.remove());
 
-  if (!iconLink) {
-    iconLink = document.createElement('link');
+    const iconLink = document.createElement('link');
     iconLink.rel = 'icon';
     iconLink.type = 'image/png';
+    iconLink.href = href;
     document.head.appendChild(iconLink);
-  }
+
+    const appleLink = document.createElement('link');
+    appleLink.rel = 'apple-touch-icon';
+    appleLink.href = href;
+    document.head.appendChild(appleLink);
+  };
 
   const defaultFavicon = '/kmii-logo.png';
 
   // If no partner (only 1 or 0 logos), use standard KMII logo
   if (!logos || logos.length <= 1) {
-    iconLink.href = defaultFavicon;
-    if (appleLink) appleLink.href = defaultFavicon;
+    setFavicon(defaultFavicon);
     return;
   }
 
@@ -24,8 +28,7 @@ export const updateDynamicFavicon = async (logos?: PublicLogo[]) => {
   const partnerLogoSrc = logos[1]?.src;
 
   if (!partnerLogoSrc) {
-    iconLink.href = defaultFavicon;
-    if (appleLink) appleLink.href = defaultFavicon;
+    setFavicon(defaultFavicon);
     return;
   }
 
@@ -94,11 +97,9 @@ export const updateDynamicFavicon = async (logos?: PublicLogo[]) => {
     ctx.drawImage(imgPartner, px, py, pw, ph);
 
     const dataUrl = canvas.toDataURL('image/png');
-    iconLink.href = dataUrl;
-    if (appleLink) appleLink.href = dataUrl;
+    setFavicon(dataUrl);
   } catch (err) {
     console.warn('Could not generate dynamic favicon, using fallback:', err);
-    iconLink.href = defaultFavicon;
-    if (appleLink) appleLink.href = defaultFavicon;
+    setFavicon(defaultFavicon);
   }
 };
