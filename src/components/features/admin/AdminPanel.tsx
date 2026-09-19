@@ -101,6 +101,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isDeletingCampaign, setIsDeletingCampaign] = useState(false);
 
+  const initialPartnerLogo = publicConfig.logos?.find((l) => l.src !== '/kmii-logo.png' && !l.src.includes('kmii-logo'));
+  const [hasPartner, setHasPartner] = useState<boolean>(Boolean(initialPartnerLogo));
+  const [partnerName, setPartnerName] = useState<string>(initialPartnerLogo?.alt || '');
+  const [partnerLogoUrl, setPartnerLogoUrl] = useState<string>(initialPartnerLogo?.src || '');
+  const [isUploadingPartnerLogo, setIsUploadingPartnerLogo] = useState(false);
+
   const [deadlineInput, setDeadlineInput] = useState(toLocalInput(donationDeadline));
   const [totalNeedInput, setTotalNeedInput] = useState(String(totalNeed));
   const [renovationNeedInput, setRenovationNeedInput] = useState(String(renovationNeed));
@@ -191,7 +197,40 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     setShowNarahubung(publicConfig.showNarahubung !== false);
     setNarahubungList(publicConfig.narahubung || []);
     setEnablePhase2(Boolean(publicConfig.phases.length > 1));
+
+    const pLogo = publicConfig.logos?.find((l) => l.src !== '/kmii-logo.png' && !l.src.includes('kmii-logo'));
+    setHasPartner(Boolean(pLogo));
+    setPartnerName(pLogo?.alt || '');
+    setPartnerLogoUrl(pLogo?.src || '');
   }, [publicConfig, currentCampaignId, campaigns, isClosed]);
+
+  const handlePartnerLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !e.target.files[0]) return;
+    const file = e.target.files[0];
+    const ext = file.name.split('.').pop()?.toLowerCase() || 'png';
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Ukuran logo mitra terlalu besar! Maksimal 10MB.');
+      e.target.value = '';
+      return;
+    }
+    const targetCampId = currentCampaignId || 'pemakaman';
+    setIsUploadingPartnerLogo(true);
+    try {
+      const fileName = `partner_logo_${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
+      const storageRef = ref(storage, `campaigns/${targetCampId}/${fileName}`);
+      const snapshot = await uploadBytes(storageRef, file);
+      const downloadUrl = await getDownloadURL(snapshot.ref);
+      setPartnerLogoUrl(downloadUrl);
+      setHasPartner(true);
+      alert('Logo mitra berhasil diunggah! Klik "Simpan Perubahan" di bagian bawah untuk menerapkan.');
+    } catch (err: any) {
+      console.error('Failed to upload partner logo:', err);
+      alert(`Gagal mengunggah logo mitra: ${err?.message || 'Terjadi kesalahan'}`);
+    } finally {
+      setIsUploadingPartnerLogo(false);
+      e.target.value = '';
+    }
+  };
 
   const updatePublicConfigInput = (field: keyof typeof publicConfigInput, value: string) => {
     setPublicConfigInput((prev) => ({ ...prev, [field]: value }));
@@ -621,6 +660,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         const isClosedValue = campaignStatusInput === 'closed';
         const cleanImageUrl = imageUrlInput.trim();
 
+        const constructedLogos = [{ src: '/kmii-logo.png', alt: 'KMII', height: 38 }];
+        if (hasPartner && partnerLogoUrl.trim()) {
+          constructedLogos.push({
+            src: partnerLogoUrl.trim(),
+            alt: partnerName.trim() || 'Mitra',
+            height: 38
+          });
+        }
+
         const settingsPayload: any = {
           status: campaignStatusInput,
           category: campaignCategoryInput || 'Donasi',
@@ -652,7 +700,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             cashPaymentText: publicConfigInput.cashPaymentText?.trim() || 'Donasi tunai dapat diserahkan langsung atau dikonfirmasikan kepada panitia.',
             donationClosedTitle: publicConfigInput.donationClosedTitle || '',
             donationClosedText: publicConfigInput.donationClosedText || '',
-            logos: publicConfig.logos || [],
+            logos: constructedLogos,
             uniqueCode: publicConfig.uniqueCode || 0,
             phases,
             packages,
@@ -1538,6 +1586,90 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 }
                 sx={{ m: 0, opacity: isTogglingDonatur ? 0.6 : 1 }}
               />
+            </Box>
+          </Card>
+
+          {/* Group 1A: Mitra / Partner Kerjasama (Opsional) */}
+          <Card sx={{ p: 2.25, border: `1px solid ${c.ruleStrong}`, borderRadius: radius.lg, bgcolor: c.paper }}>
+            <SectionHeading title="Mitra / Partner Kerjasama (Opsional)" />
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={hasPartner}
+                    onChange={(e) => setHasPartner(e.target.checked)}
+                    color="primary"
+                  />
+                }
+                label={
+                  <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                      Program Memiliki Mitra / Partner Kerjasama
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                      Jika aktif, logo mitra akan tampil berdampingan dengan logo KMII di header halaman dan favicon browser.
+                    </Typography>
+                  </Box>
+                }
+                sx={{ m: 0 }}
+              />
+
+              {hasPartner && (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 0.5 }}>
+                  <TextField
+                    size="small"
+                    label="Nama Mitra Kerjasama"
+                    placeholder="Contoh: Indonesian Volunteer Community"
+                    value={partnerName}
+                    onChange={(e) => setPartnerName(e.target.value)}
+                    helperText="Nama organisasi mitra yang bekerjasama pada program ini"
+                    fullWidth
+                  />
+
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                    <Typography sx={{ fontSize: '0.75rem', fontWeight: 600, color: c.ink }}>
+                      Pratinjau Logo Header & Favicon
+                    </Typography>
+
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 2, bgcolor: c.well, borderRadius: radius.md, border: `1px solid ${c.rule}`, width: 'fit-content' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <img src="/kmii-logo.png" alt="KMII" style={{ height: 38, width: 'auto', objectFit: 'contain' }} />
+                        <Box sx={{ width: '1px', height: 28, bgcolor: c.rule, flexShrink: 0 }} />
+                        {partnerLogoUrl ? (
+                          <img src={partnerLogoUrl} alt={partnerName || 'Mitra'} style={{ height: 38, width: 'auto', objectFit: 'contain' }} />
+                        ) : (
+                          <Box sx={{ height: 38, px: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px dashed ${c.ruleStrong}`, borderRadius: 1, bgcolor: '#fff' }}>
+                            <Typography sx={{ fontSize: '0.6875rem', color: c.inkFaint }}>[Belum ada logo mitra]</Typography>
+                          </Box>
+                        )}
+                      </Box>
+                    </Box>
+
+                    <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+                      <Button
+                        variant="outlined"
+                        component="label"
+                        disabled={isUploadingPartnerLogo}
+                        startIcon={isUploadingPartnerLogo ? <CircularProgress size={14} /> : <Upload size={14} />}
+                        sx={{ ...eyebrow, fontSize: '0.625rem', color: c.ink, borderColor: c.ruleStrong }}
+                      >
+                        {isUploadingPartnerLogo ? 'Mengunggah…' : 'Unggah Logo Mitra'}
+                        <input type="file" accept="image/*" hidden onChange={handlePartnerLogoUpload} />
+                      </Button>
+                      <Typography sx={{ fontSize: '0.75rem', color: c.inkFaint }}>atau gunakan tautan langsung:</Typography>
+                    </Box>
+                    <TextField
+                      size="small"
+                      label="URL Logo Mitra (Opsional)"
+                      placeholder="https://... atau /ivc-logo.png"
+                      value={partnerLogoUrl}
+                      onChange={(e) => setPartnerLogoUrl(e.target.value.trim())}
+                      helperText="Disarankan format PNG transparan dengan resolusi jelas"
+                      fullWidth
+                    />
+                  </Box>
+                </Box>
+              )}
             </Box>
           </Card>
 

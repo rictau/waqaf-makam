@@ -11,8 +11,10 @@ import {
   Switch,
   FormControlLabel,
   InputAdornment,
-  MenuItem
+  MenuItem,
+  CircularProgress
 } from '@mui/material';
+import { Upload } from 'lucide-react';
 import { doc, setDoc, getDoc, Timestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../../../firebase';
@@ -47,6 +49,10 @@ export const CampaignBuilderDialog: React.FC<CampaignBuilderDialogProps> = ({
   const [category, setCategory] = useState<string>('Wakaf');
   const [imageUrl, setImageUrl] = useState<string>('');
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [hasPartner, setHasPartner] = useState(false);
+  const [partnerName, setPartnerName] = useState('');
+  const [partnerLogoUrl, setPartnerLogoUrl] = useState('');
+  const [isUploadingPartnerLogo, setIsUploadingPartnerLogo] = useState(false);
   const [targetJPY, setTargetJPY] = useState('20000000');
   const [locationText, setLocationText] = useState('');
   const [status, setStatus] = useState<CampaignStatus>('active');
@@ -68,6 +74,10 @@ export const CampaignBuilderDialog: React.FC<CampaignBuilderDialogProps> = ({
         setShortName(editCampaign.shortName || '');
         setCategory(editCampaign.category || (editCampaign.publicConfig as any)?.category || 'Wakaf');
         setImageUrl(editCampaign.imageUrl || (editCampaign.publicConfig as any)?.imageUrl || '');
+        const pLogo = editCampaign.publicConfig?.logos?.find((l) => l.src !== '/kmii-logo.png' && !l.src.includes('kmii-logo'));
+        setHasPartner(Boolean(pLogo));
+        setPartnerName(pLogo?.alt || '');
+        setPartnerLogoUrl(pLogo?.src || '');
         setTargetJPY(String(editCampaign.totalNeed || 20000000));
         setLocationText(editCampaign.publicConfig?.locationText || '');
         setStatus(editCampaign.status || 'active');
@@ -87,6 +97,10 @@ export const CampaignBuilderDialog: React.FC<CampaignBuilderDialogProps> = ({
         setShortName(cloneFrom.shortName);
         setCategory(cloneFrom.category || (cloneFrom.publicConfig as any)?.category || 'Wakaf');
         setImageUrl(cloneFrom.imageUrl || (cloneFrom.publicConfig as any)?.imageUrl || '');
+        const pLogo = cloneFrom.publicConfig?.logos?.find((l) => l.src !== '/kmii-logo.png' && !l.src.includes('kmii-logo'));
+        setHasPartner(Boolean(pLogo));
+        setPartnerName(pLogo?.alt || '');
+        setPartnerLogoUrl(pLogo?.src || '');
         setTargetJPY(String(cloneFrom.totalNeed || 20000000));
         setLocationText(cloneFrom.publicConfig?.locationText || '');
         setStatus('active');
@@ -106,6 +120,9 @@ export const CampaignBuilderDialog: React.FC<CampaignBuilderDialogProps> = ({
         setShortName('');
         setCategory('Wakaf');
         setImageUrl('');
+        setHasPartner(false);
+        setPartnerName('');
+        setPartnerLogoUrl('');
         setTargetJPY('20000000');
         setLocationText('');
         setStatus('active');
@@ -147,6 +164,33 @@ export const CampaignBuilderDialog: React.FC<CampaignBuilderDialogProps> = ({
     }
   };
 
+  const handlePartnerLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !e.target.files[0]) return;
+    const file = e.target.files[0];
+    const ext = file.name.split('.').pop()?.toLowerCase() || 'png';
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Ukuran logo mitra maksimal 10MB.');
+      e.target.value = '';
+      return;
+    }
+    setIsUploadingPartnerLogo(true);
+    try {
+      const targetSlug = slug.trim() || 'new-campaign';
+      const fileName = `partner_logo_${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
+      const storageRef = ref(storage, `campaigns/${targetSlug}/${fileName}`);
+      const snapshot = await uploadBytes(storageRef, file);
+      const downloadUrl = await getDownloadURL(snapshot.ref);
+      setPartnerLogoUrl(downloadUrl);
+      setHasPartner(true);
+    } catch (err: any) {
+      console.error('Failed to upload partner logo:', err);
+      alert(`Gagal upload logo mitra: ${err?.message || 'Terjadi kesalahan'}`);
+    } finally {
+      setIsUploadingPartnerLogo(false);
+      e.target.value = '';
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
@@ -173,6 +217,15 @@ export const CampaignBuilderDialog: React.FC<CampaignBuilderDialogProps> = ({
       const docRef = doc(db, 'campaigns', cleanSlug);
       const deadlineTimestamp = deadline ? Timestamp.fromDate(new Date(`${deadline}T23:59:59+09:00`)) : null;
 
+      const constructedLogos = [{ src: '/kmii-logo.png', alt: 'KMII', height: 38 }];
+      if (hasPartner && partnerLogoUrl.trim()) {
+        constructedLogos.push({
+          src: partnerLogoUrl.trim(),
+          alt: partnerName.trim() || 'Mitra',
+          height: 38
+        });
+      }
+
       if (mode === 'edit') {
         const existingSnap = await getDoc(docRef);
         const existingData = existingSnap.exists() ? existingSnap.data() : {};
@@ -187,6 +240,7 @@ export const CampaignBuilderDialog: React.FC<CampaignBuilderDialogProps> = ({
           imageUrl: imageUrl.trim() || undefined,
           locationText: locationText.trim() || 'Jepang',
           wakafHadith: hadith.trim(),
+          logos: constructedLogos,
         };
 
         const updatePayload: Record<string, any> = {
@@ -247,7 +301,7 @@ export const CampaignBuilderDialog: React.FC<CampaignBuilderDialogProps> = ({
         cashPaymentText: clonedConfig.cashPaymentText || basePublicConfig.cashPaymentText,
         donationClosedTitle: clonedConfig.donationClosedTitle || 'Periode Donasi Telah Ditutup',
         donationClosedText: clonedConfig.donationClosedText || 'Jazakumullah Khairan atas partisipasi Anda.',
-        logos: clonedConfig.logos || basePublicConfig.logos,
+        logos: constructedLogos,
         packages: clonedConfig.packages || basePublicConfig.packages,
         banks: useDefaultBanks ? basePublicConfig.banks : (cloneFrom?.publicConfig?.banks || basePublicConfig.banks),
         contactLinks: clonedConfig.contactLinks || basePublicConfig.contactLinks,
@@ -338,13 +392,13 @@ export const CampaignBuilderDialog: React.FC<CampaignBuilderDialogProps> = ({
               onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
               slotProps={{
                 input: {
-                  startAdornment: <InputAdornment position="start">infaq.kmii.jp/</InputAdornment>
+                  startAdornment: <InputAdornment position="start">ziswaf.kmii.jp/</InputAdornment>
                 }
               }}
               helperText={
                 mode === 'edit'
                   ? 'Slug URL tidak dapat diubah agar link donasi yang sudah beredar tidak rusak.'
-                  : `Halaman akan dibuka di: infaq.kmii.jp/${slug || 'nama-slug'}`
+                  : `Halaman akan dibuka di: ziswaf.kmii.jp/${slug || 'nama-slug'}`
               }
             />
           </Box>
@@ -460,6 +514,89 @@ export const CampaignBuilderDialog: React.FC<CampaignBuilderDialogProps> = ({
                   alt="Banner Program"
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
+              </Box>
+            )}
+          </Box>
+
+          {/* Mitra / Partner Kerjasama (Opsional) */}
+          <Box sx={{ p: 2, border: `1px solid ${c.rule}`, borderRadius: radius.md, bgcolor: c.well }}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={hasPartner}
+                  onChange={(e) => setHasPartner(e.target.checked)}
+                  color="success"
+                />
+              }
+              label={
+                <Box>
+                  <Typography sx={{ fontSize: '0.8125rem', fontWeight: 600, color: c.ink }}>
+                    Program Memiliki Mitra / Partner Kerjasama (Opsional)
+                  </Typography>
+                  <Typography sx={{ fontSize: '0.6875rem', color: c.inkMuted }}>
+                    Logo mitra akan tampil berdampingan dengan logo KMII di header dan favicon.
+                  </Typography>
+                </Box>
+              }
+              sx={{ m: 0 }}
+            />
+
+            {hasPartner && (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mt: 2, pt: 1.5, borderTop: `1px solid ${c.rule}` }}>
+                <Box>
+                  <Eyebrow sx={{ mb: 0.5 }}>Nama Mitra Kerjasama</Eyebrow>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    placeholder="Contoh: Indonesian Volunteer Community"
+                    value={partnerName}
+                    onChange={(e) => setPartnerName(e.target.value)}
+                    helperText="Nama organisasi mitra yang bekerjasama pada program ini"
+                  />
+                </Box>
+
+                <Box>
+                  <Eyebrow sx={{ mb: 0.5 }}>Pratinjau Logo Header & Favicon</Eyebrow>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 1.5, bgcolor: c.paper, borderRadius: radius.sm, border: `1px solid ${c.rule}`, width: 'fit-content' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                      <img src="/kmii-logo.png" alt="KMII" style={{ height: 32, width: 'auto', objectFit: 'contain' }} />
+                      <Box sx={{ width: '1px', height: 24, bgcolor: c.rule, flexShrink: 0 }} />
+                      {partnerLogoUrl ? (
+                        <img src={partnerLogoUrl} alt={partnerName || 'Mitra'} style={{ height: 32, width: 'auto', objectFit: 'contain' }} />
+                      ) : (
+                        <Box sx={{ height: 32, px: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px dashed ${c.ruleStrong}`, borderRadius: 1, bgcolor: '#fff' }}>
+                          <Typography sx={{ fontSize: '0.625rem', color: c.inkFaint }}>[Belum ada logo mitra]</Typography>
+                        </Box>
+                      )}
+                    </Box>
+                  </Box>
+                </Box>
+
+                <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    placeholder="https://... atau klik Upload Logo Mitra"
+                    value={partnerLogoUrl}
+                    onChange={(e) => setPartnerLogoUrl(e.target.value.trim())}
+                    helperText="Disarankan file PNG transparan (maks 10MB)"
+                  />
+                  <Button
+                    variant="outlined"
+                    component="label"
+                    disabled={isUploadingPartnerLogo}
+                    startIcon={isUploadingPartnerLogo ? <CircularProgress size={14} /> : <Upload size={14} />}
+                    sx={{ ...eyebrow, fontSize: '0.625rem', whiteSpace: 'nowrap', py: 1, minHeight: 40 }}
+                  >
+                    {isUploadingPartnerLogo ? 'Mengunggah…' : 'Upload Logo'}
+                    <input
+                      type="file"
+                      hidden
+                      accept="image/*"
+                      onChange={handlePartnerLogoUpload}
+                    />
+                  </Button>
+                </Box>
               </Box>
             )}
           </Box>

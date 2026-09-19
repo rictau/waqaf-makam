@@ -188,12 +188,18 @@ export function useStats(campaignId: string = 'pemakaman') {
 
   useEffect(() => {
     if (!hasLoadedStats) return;
+    const title = publicConfig.campaignTitle || publicConfig.masjidName || 'Program Donasi';
+    const desc = publicConfig.programmeScopeDescription || publicConfig.programmeScopeTitle || 'Salurkan donasi, infaq, sedekah, dan wakaf Anda bersama KMII Jepang.';
+    const img = publicConfig.imageUrl || '/og-preview.png';
+    const pageUrl = `https://ziswaf.kmii.jp/${campaignId || 'pemakaman'}`;
+
     updateDocumentMetadata({
-      title: `Wakaf Tanah Makam Muslim - ${publicConfig.shortName || 'KMII Jepang'}`,
-      description: 'Bersama Wujudkan Pemakaman Muslim untuk WNI di Jepang',
-      url: window.location.origin
+      title: `${title} · ${publicConfig.shortName || 'KMII Jepang'}`,
+      description: desc,
+      image: img,
+      url: pageUrl
     });
-  }, [hasLoadedStats, publicConfig]);
+  }, [hasLoadedStats, publicConfig, campaignId]);
 
   const shortfallAmount = Math.max(0, stats.totalNeed - danaTerkumpulAmount);
   const totalPercentage = (danaTerkumpulAmount / stats.totalNeed) * 100;

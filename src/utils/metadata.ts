@@ -2,9 +2,9 @@ const setMeta = (selector: string, value: string) => {
   document.querySelector(selector)?.setAttribute('content', value);
 };
 
-const siteUrl = 'https://honjo.kmii.jp';
-const defaultTitle = 'Wakaf Tanah Makam Muslim - KMII Jepang';
-const defaultDescription = 'Bersama Wujudkan Pemakaman Muslim untuk WNI di Jepang';
+const siteUrl = 'https://ziswaf.kmii.jp';
+const defaultTitle = 'KMII Jepang - Portal ZISWAF & Donasi';
+const defaultDescription = 'Salurkan zakat, infaq, sedekah, dan wakaf Anda untuk berbagai program dakwah dan kemaslahatan muslim di Jepang.';
 
 const toAbsoluteUrl = (value: string) => {
   try {

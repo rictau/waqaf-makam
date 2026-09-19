@@ -25,6 +25,8 @@ import { CampaignDirectory } from './components/features/directory/CampaignDirec
 import { useStats } from './hooks/useStats';
 import { useDonations } from './hooks/useDonations';
 import { useCampaigns } from './hooks/useCampaigns';
+import { updateDynamicFavicon } from './utils/favicon';
+import { updateDocumentMetadata } from './utils/metadata';
 import type { AppTab } from './types';
 
 interface RouteState {
@@ -223,6 +225,21 @@ function DonationApp() {
       navigateToTab('donasi');
     }
   }, [stats.showDonaturTab, activeTab, hasLoadedStats, navigateToTab]);
+
+  // Dynamic favicon & metadata handling
+  useEffect(() => {
+    if (routeState.isHub && activeCampaigns.length > 1) {
+      updateDynamicFavicon([{ src: '/kmii-logo.png', alt: 'KMII Jepang', height: 38 }]);
+      updateDocumentMetadata({
+        title: 'KMII Jepang - Portal ZISWAF & Donasi',
+        description: 'Salurkan zakat, infaq, sedekah, dan wakaf Anda untuk berbagai program dakwah dan kemaslahatan muslim di Jepang.',
+        image: '/og-preview.png',
+        url: 'https://ziswaf.kmii.jp'
+      });
+    } else if (publicConfig.logos) {
+      updateDynamicFavicon(publicConfig.logos);
+    }
+  }, [routeState.isHub, activeCampaigns.length, publicConfig.logos]);
 
   const handleSelectAccount = (text: string, id: string) => {
     setSelectedAccountId(id);

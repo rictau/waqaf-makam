@@ -93,6 +93,7 @@ export interface GlobalStats {
 export interface PublicLogo {
   src: string;
   alt: string;
+  height?: number;
 }
 
 export interface DonationPackageConfig {

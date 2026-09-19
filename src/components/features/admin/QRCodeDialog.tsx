@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -14,7 +14,7 @@ import {
   Switch,
   Tab,
   Tabs,
-  Chip
+  CircularProgress
 } from '@mui/material';
 import {
   QrCode,
@@ -46,32 +46,17 @@ export const QRCodeDialog: React.FC<QRCodeDialogProps> = ({
   locationText
 }) => {
   const [activeTab, setActiveTab] = useState<'qr' | 'standee'>('qr');
-  const [domainOption, setDomainOption] = useState<'ziswaf' | 'infaq' | 'honjo' | 'custom'>('ziswaf');
   const [url, setUrl] = useState('');
   const [includeLogo, setIncludeLogo] = useState(true);
   const [colorMode, setColorMode] = useState<'forest' | 'black'>('forest');
   const [isCopied, setIsCopied] = useState(false);
   const [isRendering, setIsRendering] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState<string>('');
+  const [standeeDataUrl, setStandeeDataUrl] = useState<string>('');
 
-  const qrCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const standeeCanvasRef = useRef<HTMLCanvasElement | null>(null);
-
-  // Default URL logic based on campaign
-  useEffect(() => {
-    const slug = campaignId || 'pemakaman';
-    if (domainOption === 'ziswaf') {
-      setUrl(`https://ziswaf.kmii.jp/${slug}`);
-    } else if (domainOption === 'infaq') {
-      setUrl(`https://infaq.kmii.jp/${slug}`);
-    } else if (domainOption === 'honjo') {
-      setUrl('https://honjo.kmii.jp');
-    }
-  }, [campaignId, domainOption]);
-
-  // When dialog opens, reset to ziswaf domain
+  // When dialog opens, initialize with canonical ziswaf.kmii.jp URL
   useEffect(() => {
     if (open) {
-      setDomainOption('ziswaf');
       setUrl(`https://ziswaf.kmii.jp/${campaignId || 'pemakaman'}`);
       setIsCopied(false);
     }
@@ -79,7 +64,7 @@ export const QRCodeDialog: React.FC<QRCodeDialogProps> = ({
 
   const fgColor = colorMode === 'forest' ? '#1E3A2F' : '#000000';
 
-  // Render QR Code onto canvas
+  // Render QR Code and Standee to offscreen canvases
   useEffect(() => {
     if (!open || !url) return;
 
@@ -88,10 +73,11 @@ export const QRCodeDialog: React.FC<QRCodeDialogProps> = ({
 
     const renderQR = async () => {
       try {
-        const qrCanvas = qrCanvasRef.current;
-        if (!qrCanvas) return;
+        // 1. Offscreen canvas for QR Code (1024x1024)
+        const qrCanvas = document.createElement('canvas');
+        qrCanvas.width = 1024;
+        qrCanvas.height = 1024;
 
-        // 1. Generate base high-res QR code (1024x1024)
         await QRCode.toCanvas(qrCanvas, url, {
           errorCorrectionLevel: 'H',
           width: 1024,
@@ -102,178 +88,177 @@ export const QRCodeDialog: React.FC<QRCodeDialogProps> = ({
           }
         });
 
-        // 2. If includeLogo is true, draw KMII logo badge in center
+        // 2. Draw center KMII logo badge if enabled
         if (includeLogo) {
           const ctx = qrCanvas.getContext('2d');
-          if (!ctx) return;
+          if (ctx) {
+            const logoImg = new Image();
+            logoImg.crossOrigin = 'anonymous';
+            logoImg.src = '/kmii-logo.png';
 
-          const logoImg = new Image();
-          logoImg.crossOrigin = 'anonymous';
-          logoImg.src = '/kmii-logo.png';
-
-          await new Promise<void>((resolve) => {
-            logoImg.onload = () => resolve();
-            logoImg.onerror = () => resolve(); // fallback gracefully
-          });
-
-          if (!isMounted) return;
-
-          const canvasWidth = qrCanvas.width;
-          const targetLogoSize = Math.round(canvasWidth * 0.22);
-          const badgePadding = Math.round(targetLogoSize * 0.08);
-          const badgeTotalSize = targetLogoSize + badgePadding * 2;
-          const startX = Math.round((canvasWidth - badgeTotalSize) / 2);
-          const startY = Math.round((canvasWidth - badgeTotalSize) / 2);
-          const cornerRadius = Math.round(badgeTotalSize * 0.16);
-
-          // Draw rounded white background
-          ctx.save();
-          ctx.fillStyle = '#FFFFFF';
-          ctx.beginPath();
-          ctx.roundRect(startX, startY, badgeTotalSize, badgeTotalSize, cornerRadius);
-          ctx.fill();
-
-          // Subtle hairline border around badge
-          ctx.strokeStyle = '#E5DFD7';
-          ctx.lineWidth = 4;
-          ctx.stroke();
-
-          // Draw logo
-          if (logoImg.complete && logoImg.naturalWidth > 0) {
-            ctx.drawImage(
-              logoImg,
-              startX + badgePadding,
-              startY + badgePadding,
-              targetLogoSize,
-              targetLogoSize
-            );
-          }
-          ctx.restore();
-        }
-
-        // 3. Render Standee Canvas (1000 x 1400)
-        const standeeCanvas = standeeCanvasRef.current;
-        if (standeeCanvas) {
-          const sCtx = standeeCanvas.getContext('2d');
-          if (sCtx) {
-            const W = 1000;
-            const H = 1400;
-            standeeCanvas.width = W;
-            standeeCanvas.height = H;
-
-            // Background stone
-            sCtx.fillStyle = '#FBF9F5';
-            sCtx.fillRect(0, 0, W, H);
-
-            // Subtle outer border
-            sCtx.strokeStyle = '#E5DFD7';
-            sCtx.lineWidth = 2;
-            sCtx.beginPath();
-            sCtx.roundRect(30, 30, W - 60, H - 60, 32);
-            sCtx.stroke();
-
-            // Load header logos
-            const kmiiLogo = new Image();
-            kmiiLogo.src = '/kmii-logo.png';
-            await new Promise<void>((res) => {
-              kmiiLogo.onload = () => res();
-              kmiiLogo.onerror = () => res();
+            await new Promise<void>((resolve) => {
+              logoImg.onload = () => resolve();
+              logoImg.onerror = () => resolve();
             });
 
-            // Draw header KMII logo
-            const logoW = 80;
-            const logoH = 80;
-            if (kmiiLogo.complete && kmiiLogo.naturalWidth > 0) {
-              sCtx.drawImage(kmiiLogo, (W - logoW) / 2, 75, logoW, logoH);
+            if (!isMounted) return;
+
+            const canvasWidth = 1024;
+            const targetLogoSize = Math.round(canvasWidth * 0.22);
+            const badgePadding = Math.round(targetLogoSize * 0.08);
+            const badgeTotalSize = targetLogoSize + badgePadding * 2;
+            const startX = Math.round((canvasWidth - badgeTotalSize) / 2);
+            const startY = Math.round((canvasWidth - badgeTotalSize) / 2);
+            const cornerRadius = Math.round(badgeTotalSize * 0.16);
+
+            ctx.save();
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath();
+            ctx.roundRect(startX, startY, badgeTotalSize, badgeTotalSize, cornerRadius);
+            ctx.fill();
+
+            ctx.strokeStyle = '#E5DFD7';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            if (logoImg.complete && logoImg.naturalWidth > 0) {
+              ctx.drawImage(
+                logoImg,
+                startX + badgePadding,
+                startY + badgePadding,
+                targetLogoSize,
+                targetLogoSize
+              );
             }
-
-            // Eyebrow
-            sCtx.fillStyle = '#9C6D37'; // brass
-            sCtx.font = 'bold 20px "Plus Jakarta Sans", sans-serif';
-            sCtx.textAlign = 'center';
-            sCtx.fillText('KMII JEPANG', W / 2, 195);
-
-            // Title
-            sCtx.fillStyle = '#1E3A2F';
-            sCtx.font = 'bold 42px "Fraunces", Georgia, serif';
-            const displayTitle = campaignTitle || shortName || 'Program Donasi & Wakaf';
-            // Simple wrap if title is too long
-            if (displayTitle.length > 35) {
-              const words = displayTitle.split(' ');
-              const mid = Math.ceil(words.length / 2);
-              const line1 = words.slice(0, mid).join(' ');
-              const line2 = words.slice(mid).join(' ');
-              sCtx.fillText(line1, W / 2, 255);
-              sCtx.fillText(line2, W / 2, 305);
-            } else {
-              sCtx.fillText(displayTitle, W / 2, 270);
-            }
-
-            // Subtitle location & info
-            sCtx.fillStyle = '#6B7280';
-            sCtx.font = '500 22px "Plus Jakarta Sans", sans-serif';
-            const subLoc = locationText ? `${locationText} · KMII Jepang` : 'Keluarga Masyarakat Islam Indonesia (KMII) Jepang';
-            sCtx.fillText(subLoc, W / 2, 345);
-
-            // Divider hairline
-            sCtx.strokeStyle = '#E5DFD7';
-            sCtx.lineWidth = 1.5;
-            sCtx.beginPath();
-            sCtx.moveTo(150, 380);
-            sCtx.lineTo(W - 150, 380);
-            sCtx.stroke();
-
-            // QR Frame Card
-            const qrCardSize = 600;
-            const qrCardX = (W - qrCardSize) / 2;
-            const qrCardY = 415;
-            sCtx.fillStyle = '#FFFFFF';
-            sCtx.strokeStyle = '#E5DFD7';
-            sCtx.lineWidth = 2;
-            sCtx.beginPath();
-            sCtx.roundRect(qrCardX, qrCardY, qrCardSize, qrCardSize, 32);
-            sCtx.fill();
-            sCtx.stroke();
-
-            // Draw QR code onto Standee card
-            const qrInnerPadding = 30;
-            const qrDrawSize = qrCardSize - qrInnerPadding * 2;
-            sCtx.drawImage(
-              qrCanvas,
-              qrCardX + qrInnerPadding,
-              qrCardY + qrInnerPadding,
-              qrDrawSize,
-              qrDrawSize
-            );
-
-            // Action Callout
-            sCtx.fillStyle = '#1E3A2F';
-            sCtx.font = 'bold 26px "Plus Jakarta Sans", sans-serif';
-            sCtx.fillText('PINDAI UNTUK DONASI & CEK PROGRES', W / 2, 1080);
-
-            // Pill button with URL
-            const pillW = 460;
-            const pillH = 72;
-            const pillX = (W - pillW) / 2;
-            const pillY = 1125;
-            sCtx.fillStyle = '#1E3A2F';
-            sCtx.beginPath();
-            sCtx.roundRect(pillX, pillY, pillW, pillH, 36);
-            sCtx.fill();
-
-            sCtx.fillStyle = '#FFFFFF';
-            sCtx.font = 'bold 28px "Plus Jakarta Sans", monospace';
-            const cleanDisplayUrl = url.replace(/^https?:\/\//, '');
-            sCtx.fillText(cleanDisplayUrl, W / 2, pillY + 46);
-
-            // Footer note
-            sCtx.fillStyle = '#6B7280';
-            sCtx.font = '500 20px "Plus Jakarta Sans", sans-serif';
-            sCtx.fillText('Keluarga Masyarakat Islam Indonesia (KMII) Jepang', W / 2, 1265);
+            ctx.restore();
           }
         }
+
+        const generatedQrUrl = qrCanvas.toDataURL('image/png');
+        if (isMounted) setQrDataUrl(generatedQrUrl);
+
+        // 3. Offscreen canvas for Standee Flyer (1000x1400)
+        const standeeCanvas = document.createElement('canvas');
+        const W = 1000;
+        const H = 1400;
+        standeeCanvas.width = W;
+        standeeCanvas.height = H;
+
+        const sCtx = standeeCanvas.getContext('2d');
+        if (sCtx) {
+          // Warm stone background
+          sCtx.fillStyle = '#FBF9F5';
+          sCtx.fillRect(0, 0, W, H);
+
+          // Subtle rounded border
+          sCtx.strokeStyle = '#E5DFD7';
+          sCtx.lineWidth = 2;
+          sCtx.beginPath();
+          sCtx.roundRect(30, 30, W - 60, H - 60, 32);
+          sCtx.stroke();
+
+          // Header logo
+          const kmiiLogo = new Image();
+          kmiiLogo.src = '/kmii-logo.png';
+          await new Promise<void>((res) => {
+            kmiiLogo.onload = () => res();
+            kmiiLogo.onerror = () => res();
+          });
+
+          const logoW = 80;
+          const logoH = 80;
+          if (kmiiLogo.complete && kmiiLogo.naturalWidth > 0) {
+            sCtx.drawImage(kmiiLogo, (W - logoW) / 2, 75, logoW, logoH);
+          }
+
+          // Eyebrow
+          sCtx.fillStyle = '#9C6D37'; // brass
+          sCtx.font = 'bold 20px "Plus Jakarta Sans", sans-serif';
+          sCtx.textAlign = 'center';
+          sCtx.fillText('KMII JEPANG', W / 2, 195);
+
+          // Campaign Title
+          sCtx.fillStyle = '#1E3A2F';
+          sCtx.font = 'bold 42px "Fraunces", Georgia, serif';
+          const displayTitle = campaignTitle || shortName || 'Program Donasi & ZISWAF';
+          if (displayTitle.length > 35) {
+            const words = displayTitle.split(' ');
+            const mid = Math.ceil(words.length / 2);
+            const line1 = words.slice(0, mid).join(' ');
+            const line2 = words.slice(mid).join(' ');
+            sCtx.fillText(line1, W / 2, 255);
+            sCtx.fillText(line2, W / 2, 305);
+          } else {
+            sCtx.fillText(displayTitle, W / 2, 270);
+          }
+
+          // Subtitle / Location
+          sCtx.fillStyle = '#6B7280';
+          sCtx.font = '500 22px "Plus Jakarta Sans", sans-serif';
+          const subLoc = locationText ? `${locationText} · KMII Jepang` : 'Keluarga Masyarakat Islam Indonesia (KMII) Jepang';
+          sCtx.fillText(subLoc, W / 2, 345);
+
+          // Divider rule
+          sCtx.strokeStyle = '#E5DFD7';
+          sCtx.lineWidth = 1.5;
+          sCtx.beginPath();
+          sCtx.moveTo(150, 380);
+          sCtx.lineTo(W - 150, 380);
+          sCtx.stroke();
+
+          // QR Card Frame
+          const qrCardSize = 600;
+          const qrCardX = (W - qrCardSize) / 2;
+          const qrCardY = 415;
+          sCtx.fillStyle = '#FFFFFF';
+          sCtx.strokeStyle = '#E5DFD7';
+          sCtx.lineWidth = 2;
+          sCtx.beginPath();
+          sCtx.roundRect(qrCardX, qrCardY, qrCardSize, qrCardSize, 32);
+          sCtx.fill();
+          sCtx.stroke();
+
+          // Draw QR onto card
+          const qrInnerPadding = 30;
+          const qrDrawSize = qrCardSize - qrInnerPadding * 2;
+          sCtx.drawImage(
+            qrCanvas,
+            qrCardX + qrInnerPadding,
+            qrCardY + qrInnerPadding,
+            qrDrawSize,
+            qrDrawSize
+          );
+
+          // Action Heading
+          sCtx.fillStyle = '#1E3A2F';
+          sCtx.font = 'bold 26px "Plus Jakarta Sans", sans-serif';
+          sCtx.fillText('PINDAI UNTUK DONASI & CEK PROGRES', W / 2, 1080);
+
+          // Pill button with URL
+          const pillW = 460;
+          const pillH = 72;
+          const pillX = (W - pillW) / 2;
+          const pillY = 1125;
+          sCtx.fillStyle = '#1E3A2F';
+          sCtx.beginPath();
+          sCtx.roundRect(pillX, pillY, pillW, pillH, 36);
+          sCtx.fill();
+
+          sCtx.fillStyle = '#FFFFFF';
+          sCtx.font = 'bold 28px "Plus Jakarta Sans", monospace';
+          const cleanDisplayUrl = url.replace(/^https?:\/\//, '');
+          sCtx.fillText(cleanDisplayUrl, W / 2, pillY + 46);
+
+          // Footer
+          sCtx.fillStyle = '#6B7280';
+          sCtx.font = '500 20px "Plus Jakarta Sans", sans-serif';
+          sCtx.fillText('Keluarga Masyarakat Islam Indonesia (KMII) Jepang', W / 2, 1265);
+
+          const generatedStandeeUrl = standeeCanvas.toDataURL('image/png');
+          if (isMounted) setStandeeDataUrl(generatedStandeeUrl);
+        }
       } catch (err) {
-        console.error('Failed to generate QR Code canvas:', err);
+        console.error('Failed to render QR/Standee:', err);
       } finally {
         if (isMounted) setIsRendering(false);
       }
@@ -294,25 +279,36 @@ export const QRCodeDialog: React.FC<QRCodeDialogProps> = ({
   };
 
   const handleDownloadQR = () => {
-    const canvas = qrCanvasRef.current;
-    if (!canvas) return;
+    if (!qrDataUrl) return;
     const link = document.createElement('a');
     link.download = `qr-code-${campaignId || 'ziswaf'}.png`;
-    link.href = canvas.toDataURL('image/png');
+    link.href = qrDataUrl;
     link.click();
   };
 
   const handleDownloadStandee = () => {
-    const canvas = standeeCanvasRef.current;
-    if (!canvas) return;
+    if (!standeeDataUrl) return;
     const link = document.createElement('a');
     link.download = `standee-${campaignId || 'ziswaf'}.png`;
-    link.href = canvas.toDataURL('image/png');
+    link.href = standeeDataUrl;
     link.click();
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: radius.lg,
+            overflowX: 'hidden'
+          }
+        }
+      }}
+    >
       <DialogTitle sx={{ borderBottom: `1px solid ${c.rule}`, pb: 1.5 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <QrCode size={20} color={c.forest} />
@@ -323,7 +319,7 @@ export const QRCodeDialog: React.FC<QRCodeDialogProps> = ({
         </Typography>
       </DialogTitle>
 
-      <DialogContent sx={{ pt: 2.5, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+      <DialogContent sx={{ pt: 2.5, display: 'flex', flexDirection: 'column', gap: 2.5, overflowX: 'hidden' }}>
         {/* Tabs: QR Code vs Standee */}
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <Tabs
@@ -346,54 +342,16 @@ export const QRCodeDialog: React.FC<QRCodeDialogProps> = ({
           </Tabs>
         </Box>
 
-        {/* URL Selection & Customization */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
-            <Eyebrow sx={{ fontSize: '0.625rem' }}>Pilih Domain / Tautan Cepat:</Eyebrow>
-            <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
-              <Chip
-                size="small"
-                label="ziswaf.kmii.jp"
-                clickable
-                color={domainOption === 'ziswaf' ? 'primary' : 'default'}
-                variant={domainOption === 'ziswaf' ? 'filled' : 'outlined'}
-                onClick={() => setDomainOption('ziswaf')}
-                sx={{ fontSize: '0.6875rem', fontWeight: 600 }}
-              />
-              <Chip
-                size="small"
-                label="infaq.kmii.jp"
-                clickable
-                color={domainOption === 'infaq' ? 'primary' : 'default'}
-                variant={domainOption === 'infaq' ? 'filled' : 'outlined'}
-                onClick={() => setDomainOption('infaq')}
-                sx={{ fontSize: '0.6875rem', fontWeight: 600 }}
-              />
-              {campaignId === 'pemakaman' && (
-                <Chip
-                  size="small"
-                  label="honjo.kmii.jp"
-                  clickable
-                  color={domainOption === 'honjo' ? 'primary' : 'default'}
-                  variant={domainOption === 'honjo' ? 'filled' : 'outlined'}
-                  onClick={() => setDomainOption('honjo')}
-                  sx={{ fontSize: '0.6875rem', fontWeight: 600 }}
-                />
-              )}
-            </Box>
-          </Box>
-
+        {/* URL Field */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Eyebrow sx={{ fontSize: '0.625rem' }}>Tautan Program (ziswaf.kmii.jp):</Eyebrow>
           <Box sx={{ display: 'flex', gap: 1 }}>
             <TextField
               size="small"
               fullWidth
-              label="Tautan Tujuan (Target URL)"
               value={url}
-              onChange={(e) => {
-                setUrl(e.target.value);
-                setDomainOption('custom');
-              }}
-              helperText="URL yang akan terbuka saat donatur memindai QR Code."
+              onChange={(e) => setUrl(e.target.value)}
+              helperText="URL halaman donasi yang terbuka saat donatur memindai QR code."
             />
             <Tooltip title={isCopied ? 'Tersalin!' : 'Salin Tautan'}>
               <IconButton
@@ -419,7 +377,7 @@ export const QRCodeDialog: React.FC<QRCodeDialogProps> = ({
         </Box>
 
         {/* Options */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: c.well, p: 1.5, borderRadius: radius.md, border: `1px solid ${c.rule}` }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: c.well, p: 1.5, borderRadius: radius.md, border: `1px solid ${c.rule}`, flexWrap: 'wrap', gap: 1 }}>
           <FormControlLabel
             control={
               <Switch
@@ -450,60 +408,84 @@ export const QRCodeDialog: React.FC<QRCodeDialogProps> = ({
           />
         </Box>
 
-        {/* Canvas Visual Previews */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', p: 2, bgcolor: c.well, borderRadius: radius.lg, border: `1px solid ${c.rule}` }}>
-          {/* QR Code Tab View */}
-          <Box sx={{ display: activeTab === 'qr' ? 'flex' : 'none', flexDirection: 'column', alignItems: 'center' }}>
-            <Box
-              sx={{
-                p: 2,
-                bgcolor: '#FFFFFF',
-                borderRadius: radius.md,
-                border: `1px solid ${c.rule}`,
-                boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center'
-              }}
-            >
-              <canvas
-                ref={qrCanvasRef}
-                style={{
-                  width: 240,
-                  height: 240,
-                  display: 'block'
-                }}
-              />
-            </Box>
-            <Typography sx={{ fontSize: '0.75rem', color: c.inkMuted, mt: 1.5, textAlign: 'center' }}>
-              Resolusi tinggi 1024×1024 px · Format PNG jernih untuk flyer, media sosial, atau stiker.
-            </Typography>
-          </Box>
+        {/* Visual Previews - Completely responsive, zero window overflow */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', p: 2, bgcolor: c.well, borderRadius: radius.lg, border: `1px solid ${c.rule}`, minHeight: 250 }}>
+          {isRendering && !qrDataUrl ? (
+            <CircularProgress size={32} sx={{ color: c.forest, my: 4 }} />
+          ) : (
+            <>
+              {/* QR Code Tab View */}
+              <Box sx={{ display: activeTab === 'qr' ? 'flex' : 'none', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+                <Box
+                  sx={{
+                    p: 1.5,
+                    bgcolor: '#FFFFFF',
+                    borderRadius: radius.md,
+                    border: `1px solid ${c.rule}`,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    maxWidth: 240,
+                    width: '100%',
+                    aspectRatio: '1/1'
+                  }}
+                >
+                  {qrDataUrl && (
+                    <Box
+                      component="img"
+                      src={qrDataUrl}
+                      alt="Pratinjau QR Code"
+                      sx={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'contain',
+                        display: 'block'
+                      }}
+                    />
+                  )}
+                </Box>
+                <Typography sx={{ fontSize: '0.75rem', color: c.inkMuted, mt: 1.5, textAlign: 'center' }}>
+                  Resolusi tinggi 1024×1024 px · Format PNG jernih untuk flyer, media sosial, atau stiker.
+                </Typography>
+              </Box>
 
-          {/* Standee Tab View */}
-          <Box sx={{ display: activeTab === 'standee' ? 'flex' : 'none', flexDirection: 'column', alignItems: 'center' }}>
-            <Box
-              sx={{
-                bgcolor: '#FFFFFF',
-                borderRadius: radius.md,
-                border: `1px solid ${c.rule}`,
-                boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                overflow: 'hidden'
-              }}
-            >
-              <canvas
-                ref={standeeCanvasRef}
-                style={{
-                  width: 240,
-                  height: 336, // aspect 1000:1400
-                  display: 'block'
-                }}
-              />
-            </Box>
-            <Typography sx={{ fontSize: '0.75rem', color: c.inkMuted, mt: 1.5, textAlign: 'center' }}>
-              Standee A4 / Kartu Meja 1000×1400 px · Siap cetak langsung untuk meja registrasi dan masjid.
-            </Typography>
-          </Box>
+              {/* Standee Tab View */}
+              <Box sx={{ display: activeTab === 'standee' ? 'flex' : 'none', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+                <Box
+                  sx={{
+                    bgcolor: '#FFFFFF',
+                    borderRadius: radius.md,
+                    border: `1px solid ${c.rule}`,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                    overflow: 'hidden',
+                    maxWidth: 220,
+                    width: '100%',
+                    display: 'flex',
+                    justifyContent: 'center'
+                  }}
+                >
+                  {standeeDataUrl && (
+                    <Box
+                      component="img"
+                      src={standeeDataUrl}
+                      alt="Pratinjau Standee Flyer"
+                      sx={{
+                        width: '100%',
+                        height: 'auto',
+                        maxHeight: 308,
+                        objectFit: 'contain',
+                        display: 'block'
+                      }}
+                    />
+                  )}
+                </Box>
+                <Typography sx={{ fontSize: '0.75rem', color: c.inkMuted, mt: 1.5, textAlign: 'center' }}>
+                  Standee A4 / Kartu Meja 1000×1400 px · Siap cetak langsung untuk meja registrasi dan masjid.
+                </Typography>
+              </Box>
+            </>
+          )}
         </Box>
       </DialogContent>
 
@@ -517,7 +499,7 @@ export const QRCodeDialog: React.FC<QRCodeDialogProps> = ({
               variant="contained"
               startIcon={<Download size={15} />}
               onClick={handleDownloadQR}
-              disabled={isRendering}
+              disabled={isRendering || !qrDataUrl}
               sx={{
                 ...eyebrow,
                 fontSize: '0.6875rem',
@@ -534,7 +516,7 @@ export const QRCodeDialog: React.FC<QRCodeDialogProps> = ({
               variant="contained"
               startIcon={<Printer size={15} />}
               onClick={handleDownloadStandee}
-              disabled={isRendering}
+              disabled={isRendering || !standeeDataUrl}
               sx={{
                 ...eyebrow,
                 fontSize: '0.6875rem',
