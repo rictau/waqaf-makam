@@ -17,6 +17,8 @@ const defaultPublicConfig: PublicConfig = {
   cashPaymentText: "Donasi tunai dapat diserahkan langsung atau dikonfirmasikan kepada panitia melalui direct message (DM) Instagram @kmiijepang.",
   donationClosedTitle: "Periode Donasi Telah Ditutup",
   donationClosedText: "Jazakumullah Khairan atas dukungan seluruh donatur. Untuk informasi lebih lanjut, silakan hubungi panitia.",
+  programmeScopeTitle: "Tahap 1: 10 Kapling · ~300 m² · 120 Slot",
+  programmeScopeDescription: "Setelah masa pakai 10 tahun, kapling digunakan kembali untuk jenazah berikutnya sehingga melayani keluarga WNI di Jepang selama puluhan tahun ke depan.",
   logos: [
     { src: "/kmii-logo.png", alt: "KMII Jepang" },
     { src: "/ivc-logo.png", alt: "Indonesian Volunteer Community" }

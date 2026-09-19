@@ -16,6 +16,9 @@ interface StatsCardProps {
   activePhase?: PhaseProgress;
   jpyToIdrRate: number;
   donationDeadline?: Date | null;
+  publicConfig?: import('../../../types').PublicConfig;
+  totalNeed?: number;
+  baseVerified?: number;
 }
 
 /** Flat progress rail: verified fill, pending fill, quarter ticks. No glow, no shimmer. */
@@ -57,6 +60,9 @@ export const StatsCard: React.FC<StatsCardProps> = ({
   activePhase,
   jpyToIdrRate,
   donationDeadline,
+  publicConfig,
+  totalNeed,
+  baseVerified,
 }) => {
   const verifiedPercentage = danaTerkumpulAmount > 0 ? (terverifikasiAmount / danaTerkumpulAmount) * totalPercentage : 0;
   const pendingPercentage = Math.max(0, totalPercentage - verifiedPercentage);
@@ -200,18 +206,31 @@ export const StatsCard: React.FC<StatsCardProps> = ({
         </Box>
 
         {/* Programme note */}
-        <Box sx={{ mx: 2.25, mb: 2.25, pl: 1.5, borderLeft: `2px solid ${c.brassBright}` }}>
-          <Typography sx={{ fontSize: '0.75rem', lineHeight: 1.55, color: c.inkMuted }}>
-            Target <strong style={{ color: c.ink }}>¥20.000.000</strong> · sudah DP <strong style={{ color: c.ink }}>¥2.000.000</strong> ·
-            target pelunasan <strong style={{ color: c.ink }}>{formattedDeadline}</strong>.
-          </Typography>
-          <Typography sx={{ fontSize: '0.75rem', lineHeight: 1.55, color: c.inkMuted, mt: 0.75 }}>
-            <Box component="span" sx={{ ...eyebrow, fontSize: '0.5625rem', color: c.brass, display: 'block', mb: 0.25 }}>
-              Tahap 1: 10 Kapling · ~300 m² · 120 Slot
-            </Box>
-            Setelah masa pakai 10 tahun, kapling digunakan kembali untuk jenazah berikutnya sehingga melayani keluarga WNI di Jepang selama puluhan tahun ke depan.
-          </Typography>
-        </Box>
+        {((publicConfig?.programmeScopeTitle !== undefined ? publicConfig.programmeScopeTitle : true) || (publicConfig?.programmeScopeDescription !== undefined ? publicConfig.programmeScopeDescription : true)) && (
+          <Box sx={{ mx: 2.25, mb: 2.25, pl: 1.5, borderLeft: `2px solid ${c.brassBright}` }}>
+            <Typography sx={{ fontSize: '0.75rem', lineHeight: 1.55, color: c.inkMuted }}>
+              Target <strong style={{ color: c.ink }}>{formatJPY(totalNeed !== undefined && totalNeed > 0 ? totalNeed : 20000000)}</strong>
+              {(baseVerified ?? 0) > 0 && (
+                <> · sudah DP <strong style={{ color: c.ink }}>{formatJPY(baseVerified!)}</strong></>
+              )}
+              {formattedDeadline && formattedDeadline !== '—' && (
+                <> · target pelunasan <strong style={{ color: c.ink }}>{formattedDeadline}</strong></>
+              )}.
+            </Typography>
+            {((publicConfig?.programmeScopeTitle || 'Tahap 1: 10 Kapling · ~300 m² · 120 Slot') || (publicConfig?.programmeScopeDescription || 'Setelah masa pakai 10 tahun, kapling digunakan kembali untuk jenazah berikutnya sehingga melayani keluarga WNI di Jepang selama puluhan tahun ke depan.')) && (
+              <Typography sx={{ fontSize: '0.75rem', lineHeight: 1.55, color: c.inkMuted, mt: 0.75 }}>
+                {(publicConfig?.programmeScopeTitle !== undefined ? publicConfig.programmeScopeTitle : 'Tahap 1: 10 Kapling · ~300 m² · 120 Slot') && (
+                  <Box component="span" sx={{ ...eyebrow, fontSize: '0.5625rem', color: c.brass, display: 'block', mb: 0.25 }}>
+                    {publicConfig?.programmeScopeTitle !== undefined ? publicConfig.programmeScopeTitle : 'Tahap 1: 10 Kapling · ~300 m² · 120 Slot'}
+                  </Box>
+                )}
+                {publicConfig?.programmeScopeDescription !== undefined
+                  ? publicConfig.programmeScopeDescription
+                  : 'Setelah masa pakai 10 tahun, kapling digunakan kembali untuk jenazah berikutnya sehingga melayani keluarga WNI di Jepang selama puluhan tahun ke depan.'}
+              </Typography>
+            )}
+          </Box>
+        )}
       </Box>
 
       {/* Deadline strip */}

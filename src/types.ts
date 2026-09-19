@@ -141,6 +141,8 @@ export interface PublicConfig {
   cashPaymentText: string;
   donationClosedTitle: string;
   donationClosedText: string;
+  programmeScopeTitle?: string;
+  programmeScopeDescription?: string;
   logos: PublicLogo[];
   phases: CampaignPhaseConfig[];
   packages: DonationPackageConfig[];

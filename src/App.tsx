@@ -517,6 +517,9 @@ function DonationApp() {
                   activePhase={activePhase}
                   jpyToIdrRate={stats.jpyToIdrRate ?? 113}
                   donationDeadline={deadlineDate}
+                  publicConfig={publicConfig}
+                  totalNeed={stats.totalNeed}
+                  baseVerified={stats.baseVerified}
                 />
                 {isDonationClosed && !isAdminUser ? (
                   <Box sx={{ px: 2, py: 2, bgcolor: c.pendingTint, borderLeft: `3px solid ${c.pending}`, borderRadius: `0 ${radius.md} ${radius.md} 0` }}>

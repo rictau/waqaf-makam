@@ -8,7 +8,7 @@ import { formatJPY } from '../../../utils/formatters';
 import { c, eyebrow, mono, radius, tnum } from '../../../design';
 import { Eyebrow, Figure, LedgerRow, SectionHeading, StatusTag } from '../../common/primitives';
 import { handleFirestoreError, OperationType } from '../../../utils/errors';
-import type { BankConfig, BankAccountConfig, CampaignDocument, ContactPersonConfig, DonationPackageConfig, DonationRecord, DonationStatus, EditableDonationRecord, PublicConfig } from '../../../types';
+import type { BankConfig, BankAccountConfig, CampaignDocument, CampaignStatus, ContactPersonConfig, DonationPackageConfig, DonationRecord, DonationStatus, EditableDonationRecord, PublicConfig } from '../../../types';
 import { CampaignBuilderDialog } from './CampaignBuilderDialog';
 
 interface AdminPanelProps {
@@ -66,7 +66,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 }) => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [cloneDialogOpen, setCloneDialogOpen] = useState(false);
-  const [editCampaignDialogOpen, setEditCampaignDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingDonation, setEditingDonation] = useState<EditableDonationRecord | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -84,13 +83,19 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     const pad = (n: number) => String(n).padStart(2, '0');
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   };
+  const currentCampaign = campaigns.find((c) => c.id === currentCampaignId);
+  const [campaignStatusInput, setCampaignStatusInput] = useState<CampaignStatus>(
+    currentCampaign?.status || (isClosed ? 'closed' : 'active')
+  );
+  const [isFeaturedInput, setIsFeaturedInput] = useState<boolean>(Boolean(currentCampaign?.isFeatured));
+  const [campaignOrderInput, setCampaignOrderInput] = useState<string>(String(currentCampaign?.order ?? 1));
+
   const [deadlineInput, setDeadlineInput] = useState(toLocalInput(donationDeadline));
   const [totalNeedInput, setTotalNeedInput] = useState(String(totalNeed));
   const [renovationNeedInput, setRenovationNeedInput] = useState(String(renovationNeed));
   const [baseVerifiedInput, setBaseVerifiedInput] = useState(String(baseVerified));
   const [jpyToIdrRateInput, setJpyToIdrRateInput] = useState(String(jpyToIdrRate));
   const [spreadsheetIdInput, setSpreadsheetIdInput] = useState(spreadsheetId || '');
-  const [isClosedInput, setIsClosedInput] = useState(isClosed);
   const findPackage = (id: string) => publicConfig.packages.find((pkg) => pkg.id === id);
   const [publicConfigInput, setPublicConfigInput] = useState({
     masjidName: publicConfig.masjidName,
@@ -98,6 +103,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     locationText: publicConfig.locationText,
     footerCredit: publicConfig.footerCredit,
     donorListSubtitleDate: publicConfig.donorListSubtitleDate,
+    programmeScopeTitle: publicConfig.programmeScopeTitle || '',
+    programmeScopeDescription: publicConfig.programmeScopeDescription || '',
+    wakafHadith: publicConfig.wakafHadith || '',
     phase1Label: publicConfig.phases[0]?.shortLabel || '',
     phase2Label: publicConfig.phases[1]?.shortLabel || '',
     packageBulananPrice: String(findPackage('bulanan')?.priceJPY || '3000'),
@@ -127,14 +135,20 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   React.useEffect(() => { setBaseVerifiedInput(String(baseVerified)); }, [baseVerified]);
   React.useEffect(() => { setJpyToIdrRateInput(String(jpyToIdrRate)); }, [jpyToIdrRate]);
   React.useEffect(() => { setSpreadsheetIdInput(spreadsheetId || ''); }, [spreadsheetId]);
-  React.useEffect(() => { setIsClosedInput(isClosed); }, [isClosed]);
   React.useEffect(() => {
+    const curCamp = campaigns.find((c) => c.id === currentCampaignId);
+    setCampaignStatusInput(curCamp?.status || (isClosed ? 'closed' : 'active'));
+    setIsFeaturedInput(Boolean(curCamp?.isFeatured));
+    setCampaignOrderInput(String(curCamp?.order ?? 1));
     setPublicConfigInput({
       masjidName: publicConfig.masjidName,
       shortName: publicConfig.shortName,
       locationText: publicConfig.locationText,
       footerCredit: publicConfig.footerCredit,
       donorListSubtitleDate: publicConfig.donorListSubtitleDate,
+      programmeScopeTitle: publicConfig.programmeScopeTitle ?? (currentCampaignId === 'pemakaman' ? 'Tahap 1: 10 Kapling · ~300 m² · 120 Slot' : ''),
+      programmeScopeDescription: publicConfig.programmeScopeDescription ?? (currentCampaignId === 'pemakaman' ? 'Setelah masa pakai 10 tahun, kapling digunakan kembali untuk jenazah berikutnya sehingga melayani keluarga WNI di Jepang selama puluhan tahun ke depan.' : ''),
+      wakafHadith: publicConfig.wakafHadith || '',
       phase1Label: publicConfig.phases[0]?.shortLabel || '',
       phase2Label: publicConfig.phases[1]?.shortLabel || '',
       packageBulananPrice: String(publicConfig.packages.find((pkg) => pkg.id === 'bulanan')?.priceJPY || '3000'),
@@ -152,7 +166,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     setShowNarahubung(publicConfig.showNarahubung !== false);
     setNarahubungList(publicConfig.narahubung || []);
     setEnablePhase2(Boolean(publicConfig.phases.length > 1));
-  }, [publicConfig]);
+  }, [publicConfig, currentCampaignId, campaigns, isClosed]);
 
   const updatePublicConfigInput = (field: keyof typeof publicConfigInput, value: string) => {
     setPublicConfigInput((prev) => ({ ...prev, [field]: value }));
@@ -505,8 +519,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         }
 
         const cleanSpreadsheetId = spreadsheetIdInput.trim();
+        const targetCampId = currentCampaignId || 'pemakaman';
+        const curCamp = campaigns.find((c) => c.id === targetCampId);
+        const isClosedValue = campaignStatusInput === 'closed';
 
         const settingsPayload: any = {
+          status: campaignStatusInput,
+          isFeatured: isFeaturedInput,
+          order: Number(campaignOrderInput) || 1,
+          isClosed: isClosedValue,
+          title: publicConfigInput.masjidName ? `Wakaf Pemakaman Muslim ${publicConfigInput.masjidName}` : (curCamp?.title || 'Wakaf Pemakaman Muslim'),
+          shortName: publicConfigInput.shortName || curCamp?.shortName || 'Pemakaman',
           donationDeadline: Timestamp.fromDate(deadlineDate),
           totalNeed: totalNeedNum,
           baseVerified: baseVerifiedNum,
@@ -521,10 +544,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             footerCredit: publicConfigInput.footerCredit?.trim() || publicConfig.footerCredit || '',
             donorListTitle: publicConfig.donorListTitle || '',
             donorListSubtitleDate: publicConfigInput.donorListSubtitleDate?.trim() || publicConfig.donorListSubtitleDate || '',
-            wakafHadith: publicConfig.wakafHadith || '',
+            wakafHadith: publicConfigInput.wakafHadith?.trim() || publicConfig.wakafHadith || '',
+            programmeScopeTitle: publicConfigInput.programmeScopeTitle !== undefined ? publicConfigInput.programmeScopeTitle.trim() : (publicConfig.programmeScopeTitle || ''),
+            programmeScopeDescription: publicConfigInput.programmeScopeDescription !== undefined ? publicConfigInput.programmeScopeDescription.trim() : (publicConfig.programmeScopeDescription || ''),
             cashPaymentText: publicConfigInput.cashPaymentText?.trim() || 'Donasi tunai dapat diserahkan langsung atau dikonfirmasikan kepada panitia melalui direct message (DM) Instagram @kmiijepang.',
-            donationClosedTitle: publicConfig.donationClosedTitle || '',
-            donationClosedText: publicConfig.donationClosedText || '',
+            donationClosedTitle: publicConfigInput.donationClosedTitle || '',
+            donationClosedText: publicConfigInput.donationClosedText || '',
             logos: publicConfig.logos || [],
             uniqueCode: publicConfig.uniqueCode || 0,
             phases,
@@ -554,7 +579,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           }
         };
 
-        const targetCampId = currentCampaignId || 'pemakaman';
         await setDoc(doc(db, 'campaigns', targetCampId), {
           ...settingsPayload,
           id: targetCampId,
@@ -852,15 +876,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 sx={{ ...eyebrow, fontSize: '0.625rem', bgcolor: c.forest, color: c.paper, height: 38, '&:hover': { bgcolor: c.forestDeep } }}
               >
                 Program Baru
-              </Button>
-              <Button
-                size="small"
-                variant="outlined"
-                startIcon={<Pencil size={13} />}
-                onClick={() => setEditCampaignDialogOpen(true)}
-                sx={{ ...eyebrow, fontSize: '0.625rem', color: c.ink, borderColor: c.ruleStrong, height: 38 }}
-              >
-                Edit Program
               </Button>
               <Button
                 size="small"
@@ -1193,6 +1208,58 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         </Box>
       ) : (
         <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+          {/* Group 0: Status & Visibilitas Program */}
+          <Card sx={{ p: 2.25, border: `1px solid ${c.ruleStrong}`, borderRadius: radius.lg, bgcolor: c.paper }}>
+            <SectionHeading title="Status & Visibilitas Program" />
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+              <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
+                <TextField
+                  select
+                  size="small"
+                  label="Status Program"
+                  value={campaignStatusInput}
+                  onChange={(e) => setCampaignStatusInput(e.target.value as CampaignStatus)}
+                  fullWidth
+                  helperText="Status 'Ditutup' akan menonaktifkan form penerimaan donasi untuk program ini"
+                >
+                  <MenuItem value="active">Aktif (Menerima Donasi)</MenuItem>
+                  <MenuItem value="closed">Ditutup (Periode Selesai)</MenuItem>
+                  <MenuItem value="draft">Draft (Belum Dibuka Publik)</MenuItem>
+                  <MenuItem value="archived">Diarsipkan</MenuItem>
+                </TextField>
+                <TextField
+                  size="small"
+                  label="Urutan Tampilan"
+                  type="number"
+                  value={campaignOrderInput}
+                  onChange={(e) => setCampaignOrderInput(e.target.value)}
+                  fullWidth
+                  helperText="Urutan nomor saat ditampilkan di menu program"
+                />
+              </Box>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={isFeaturedInput}
+                    onChange={(e) => setIsFeaturedInput(e.target.checked)}
+                    color="primary"
+                  />
+                }
+                label={
+                  <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                      Jadikan Program Unggulan (Featured)
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                      Program featured diprioritaskan saat donatur membuka beranda
+                    </Typography>
+                  </Box>
+                }
+                sx={{ m: 0 }}
+              />
+            </Box>
+          </Card>
+
           {/* Group 1: Informasi Umum & Tanggal */}
           <Card sx={{ p: 2.25, border: `1px solid ${c.ruleStrong}`, borderRadius: radius.lg, bgcolor: c.paper }}>
             <SectionHeading title="Informasi Umum & Tanggal" />
@@ -1259,6 +1326,44 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   </Box>
                 }
                 sx={{ m: 0, opacity: isTogglingDonatur ? 0.6 : 1 }}
+              />
+            </Box>
+          </Card>
+
+          {/* Group 1B: Catatan Ruang Lingkup & Keterangan Sasaran */}
+          <Card sx={{ p: 2.25, border: `1px solid ${c.ruleStrong}`, borderRadius: radius.lg, bgcolor: c.paper }}>
+            <SectionHeading title="Catatan Ruang Lingkup & Keterangan Sasaran" />
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+              <TextField
+                size="small"
+                label="Judul Ruang Lingkup (Scope Title)"
+                placeholder="Contoh: Tahap 1: 10 Kapling · ~300 m² · 120 Slot"
+                value={publicConfigInput.programmeScopeTitle}
+                onChange={(e) => updatePublicConfigInput('programmeScopeTitle', e.target.value)}
+                helperText="Teks tebal sorotan sasaran di kartu progress donasi publik"
+                fullWidth
+              />
+              <TextField
+                size="small"
+                label="Keterangan Detail Ruang Lingkup (Scope Description)"
+                placeholder="Contoh: Setelah masa pakai 10 tahun, kapling digunakan kembali untuk jenazah berikutnya sehingga melayani keluarga WNI di Jepang selama puluhan tahun ke depan."
+                value={publicConfigInput.programmeScopeDescription}
+                onChange={(e) => updatePublicConfigInput('programmeScopeDescription', e.target.value)}
+                multiline
+                rows={3}
+                helperText="Penjelasan peruntukan dan keberlanjutan program di kartu progress donasi"
+                fullWidth
+              />
+              <TextField
+                size="small"
+                label="Kutipan Hadits / Teks Penguat Wakaf"
+                placeholder="Contoh: Jika seseorang meninggal dunia, maka terputuslah amalannya kecuali tiga perkara..."
+                value={publicConfigInput.wakafHadith}
+                onChange={(e) => updatePublicConfigInput('wakafHadith', e.target.value)}
+                multiline
+                rows={2}
+                helperText="Tampil di kartu kutipan hadits pada halaman publik donasi"
+                fullWidth
               />
             </Box>
           </Card>
@@ -1792,17 +1897,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         onSuccess={(newSlug) => {
           if (onSelectCampaign) onSelectCampaign(newSlug);
         }}
-        basePublicConfig={publicConfig}
-        jpyToIdrRate={jpyToIdrRate}
-      />
-
-      <CampaignBuilderDialog
-        open={editCampaignDialogOpen}
-        onClose={() => setEditCampaignDialogOpen(false)}
-        onSuccess={(slug) => {
-          if (onSelectCampaign) onSelectCampaign(slug);
-        }}
-        editCampaign={campaigns.find(c => c.id === currentCampaignId) || null}
         basePublicConfig={publicConfig}
         jpyToIdrRate={jpyToIdrRate}
       />
