@@ -1,5 +1,7 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
+import * as fs from 'fs';
+import * as path from 'path';
 import { Resend } from 'resend';
 import { google } from 'googleapis';
 import { EMAIL_CONFIG } from './config';
@@ -415,3 +417,94 @@ export const syncToSheets = functions
       console.error(`Failed to sync donation ${donationId} to Google Sheets:`, error);
     }
   });
+
+let cachedBaseHtml: string | null = null;
+
+function getBaseHtml(): string {
+  if (cachedBaseHtml) return cachedBaseHtml;
+  const possiblePaths = [
+    path.join(__dirname, 'index.html'),
+    path.join(__dirname, '../src/index.html'),
+    path.join(__dirname, '../../dist/index.html'),
+    path.join(process.cwd(), 'dist/index.html'),
+    path.join(process.cwd(), 'index.html')
+  ];
+  for (const p of possiblePaths) {
+    if (fs.existsSync(p)) {
+      try {
+        cachedBaseHtml = fs.readFileSync(p, 'utf8');
+        return cachedBaseHtml;
+      } catch (err) {
+        console.warn(`Could not read ${p}:`, err);
+      }
+    }
+  }
+  return '';
+}
+
+function replaceMeta(html: string, pattern: RegExp, newTag: string): string {
+  if (pattern.test(html)) {
+    return html.replace(pattern, newTag);
+  }
+  return html.replace('</head>', `  ${newTag}\n</head>`);
+}
+
+/**
+ * Cloud Function to dynamically render OpenGraph & Twitter preview meta tags
+ * for specific donation programs (e.g. /pemakaman, /masjid-koganei)
+ * and portal catalog (/ or /katalog), cached at the edge CDN.
+ */
+export const ssrApp = functions.https.onRequest(async (req, res) => {
+  const baseHtml = getBaseHtml();
+  if (!baseHtml) {
+    res.status(500).send('Base HTML template missing');
+    return;
+  }
+
+  // Parse campaign slug from path (e.g. /pemakaman or /masjid-koganei)
+  const rawPath = req.path.replace(/^\/+|\/+$/g, '');
+  const segments = rawPath.split('/').filter(Boolean);
+  const slug = segments[0] || '';
+
+  // Default Portal metadata
+  let title = 'KMII Jepang - Portal ZISWAF & Donasi';
+  let desc = 'Salurkan zakat, infaq, sedekah, dan wakaf Anda untuk berbagai program dakwah dan kemaslahatan muslim di Jepang.';
+  let img = 'https://ziswaf.kmii.jp/og-preview.png';
+  let url = 'https://ziswaf.kmii.jp/';
+
+  if (slug && !['directory', 'katalog', 'admin', 'donatur', 'assets'].includes(slug)) {
+    try {
+      const db = admin.firestore();
+      const campData = await getCampaignConfig(db, slug);
+      if (campData) {
+        const campTitle = campData.publicConfig?.campaignTitle || campData.title || campData.publicConfig?.masjidName || 'Program Donasi';
+        const shortName = campData.publicConfig?.shortName || campData.shortName || 'KMII Jepang';
+        title = `${campTitle} · ${shortName}`;
+        desc = campData.publicConfig?.programmeScopeDescription || campData.publicConfig?.programmeScopeTitle || desc;
+        if (campData.publicConfig?.imageUrl) {
+          img = campData.publicConfig.imageUrl;
+        } else if (campData.imageUrl) {
+          img = campData.imageUrl;
+        }
+        url = `https://ziswaf.kmii.jp/${slug}`;
+      }
+    } catch (e) {
+      console.warn(`Error fetching campaign config for SSR [${slug}]:`, e);
+    }
+  }
+
+  let html = baseHtml;
+  html = replaceMeta(html, /<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`);
+  html = replaceMeta(html, /<meta[^>]*?name=["']description["'][^>]*?>/i, `<meta name="description" content="${escapeHtml(desc)}" />`);
+  html = replaceMeta(html, /<meta[^>]*?property=["']og:title["'][^>]*?>/i, `<meta property="og:title" content="${escapeHtml(title)}" />`);
+  html = replaceMeta(html, /<meta[^>]*?property=["']og:description["'][^>]*?>/i, `<meta property="og:description" content="${escapeHtml(desc)}" />`);
+  html = replaceMeta(html, /<meta[^>]*?property=["']og:image["'][^>]*?>/i, `<meta property="og:image" content="${escapeHtml(img)}" />`);
+  html = replaceMeta(html, /<meta[^>]*?property=["']og:url["'][^>]*?>/i, `<meta property="og:url" content="${escapeHtml(url)}" />`);
+  html = replaceMeta(html, /<meta[^>]*?name=["']twitter:title["'][^>]*?>/i, `<meta name="twitter:title" content="${escapeHtml(title)}" />`);
+  html = replaceMeta(html, /<meta[^>]*?name=["']twitter:description["'][^>]*?>/i, `<meta name="twitter:description" content="${escapeHtml(desc)}" />`);
+  html = replaceMeta(html, /<meta[^>]*?name=["']twitter:image["'][^>]*?>/i, `<meta name="twitter:image" content="${escapeHtml(img)}" />`);
+
+  // Cache at CDN edge for 1 hour (s-maxage=3600), browser for 5 minutes (max-age=300)
+  res.set('Cache-Control', 'public, max-age=300, s-maxage=3600');
+  res.status(200).send(html);
+});

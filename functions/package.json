@@ -1,7 +1,7 @@
 {
   "name": "mosque-dev-functions",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node -e \"const fs=require('fs'),p=require('path');if(fs.existsSync(p.join(__dirname,'src/index.html')))fs.copyFileSync(p.join(__dirname,'src/index.html'),p.join(__dirname,'lib/index.html'));\"",
     "serve": "npm run build && firebase emulators:start --only functions",
     "shell": "npm run build && firebase functions:shell",
     "start": "npm run shell",

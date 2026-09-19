@@ -236,10 +236,31 @@ function DonationApp() {
         image: '/og-preview.png',
         url: 'https://ziswaf.kmii.jp'
       });
-    } else if (publicConfig.logos) {
-      updateDynamicFavicon(publicConfig.logos);
+    } else {
+      if (publicConfig.logos) {
+        updateDynamicFavicon(publicConfig.logos);
+      }
+      if (hasLoadedStats) {
+        const title = publicConfig.campaignTitle || publicConfig.masjidName || 'Program Donasi';
+        const desc = publicConfig.programmeScopeDescription || publicConfig.programmeScopeTitle || 'Salurkan donasi, infaq, sedekah, dan wakaf Anda bersama KMII Jepang.';
+        const img = publicConfig.imageUrl || '/og-preview.png';
+        const pageUrl = `https://ziswaf.kmii.jp/${currentCampaignSlug || 'pemakaman'}`;
+
+        updateDocumentMetadata({
+          title: `${title} · ${publicConfig.shortName || 'KMII Jepang'}`,
+          description: desc,
+          image: img,
+          url: pageUrl
+        });
+      }
     }
-  }, [routeState.isHub, activeCampaigns.length, publicConfig.logos]);
+  }, [
+    routeState.isHub,
+    activeCampaigns.length,
+    publicConfig,
+    hasLoadedStats,
+    currentCampaignSlug
+  ]);
 
   const handleSelectAccount = (text: string, id: string) => {
     setSelectedAccountId(id);

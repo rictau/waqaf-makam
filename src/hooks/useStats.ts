@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import { handleFirestoreError, OperationType } from '../utils/errors';
-import { updateDocumentMetadata } from '../utils/metadata';
 import type { GlobalStats, PublicConfig, PhaseProgress } from '../types';
 
 const defaultPublicConfig: PublicConfig = {
@@ -185,21 +184,6 @@ export function useStats(campaignId: string = 'pemakaman') {
       }
     };
   }, [stats.publicConfig]);
-
-  useEffect(() => {
-    if (!hasLoadedStats) return;
-    const title = publicConfig.campaignTitle || publicConfig.masjidName || 'Program Donasi';
-    const desc = publicConfig.programmeScopeDescription || publicConfig.programmeScopeTitle || 'Salurkan donasi, infaq, sedekah, dan wakaf Anda bersama KMII Jepang.';
-    const img = publicConfig.imageUrl || '/og-preview.png';
-    const pageUrl = `https://ziswaf.kmii.jp/${campaignId || 'pemakaman'}`;
-
-    updateDocumentMetadata({
-      title: `${title} · ${publicConfig.shortName || 'KMII Jepang'}`,
-      description: desc,
-      image: img,
-      url: pageUrl
-    });
-  }, [hasLoadedStats, publicConfig, campaignId]);
 
   const shortfallAmount = Math.max(0, stats.totalNeed - danaTerkumpulAmount);
   const totalPercentage = (danaTerkumpulAmount / stats.totalNeed) * 100;
