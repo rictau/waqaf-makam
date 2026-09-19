@@ -6,9 +6,10 @@ import type { DonationRecord, DonationStatus } from '../types';
 
 interface UseDonationsProps {
   isAdminMode: boolean;
+  campaignId?: string;
 }
 
-export function useDonations({ isAdminMode }: UseDonationsProps) {
+export function useDonations({ isAdminMode, campaignId }: UseDonationsProps) {
   const [donations, setDonations] = useState<DonationRecord[]>([]);
   const [donationLimit, setDonationLimit] = useState(50);
   const [hasMore, setHasMore] = useState(true);
@@ -20,6 +21,11 @@ export function useDonations({ isAdminMode }: UseDonationsProps) {
   useEffect(() => {
     const constraints: QueryConstraint[] = [orderBy('date', 'desc'), limit(donationLimit)];
     
+    // Add campaign filter if specified
+    if (campaignId && campaignId !== 'all') {
+      constraints.unshift(where('campaignId', '==', campaignId));
+    }
+
     // Add server-side filters if in Admin mode and filters are active
     if (isAdminMode) {
       if (adminFilterStatus !== 'all') {
@@ -36,6 +42,7 @@ export function useDonations({ isAdminMode }: UseDonationsProps) {
         const data = docSnap.data();
         return {
           id: docSnap.id,
+          campaignId: data.campaignId,
           name: String(data.name || 'Hamba Allah'),
           email: data.email,
           amount: Number(data.amount || 0),
@@ -57,7 +64,7 @@ export function useDonations({ isAdminMode }: UseDonationsProps) {
     }, (error) => handleFirestoreError(error, OperationType.GET, 'donations'));
     
     return () => unsubscribe();
-  }, [donationLimit, isAdminMode, adminFilterStatus, adminFilterPayment]);
+  }, [donationLimit, isAdminMode, campaignId, adminFilterStatus, adminFilterPayment]);
 
   const loadMore = () => {
     setDonationLimit(prev => prev + 50);
@@ -75,10 +82,12 @@ export function useDonations({ isAdminMode }: UseDonationsProps) {
     paymentMethod: string;
     originalCurrency?: 'JPY' | 'IDR';
     originalAmount?: number;
+    campaignId?: string;
   }) => {
     try {
       return await addDoc(collection(db, 'donations'), {
         ...donationData,
+        campaignId: donationData.campaignId || campaignId || 'pemakaman',
         date: Timestamp.now(),
         status: 'pending'
       });

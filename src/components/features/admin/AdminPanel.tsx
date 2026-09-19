@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { Box, Typography, Button, Card, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Switch, FormControlLabel, InputAdornment, Tooltip, Divider } from '@mui/material';
 import { ExternalLink, CheckCircle2, Trash2, Wallet, Download, Pencil, Filter, Search, Plus } from 'lucide-react';
-import { updateDoc, deleteDoc, doc, setDoc, collection, getDocs, query, orderBy, Timestamp, writeBatch, getDocFromServer, deleteField } from 'firebase/firestore';
+import { updateDoc, deleteDoc, doc, setDoc, collection, getDocs, query, orderBy, where, Timestamp, writeBatch, getDocFromServer, deleteField } from 'firebase/firestore';
 import { EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import { db, auth } from '../../../firebase';
 import { formatJPY } from '../../../utils/formatters';
 import { c, eyebrow, mono, radius, tnum } from '../../../design';
 import { Eyebrow, Figure, LedgerRow, SectionHeading, StatusTag } from '../../common/primitives';
 import { handleFirestoreError, OperationType } from '../../../utils/errors';
-import type { BankConfig, BankAccountConfig, ContactPersonConfig, DonationPackageConfig, DonationRecord, DonationStatus, EditableDonationRecord, PublicConfig } from '../../../types';
+import type { BankConfig, BankAccountConfig, CampaignDocument, ContactPersonConfig, DonationPackageConfig, DonationRecord, DonationStatus, EditableDonationRecord, PublicConfig } from '../../../types';
+import { CampaignBuilderDialog } from './CampaignBuilderDialog';
 
 interface AdminPanelProps {
   donations: DonationRecord[];
@@ -32,6 +33,9 @@ interface AdminPanelProps {
   spreadsheetId?: string;
   isSuperAdmin: boolean;
   isClosed: boolean;
+  currentCampaignId?: string;
+  campaigns?: CampaignDocument[];
+  onSelectCampaign?: (slug: string) => void;
 }
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({ 
@@ -55,8 +59,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   jpyToIdrRate,
   spreadsheetId,
   isSuperAdmin,
-  isClosed
+  isClosed,
+  currentCampaignId = 'pemakaman',
+  campaigns = [],
+  onSelectCampaign
 }) => {
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [cloneDialogOpen, setCloneDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingDonation, setEditingDonation] = useState<EditableDonationRecord | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -544,12 +553,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           }
         };
 
-        await setDoc(doc(db, 'stats', 'global'), settingsPayload, { merge: true });
+        const targetCampId = currentCampaignId || 'pemakaman';
+        await setDoc(doc(db, 'campaigns', targetCampId), {
+          ...settingsPayload,
+          id: targetCampId,
+          updatedAt: Timestamp.now()
+        }, { merge: true });
+
+        if (targetCampId === 'pemakaman') {
+          await setDoc(doc(db, 'stats', 'global'), settingsPayload, { merge: true });
+        }
         alert('Pengaturan berhasil diperbarui!');
       } catch (e) {
         console.error('Failed to save settings:', e);
         alert(e instanceof Error ? e.message : 'Gagal menyimpan pengaturan. Silakan coba lagi.');
-        handleFirestoreError(e, OperationType.UPDATE, 'stats/global');
+        handleFirestoreError(e, OperationType.UPDATE, `campaigns/${currentCampaignId || 'pemakaman'}`);
       } finally {
         setIsSavingSettings(false);
       }
@@ -676,7 +694,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
   const recalculateStats = async () => {
     try {
-      const snapshot = await getDocs(collection(db, 'donations'));
+      const targetCampId = currentCampaignId || 'pemakaman';
+      const q = query(collection(db, 'donations'), where('campaignId', '==', targetCampId));
+      const snapshot = await getDocs(q);
       let totalVerified = 0;
       let totalPending = 0;
       snapshot.forEach((docSnap) => {
@@ -688,11 +708,19 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           totalPending += amt;
         }
       });
-      await setDoc(doc(db, 'stats', 'global'), {
+      await setDoc(doc(db, 'campaigns', targetCampId), {
         totalVerifiedAmount: totalVerified,
         totalPendingAmount: totalPending,
         lastUpdate: Timestamp.now()
       }, { merge: true });
+
+      if (targetCampId === 'pemakaman') {
+        await setDoc(doc(db, 'stats', 'global'), {
+          totalVerifiedAmount: totalVerified,
+          totalPendingAmount: totalPending,
+          lastUpdate: Timestamp.now()
+        }, { merge: true });
+      }
     } catch (err) {
       console.error('Failed to recalculate stats:', err);
     }
@@ -700,7 +728,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
   React.useEffect(() => {
     recalculateStats();
-  }, []);
+  }, [currentCampaignId]);
 
   const toggleDonaturTab = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.checked;
@@ -712,13 +740,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         setIsTogglingDonatur(false);
         return;
       }
-      await setDoc(doc(db, 'stats', 'global'), {
-        showDonaturTab: newValue
+      const targetCampId = currentCampaignId || 'pemakaman';
+      await setDoc(doc(db, 'campaigns', targetCampId), {
+        showDonaturTab: newValue,
+        updatedAt: Timestamp.now()
       }, { merge: true });
+
+      if (targetCampId === 'pemakaman') {
+        await setDoc(doc(db, 'stats', 'global'), {
+          showDonaturTab: newValue
+        }, { merge: true });
+      }
     } catch (error) {
       console.error('Failed to toggle Donatur tab:', error);
       alert('Gagal mengubah pengaturan! Pastikan Anda terhubung ke internet dan memiliki akses admin.');
-      handleFirestoreError(error, OperationType.UPDATE, 'stats/global');
+      handleFirestoreError(error, OperationType.UPDATE, `campaigns/${currentCampaignId || 'pemakaman'}`);
     } finally {
       setIsTogglingDonatur(false);
     }
@@ -785,6 +821,49 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     <Box sx={{ minHeight: '100%', bgcolor: c.well }}>
       {/* Masthead */}
       <Box sx={{ pt: 4, px: 2.5, bgcolor: c.paper, borderBottom: `1px solid ${c.ruleStrong}` }}>
+        {/* Campaign Switcher Bar */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2.5, pb: 2, borderBottom: `1px solid ${c.rule}`, flexWrap: 'wrap', gap: 1.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexGrow: 1, maxWidth: 360 }}>
+            <TextField
+              select
+              fullWidth
+              size="small"
+              label="Pilih Program / Campaign"
+              value={currentCampaignId}
+              onChange={(e) => onSelectCampaign && onSelectCampaign(e.target.value)}
+              sx={{ bgcolor: c.well }}
+            >
+              {(campaigns.length > 0 ? campaigns : [{ id: 'pemakaman', shortName: 'Pemakaman Honjo', title: 'Wakaf Pemakaman Muslim Honjo' }]).map((camp) => (
+                <MenuItem key={camp.id} value={camp.id}>
+                  {camp.shortName || camp.title || camp.id}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Box>
+
+          {isSuperAdmin && (
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button
+                size="small"
+                variant="contained"
+                startIcon={<Plus size={14} />}
+                onClick={() => setCreateDialogOpen(true)}
+                sx={{ ...eyebrow, fontSize: '0.625rem', bgcolor: c.forest, color: c.paper, height: 38, '&:hover': { bgcolor: c.forestDeep } }}
+              >
+                Program Baru
+              </Button>
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={() => setCloneDialogOpen(true)}
+                sx={{ ...eyebrow, fontSize: '0.625rem', color: c.ink, borderColor: c.ruleStrong, height: 38 }}
+              >
+                Duplikasi Program
+              </Button>
+            </Box>
+          )}
+        </Box>
+
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2, mb: 2.5 }}>
           <Box sx={{ minWidth: 0 }}>
             <Eyebrow tone="brass">Panel Panitia</Eyebrow>
@@ -1696,6 +1775,27 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           </Button>
         </DialogActions>
       </Dialog>
+
+      <CampaignBuilderDialog
+        open={createDialogOpen}
+        onClose={() => setCreateDialogOpen(false)}
+        onSuccess={(newSlug) => {
+          if (onSelectCampaign) onSelectCampaign(newSlug);
+        }}
+        basePublicConfig={publicConfig}
+        jpyToIdrRate={jpyToIdrRate}
+      />
+
+      <CampaignBuilderDialog
+        open={cloneDialogOpen}
+        onClose={() => setCloneDialogOpen(false)}
+        onSuccess={(newSlug) => {
+          if (onSelectCampaign) onSelectCampaign(newSlug);
+        }}
+        cloneFrom={campaigns.find(c => c.id === currentCampaignId) || null}
+        basePublicConfig={publicConfig}
+        jpyToIdrRate={jpyToIdrRate}
+      />
     </Box>
   );
 };

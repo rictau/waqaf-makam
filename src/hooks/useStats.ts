@@ -107,7 +107,7 @@ const defaultPublicConfig: PublicConfig = {
   ]
 };
 
-export function useStats() {
+export function useStats(campaignId: string = 'pemakaman') {
   const [stats, setStats] = useState<GlobalStats>({
     totalNeed: 20000000,
     renovationNeed: 0,
@@ -123,15 +123,45 @@ export function useStats() {
   const [hasLoadedStats, setHasLoadedStats] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(doc(db, 'stats', 'global'), (snapshot) => {
+    const campRef = doc(db, 'campaigns', campaignId);
+    let fallbackUnsub: (() => void) | null = null;
+
+    const unsubscribe = onSnapshot(campRef, (snapshot) => {
       if (snapshot.exists()) {
         const data = snapshot.data() as Partial<GlobalStats>;
         setStats(prev => ({ ...prev, ...data }));
+        setHasLoadedStats(true);
+      } else if (campaignId === 'pemakaman') {
+        fallbackUnsub = onSnapshot(doc(db, 'stats', 'global'), (globalSnap) => {
+          if (globalSnap.exists()) {
+            const data = globalSnap.data() as Partial<GlobalStats>;
+            setStats(prev => ({ ...prev, ...data }));
+          }
+          setHasLoadedStats(true);
+        }, (err) => handleFirestoreError(err, OperationType.GET, 'stats/global'));
+      } else {
+        setHasLoadedStats(true);
       }
-      setHasLoadedStats(true);
-    }, (error) => handleFirestoreError(error, OperationType.GET, 'stats/global'));
-    return () => unsubscribe();
-  }, []);
+    }, (error) => {
+      if (campaignId === 'pemakaman') {
+        fallbackUnsub = onSnapshot(doc(db, 'stats', 'global'), (globalSnap) => {
+          if (globalSnap.exists()) {
+            const data = globalSnap.data() as Partial<GlobalStats>;
+            setStats(prev => ({ ...prev, ...data }));
+          }
+          setHasLoadedStats(true);
+        }, (err) => handleFirestoreError(err, OperationType.GET, 'stats/global'));
+      } else {
+        handleFirestoreError(error, OperationType.GET, `campaigns/${campaignId}`);
+        setHasLoadedStats(true);
+      }
+    });
+
+    return () => {
+      unsubscribe();
+      if (fallbackUnsub) fallbackUnsub();
+    };
+  }, [campaignId]);
 
   const terverifikasiAmount = stats.baseVerified + (stats.totalVerifiedAmount || 0);
   const danaTerkumpulAmount = terverifikasiAmount + (stats.totalPendingAmount || 0);

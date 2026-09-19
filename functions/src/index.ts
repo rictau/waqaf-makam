@@ -21,6 +21,22 @@ const escapeHtml = (value: unknown, fallback = '-') => {
   }[char] || char));
 };
 
+async function getCampaignConfig(db: admin.firestore.Firestore, campaignId?: string) {
+  const targetCampaignId = campaignId || 'pemakaman';
+  try {
+    const campSnap = await db.doc(`campaigns/${targetCampaignId}`).get();
+    if (campSnap.exists) {
+      return campSnap.data();
+    }
+  } catch (e) {
+    console.warn(`Could not read campaigns/${targetCampaignId}, falling back to stats/global`, e);
+  }
+
+  // Fallback to stats/global
+  const statsSnap = await db.doc('stats/global').get();
+  return statsSnap.exists ? statsSnap.data() : null;
+}
+
 export const sendVerificationEmail = functions.runWith({ secrets: ['RESEND_API_KEY'] })
   .firestore
   .document("donations/{donationId}")
@@ -40,9 +56,9 @@ export const sendVerificationEmail = functions.runWith({ secrets: ['RESEND_API_K
 
       try {
         const db = admin.firestore();
-        const statsSnap = await db.doc('stats/global').get();
-        const statsData = statsSnap.exists ? statsSnap.data() : null;
-        const pubConfig = statsData?.publicConfig;
+        const campaignId = after.campaignId || 'pemakaman';
+        const campaignData = await getCampaignConfig(db, campaignId);
+        const pubConfig = campaignData?.publicConfig;
 
         const masjidName = pubConfig?.masjidName || EMAIL_CONFIG.masjidName;
         const emailBrandName = pubConfig?.masjidName ? `Wakaf ${pubConfig.masjidName}` : EMAIL_CONFIG.emailBrandName;
@@ -145,9 +161,9 @@ export const sendPendingEmail = functions.runWith({ secrets: ['RESEND_API_KEY'] 
 
     try {
       const db = admin.firestore();
-      const statsSnap = await db.doc('stats/global').get();
-      const statsData = statsSnap.exists ? statsSnap.data() : null;
-      const pubConfig = statsData?.publicConfig;
+      const campaignId = data.campaignId || 'pemakaman';
+      const campaignData = await getCampaignConfig(db, campaignId);
+      const pubConfig = campaignData?.publicConfig;
 
       const masjidName = pubConfig?.masjidName || EMAIL_CONFIG.masjidName;
       const emailBrandName = pubConfig?.masjidName ? `Wakaf ${pubConfig.masjidName}` : EMAIL_CONFIG.emailBrandName;
@@ -231,31 +247,47 @@ export const updateStats = functions.firestore
   .document("donations/{donationId}")
   .onWrite(async (change, context) => {
     const db = admin.firestore();
-    const donationsRef = db.collection('donations');
-    
-    // FETCH ALL to ensure 100% accurate, idempotent totals.
-    // This handles at-least-once retries safely.
-    const snapshot = await donationsRef.get();
-    
-    let totalVerified = 0;
-    let totalPending = 0;
-    
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      if (data.status === 'verified') {
-        totalVerified += (data.amount || 0);
-      } else if (data.status === 'pending') {
-        totalPending += (data.amount || 0);
-      }
-    });
+    const beforeData = change.before.exists ? change.before.data() : null;
+    const afterData = change.after.exists ? change.after.data() : null;
 
-    await db.doc('stats/global').set({
-      totalVerifiedAmount: totalVerified,
-      totalPendingAmount: totalPending,
-      lastUpdate: admin.firestore.Timestamp.now()
-    }, { merge: true });
-    
-    console.log(`Stats updated (Idempotent): Verified=${totalVerified}, Pending=${totalPending}`);
+    // Determine which campaigns need their stats updated
+    const campaignIds = new Set<string>();
+    if (afterData?.campaignId) campaignIds.add(afterData.campaignId);
+    if (beforeData?.campaignId) campaignIds.add(beforeData.campaignId);
+    if (campaignIds.size === 0) campaignIds.add('pemakaman');
+
+    for (const campaignId of campaignIds) {
+      const donationsRef = db.collection('donations');
+      const snapshot = await donationsRef.where('campaignId', '==', campaignId).get();
+
+      let totalVerified = 0;
+      let totalPending = 0;
+
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.status === 'verified') {
+          totalVerified += (data.amount || 0);
+        } else if (data.status === 'pending') {
+          totalPending += (data.amount || 0);
+        }
+      });
+
+      await db.doc(`campaigns/${campaignId}`).set({
+        totalVerifiedAmount: totalVerified,
+        totalPendingAmount: totalPending,
+        lastUpdate: admin.firestore.Timestamp.now()
+      }, { merge: true });
+
+      if (campaignId === 'pemakaman') {
+        await db.doc('stats/global').set({
+          totalVerifiedAmount: totalVerified,
+          totalPendingAmount: totalPending,
+          lastUpdate: admin.firestore.Timestamp.now()
+        }, { merge: true });
+      }
+
+      console.log(`Campaign ${campaignId} stats updated: Verified=${totalVerified}, Pending=${totalPending}`);
+    }
   });
 
 /**
@@ -269,12 +301,12 @@ export const syncToSheets = functions
   .onWrite(async (change, context) => {
     const donationId = context.params.donationId;
     const db = admin.firestore();
-    const statsSnap = await db.doc('stats/global').get();
-    const statsData = statsSnap.exists ? statsSnap.data() : null;
-    const spreadsheetId = statsData && statsData.spreadsheetId;
+    const campaignId = (change.after.exists ? change.after.data()?.campaignId : change.before.data()?.campaignId) || 'pemakaman';
+    const campaignData = await getCampaignConfig(db, campaignId);
+    const spreadsheetId = campaignData && campaignData.spreadsheetId;
     
     if (!spreadsheetId) {
-      console.error('Missing spreadsheetId in stats/global.');
+      console.log(`No spreadsheetId configured for campaign ${campaignId}. Skipping sheet sync.`);
       return;
     }
 

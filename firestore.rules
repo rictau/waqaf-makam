@@ -49,10 +49,16 @@ service cloud.firestore {
       );
     }
 
-    function donationsOpen() {
-      let stats = get(/databases/$(database)/documents/stats/global).data;
-      return !('isClosed' in stats && stats.isClosed == true) &&
-             (!('donationDeadline' in stats) || request.time < stats.donationDeadline);
+    function isCampaignOpen(campaignId) {
+      let camp = get(/databases/$(database)/documents/campaigns/$(campaignId)).data;
+      return !('isClosed' in camp && camp.isClosed == true) &&
+             (!('donationDeadline' in camp) || camp.donationDeadline == null || request.time < camp.donationDeadline);
+    }
+
+    function donationsOpen(data) {
+      return ('campaignId' in data && exists(/databases/$(database)/documents/campaigns/$(data.campaignId)))
+        ? isCampaignOpen(data.campaignId)
+        : (!('isClosed' in get(/databases/$(database)/documents/stats/global).data && get(/databases/$(database)/documents/stats/global).data.isClosed == true));
     }
 
     function isValidDonation(data) {
@@ -61,17 +67,30 @@ service cloud.firestore {
              data.amount is number && data.amount > 0 &&
              data.date is timestamp &&
              data.status in ['pending', 'verified'] &&
+             (!('campaignId' in data) || (data.campaignId is string && data.campaignId.size() < 100)) &&
              (!('loc' in data) || (data.loc is string && data.loc.size() < 100)) &&
              (!('phone' in data) || (data.phone is string && data.phone.size() < 50)) &&
+             (!('email' in data) || (data.email is string && data.email.size() < 150)) &&
              (!('isAnonymous' in data) || data.isAnonymous is bool) &&
              (!('proofUrl' in data) || (data.proofUrl is string && data.proofUrl.size() < 1000)) &&
              (!('package' in data) || (data.package is string && data.package.size() < 100)) &&
-             (!('remarks' in data) || (data.remarks is string && data.remarks.size() < 1000));
+             (!('paymentMethod' in data) || (data.paymentMethod is string && data.paymentMethod.size() < 100)) &&
+             (!('remarks' in data) || (data.remarks is string && data.remarks.size() < 1000)) &&
+             (!('originalCurrency' in data) || data.originalCurrency in ['JPY', 'IDR']) &&
+             (!('originalAmount' in data) || (data.originalAmount is number && data.originalAmount > 0));
     }
 
     // ===============================================================
     // Rules
     // ===============================================================
+
+    match /campaigns/{campaignId} {
+      // Public can read campaigns
+      allow read: if true;
+      
+      // Admins can configure campaigns
+      allow write: if isAdmin();
+    }
 
     match /donations/{donationId} {
       // Public can read donations for the list
@@ -81,7 +100,7 @@ service cloud.firestore {
       // Admins can always create (manual entry / re-opening case).
       allow create: if isValidDonation(request.resource.data)
                     && request.resource.data.status == 'pending'
-                    && (donationsOpen() || isAdmin());
+                    && (donationsOpen(request.resource.data) || isAdmin());
       
       // Only admins can update or delete donations
       allow update: if isAdmin() && isValidDonation(request.resource.data);
@@ -89,7 +108,7 @@ service cloud.firestore {
     }
 
     match /stats/{statId} {
-      // Public can read stats
+      // Public can read stats (legacy backward compatibility)
       allow read: if true;
       
       // All admins can configure program settings

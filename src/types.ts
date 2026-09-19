@@ -8,6 +8,7 @@ export type PaymentMethod = 'JP Post' | 'Yakesma' | 'Dompet Dhuafa' | 'Tunai' | 
 
 export interface DonationRecord {
   id: string;
+  campaignId?: string;
   name: string;
   email?: string;
   amount: number;
@@ -27,6 +28,36 @@ export interface DonationRecord {
 export type EditableDonationRecord = Omit<DonationRecord, 'amount'> & {
   amount: number | string;
 };
+
+export type CampaignStatus = 'draft' | 'active' | 'closed' | 'archived';
+
+export interface CampaignDocument {
+  id: string;
+  title: string;
+  shortName: string;
+  status: CampaignStatus;
+  isFeatured?: boolean;
+  order?: number;
+  totalNeed: number;
+  renovationNeed?: number;
+  baseVerified: number;
+  showDonaturTab: boolean;
+  isClosed?: boolean;
+  jpyToIdrRate?: number;
+  spreadsheetId?: string;
+  publicConfig?: Partial<PublicConfig>;
+  totalVerifiedAmount: number;
+  totalPendingAmount: number;
+  lastUpdate: Timestamp | null;
+  donationDeadline: Timestamp | null;
+  createdAt?: Timestamp;
+  updatedAt?: Timestamp;
+}
+
+export type CampaignSummary = Pick<
+  CampaignDocument,
+  'id' | 'title' | 'shortName' | 'status' | 'isFeatured' | 'order' | 'totalNeed' | 'baseVerified' | 'totalVerifiedAmount' | 'totalPendingAmount' | 'donationDeadline' | 'publicConfig'
+>;
 
 export interface GlobalStats {
   totalNeed: number;

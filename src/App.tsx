@@ -21,18 +21,64 @@ import { ConfirmUpload } from './components/features/donasi/ConfirmUpload';
 import { DonorList } from './components/features/donatur/DonorList';
 import { AdminPanel } from './components/features/admin/AdminPanel';
 import { Footer } from './components/layout/Footer';
+import { CampaignDirectory } from './components/features/directory/CampaignDirectory';
 import { useStats } from './hooks/useStats';
 import { useDonations } from './hooks/useDonations';
+import { useCampaigns } from './hooks/useCampaigns';
 import type { AppTab } from './types';
 
+interface RouteState {
+  isHub: boolean;
+  campaignSlug: string;
+  tab: AppTab;
+}
+
+const parseRoute = (): RouteState => {
+  const segments = window.location.pathname.replace(/^\/+|\/+$/g, '').split('/').filter(Boolean);
+  
+  // 1. Root path "/"
+  if (segments.length === 0) {
+    return { isHub: true, campaignSlug: 'pemakaman', tab: 'donasi' };
+  }
+
+  // 2. Global paths
+  if (segments[0] === 'admin') {
+    return { isHub: false, campaignSlug: 'pemakaman', tab: 'admin' };
+  }
+  if (segments[0] === 'donatur') {
+    return { isHub: false, campaignSlug: 'pemakaman', tab: 'donatur' };
+  }
+  if (segments[0] === 'directory' || segments[0] === 'katalog') {
+    return { isHub: true, campaignSlug: 'pemakaman', tab: 'donasi' };
+  }
+
+  // 3. Campaign path: /:slug or /:slug/:sub
+  const slug = segments[0];
+  const sub = segments[1];
+  let tab: AppTab = 'donasi';
+  if (sub === 'donatur') tab = 'donatur';
+  else if (sub === 'admin') tab = 'admin';
+
+  return { isHub: false, campaignSlug: slug, tab };
+};
+
 function DonationApp() {
-  const getTabFromPath = (): AppTab => {
-    const path = window.location.pathname.replace(/\/+$/, '');
-    if (path === '/admin') return 'admin';
-    if (path === '/donatur') return 'donatur';
-    return 'donasi';
-  };
-  const [activeTab, setActiveTab] = useState<AppTab>(getTabFromPath); 
+  const [routeState, setRouteState] = useState<RouteState>(parseRoute);
+  const { campaigns, activeCampaigns, loading: loadingCampaigns } = useCampaigns();
+
+  // Rule: jika hanya 1 campaign, maka harus otomatis redirect ke /pemakaman
+  useEffect(() => {
+    if (!loadingCampaigns && routeState.isHub) {
+      if (activeCampaigns.length <= 1) {
+        window.history.replaceState(null, '', '/pemakaman');
+        setRouteState({ isHub: false, campaignSlug: 'pemakaman', tab: 'donasi' });
+      }
+    }
+  }, [loadingCampaigns, routeState.isHub, activeCampaigns.length]);
+
+  const activeTab = routeState.tab;
+  const currentCampaignSlug = routeState.campaignSlug || 'pemakaman';
+
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
   
   // Donation Selection
@@ -70,7 +116,7 @@ function DonationApp() {
     deadlineDate,
     isDonationClosed,
     daysLeft
-  } = useStats();
+  } = useStats(currentCampaignSlug);
 
   // Fetch donations and pagination using custom hook
   const {
@@ -82,7 +128,10 @@ function DonationApp() {
     adminFilterPayment,
     setAdminFilterPayment,
     addDonation
-  } = useDonations({ isAdminMode: activeTab === 'admin' });
+  } = useDonations({ 
+    isAdminMode: activeTab === 'admin',
+    campaignId: currentCampaignSlug
+  });
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const [user, setUser] = useState(auth.currentUser);
@@ -92,8 +141,12 @@ function DonationApp() {
   const [adminRoleError, setAdminRoleError] = useState<string | null>(null);
 
   const navigateToTab = useCallback((tab: AppTab) => {
-    setActiveTab(tab);
-    const path = tab === 'donasi' ? '/' : `/${tab}`;
+    const slug = currentCampaignSlug;
+    let path = `/${slug}`;
+    if (tab === 'donatur') path = `/${slug}/donatur`;
+    else if (tab === 'admin') path = `/${slug}/admin`;
+
+    setRouteState(prev => ({ ...prev, isHub: false, tab }));
     if (window.location.pathname !== path) {
       window.history.pushState(null, '', path);
     }
@@ -101,10 +154,10 @@ function DonationApp() {
       scrollRef.current.scrollTo({ top: 0, behavior: 'instant' });
     }
     window.scrollTo({ top: 0, behavior: 'instant' });
-  }, []);
+  }, [currentCampaignSlug]);
 
   useEffect(() => {
-    const handlePopState = () => setActiveTab(getTabFromPath());
+    const handlePopState = () => setRouteState(parseRoute());
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
@@ -285,7 +338,7 @@ function DonationApp() {
         const extension = uploadFile.name.split('.').pop();
         const safeName = `proof_${timestamp}.${extension}`;
         
-        const storageRef = ref(storage, `proofs/${safeName}`);
+        const storageRef = ref(storage, `proofs/${currentCampaignSlug}/${safeName}`);
         const snapshot = await uploadBytes(storageRef, uploadFile);
         proofUrl = await getDownloadURL(snapshot.ref);
       }
@@ -354,6 +407,7 @@ function DonationApp() {
         paymentMethod,
         originalCurrency,
         originalAmount,
+        campaignId: currentCampaignSlug
       });
 
       setUploadState('success');
@@ -364,6 +418,34 @@ function DonationApp() {
       handleFirestoreError(error, OperationType.WRITE, 'donations');
     }
   };
+
+  if (routeState.isHub) {
+    if (loadingCampaigns) {
+      return (
+        <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: c.canvas }}>
+          <CircularProgress size={32} sx={{ color: c.forest }} />
+        </Box>
+      );
+    }
+    if (activeCampaigns.length > 1) {
+      return (
+        <CampaignDirectory
+          campaigns={campaigns}
+          onSelectCampaign={(target) => {
+            const parts = target.split('/');
+            const slug = parts[0];
+            const tab: AppTab = parts[1] === 'donatur' ? 'donatur' : 'donasi';
+            window.history.pushState(null, '', `/${target}`);
+            setRouteState({ isHub: false, campaignSlug: slug, tab });
+          }}
+          onAdminClick={() => {
+            window.history.pushState(null, '', '/admin');
+            setRouteState({ isHub: false, campaignSlug: 'pemakaman', tab: 'admin' });
+          }}
+        />
+      );
+    }
+  }
 
   return (
     <Box sx={{ minHeight: '100dvh', display: 'flex', justifyContent: 'center', bgcolor: c.canvas }}>
@@ -504,6 +586,12 @@ function DonationApp() {
               spreadsheetId={stats.spreadsheetId}
               isSuperAdmin={isSuperAdmin}
               isClosed={stats.isClosed ?? false}
+              currentCampaignId={currentCampaignSlug}
+              campaigns={campaigns}
+              onSelectCampaign={(newSlug) => {
+                setRouteState(prev => ({ ...prev, isHub: false, campaignSlug: newSlug, tab: 'admin' }));
+                window.history.pushState(null, '', `/${newSlug}/admin`);
+              }}
             />
           )}
 
