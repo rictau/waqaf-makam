@@ -16,7 +16,7 @@ const toAbsoluteUrl = (value: string) => {
 
 export const updateDocumentMetadata = ({
   title = defaultTitle,
-  description = defaultDescription,
+  description,
   image = '/og-preview.png',
   url = siteUrl
 }: {
@@ -28,12 +28,19 @@ export const updateDocumentMetadata = ({
   const absoluteUrl = toAbsoluteUrl(url);
 
   document.title = title;
-  setMeta('meta[name="description"]', description);
   setMeta('meta[property="og:url"]', absoluteUrl);
   setMeta('meta[property="og:title"]', title);
-  setMeta('meta[property="og:description"]', description);
   setMeta('meta[name="twitter:title"]', title);
-  setMeta('meta[name="twitter:description"]', description);
+
+  if (description) {
+    setMeta('meta[name="description"]', description);
+    setMeta('meta[property="og:description"]', description);
+    setMeta('meta[name="twitter:description"]', description);
+  } else {
+    document.querySelector('meta[name="description"]')?.remove();
+    document.querySelector('meta[property="og:description"]')?.remove();
+    document.querySelector('meta[name="twitter:description"]')?.remove();
+  }
 
   if (image) {
     const absoluteImage = toAbsoluteUrl(image);

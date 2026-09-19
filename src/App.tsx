@@ -241,14 +241,14 @@ function DonationApp() {
         updateDynamicFavicon(publicConfig.logos);
       }
       if (hasLoadedStats) {
+        // Only take nama program, remove nama pendek, remove detail
         const title = publicConfig.campaignTitle || publicConfig.masjidName || 'Program Donasi';
-        const desc = publicConfig.programmeScopeDescription || publicConfig.programmeScopeTitle || 'Salurkan donasi, infaq, sedekah, dan wakaf Anda bersama KMII Jepang.';
         const img = publicConfig.imageUrl || '/og-preview.png';
         const pageUrl = `https://ziswaf.kmii.jp/${currentCampaignSlug || 'pemakaman'}`;
 
         updateDocumentMetadata({
-          title: `${title} · ${publicConfig.shortName || 'KMII Jepang'}`,
-          description: desc,
+          title,
+          description: '',
           image: img,
           url: pageUrl
         });

@@ -487,10 +487,9 @@ export const ssrApp = functions.https.onRequest(async (req, res) => {
       const db = admin.firestore();
       const campData = await getCampaignConfig(db, slug);
       if (campData) {
-        const campTitle = campData.publicConfig?.campaignTitle || campData.title || campData.publicConfig?.masjidName || 'Program Donasi';
-        const shortName = campData.publicConfig?.shortName || campData.shortName || 'KMII Jepang';
-        title = `${campTitle} · ${shortName}`;
-        desc = campData.publicConfig?.programmeScopeDescription || campData.publicConfig?.programmeScopeTitle || desc;
+        // Only take nama program, remove nama pendek, remove detail
+        title = campData.publicConfig?.campaignTitle || campData.title || campData.publicConfig?.masjidName || 'Program Donasi';
+        desc = '';
         if (campData.publicConfig?.imageUrl) {
           img = campData.publicConfig.imageUrl;
         } else if (campData.imageUrl) {
@@ -505,13 +504,19 @@ export const ssrApp = functions.https.onRequest(async (req, res) => {
 
   let html = baseHtml;
   html = replaceMeta(html, /<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`);
-  html = replaceMeta(html, /<meta[^>]*?name=["']description["'][^>]*?>/i, `<meta name="description" content="${escapeHtml(desc)}" />`);
+  if (desc) {
+    html = replaceMeta(html, /<meta[^>]*?name=["']description["'][^>]*?>/i, `<meta name="description" content="${escapeHtml(desc)}" />`);
+    html = replaceMeta(html, /<meta[^>]*?property=["']og:description["'][^>]*?>/i, `<meta property="og:description" content="${escapeHtml(desc)}" />`);
+    html = replaceMeta(html, /<meta[^>]*?name=["']twitter:description["'][^>]*?>/i, `<meta name="twitter:description" content="${escapeHtml(desc)}" />`);
+  } else {
+    html = html.replace(/<meta[^>]*?name=["']description["'][^>]*?>\s*/gi, '');
+    html = html.replace(/<meta[^>]*?property=["']og:description["'][^>]*?>\s*/gi, '');
+    html = html.replace(/<meta[^>]*?name=["']twitter:description["'][^>]*?>\s*/gi, '');
+  }
   html = replaceMeta(html, /<meta[^>]*?property=["']og:title["'][^>]*?>/i, `<meta property="og:title" content="${escapeHtml(title)}" />`);
-  html = replaceMeta(html, /<meta[^>]*?property=["']og:description["'][^>]*?>/i, `<meta property="og:description" content="${escapeHtml(desc)}" />`);
   html = replaceMeta(html, /<meta[^>]*?property=["']og:image["'][^>]*?>/i, `<meta property="og:image" content="${escapeHtml(img)}" />`);
   html = replaceMeta(html, /<meta[^>]*?property=["']og:url["'][^>]*?>/i, `<meta property="og:url" content="${escapeHtml(url)}" />`);
   html = replaceMeta(html, /<meta[^>]*?name=["']twitter:title["'][^>]*?>/i, `<meta name="twitter:title" content="${escapeHtml(title)}" />`);
-  html = replaceMeta(html, /<meta[^>]*?name=["']twitter:description["'][^>]*?>/i, `<meta name="twitter:description" content="${escapeHtml(desc)}" />`);
   html = replaceMeta(html, /<meta[^>]*?name=["']twitter:image["'][^>]*?>/i, `<meta name="twitter:image" content="${escapeHtml(img)}" />`);
 
   // Cache at CDN edge for 1 hour (s-maxage=3600), browser for 5 minutes (max-age=300)
