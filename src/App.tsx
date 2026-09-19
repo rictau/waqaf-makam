@@ -319,9 +319,9 @@ function DonationApp() {
     }
     if (!isAnonymous && !donorName) return setFormError("Mohon masukkan nama donatur atau pilih Anonim.");
     if (!donorEmail || !donorEmail.includes('@')) return setFormError("Mohon masukkan alamat email yang valid.");
-    if (!donorPhone) return setFormError("Mohon masukkan nomor WhatsApp.");
-    if (!donorPhone.startsWith('81') || donorPhone.length < 10) {
-      return setFormError("Nomor WhatsApp harus diawali kode negara Jepang 81 (contoh: 818012345678).");
+    const cleanPhone = donorPhone.replace(/[^0-9]/g, '');
+    if (!cleanPhone || cleanPhone.length < 8) {
+      return setFormError("Nomor WhatsApp minimal 8 digit angka.");
     }
     if (!donorCity) return setFormError("Mohon masukkan domisili.");
     if (selectedBank !== 'cash' && !selectedAccountId) return setFormError("Mohon pilih rekening tujuan transfer terlebih dahulu.");
@@ -406,7 +406,7 @@ function DonationApp() {
         package: getPackageName(),
         paymentMethod,
         originalCurrency,
-        originalAmount,
+        ...(originalAmount > 0 ? { originalAmount } : {}),
         campaignId: currentCampaignSlug
       });
 

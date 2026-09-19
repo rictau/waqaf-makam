@@ -77,7 +77,7 @@ service cloud.firestore {
              (!('paymentMethod' in data) || (data.paymentMethod is string && data.paymentMethod.size() < 100)) &&
              (!('remarks' in data) || (data.remarks is string && data.remarks.size() < 1000)) &&
              (!('originalCurrency' in data) || data.originalCurrency in ['JPY', 'IDR']) &&
-             (!('originalAmount' in data) || (data.originalAmount is number && data.originalAmount > 0));
+             (!('originalAmount' in data) || data.originalAmount == null || (data.originalAmount is number && data.originalAmount >= 0));
     }
 
     // ===============================================================

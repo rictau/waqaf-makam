@@ -1,7 +1,7 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    match /proofs/{fileName} {
+    match /proofs/{allPaths=**} {
       // Anyone can read proof images
       allow read: if true;
 

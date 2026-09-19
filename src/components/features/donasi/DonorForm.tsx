@@ -114,16 +114,12 @@ export const DonorForm: React.FC<DonorFormProps> = ({
           />
         </FieldRow>
 
-        <FieldRow id="donor-phone" label="WhatsApp" valid={donorPhone.startsWith('81') && donorPhone.length >= 10}>
+        <FieldRow id="donor-phone" label="WhatsApp" valid={donorPhone.length >= 8}>
           <InputBase
-            id="donor-phone" fullWidth type="tel" inputMode="numeric" placeholder="Cth: 818012345678" sx={fieldSx}
+            id="donor-phone" fullWidth type="tel" inputMode="numeric" placeholder="Cth: 08123456789 atau 08012345678" sx={fieldSx}
             value={donorPhone}
             onChange={(e) => {
-              let val = e.target.value.replace(/[^0-9]/g, '');
-              // Intelligently auto-convert Japanese domestic leading 0 (080/090/070) to 81
-              if (val.startsWith('0') && val.length >= 2) {
-                val = '81' + val.slice(1);
-              }
+              const val = e.target.value.replace(/[^0-9]/g, '');
               setDonorPhone(val);
             }}
           />
