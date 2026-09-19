@@ -37,7 +37,7 @@ export const Footer: React.FC<FooterProps> = ({ publicConfig }) => {
           <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 2, pb: 1, mb: 1.5, borderBottom: `1px solid ${c.ruleStrong}` }}>
             <Eyebrow tone="ink">Narahubung</Eyebrow>
             <Typography sx={{ fontSize: '0.625rem', fontWeight: 600, color: c.inkFaint, textAlign: 'right' }}>
-              Panitia Wakaf
+              Panitia {publicConfig.shortName || 'Program'}
             </Typography>
           </Box>
 

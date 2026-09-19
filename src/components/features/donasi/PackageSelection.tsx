@@ -53,7 +53,7 @@ export const PackageSelection: React.FC<PackageSelectionProps> = ({
   return (
     <Box component="section">
       <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', pb: 1, mb: 1.5, borderBottom: `1px solid ${c.ruleStrong}` }}>
-        <Eyebrow tone="ink">Pilih Nominal Wakaf</Eyebrow>
+        <Eyebrow tone="ink">Pilih Nominal Donasi</Eyebrow>
         <Typography sx={{ fontSize: '0.625rem', fontWeight: 600, color: c.inkFaint }}>
           Langkah 1
         </Typography>
@@ -61,7 +61,7 @@ export const PackageSelection: React.FC<PackageSelectionProps> = ({
 
       <PullQuote cite={citation} sx={{ mb: 2 }}>“{quote}”</PullQuote>
 
-      <Box role="radiogroup" aria-label="Nominal wakaf" sx={{ border: `1px solid ${c.rule}`, borderRadius: radius.lg, bgcolor: c.paper, overflow: 'hidden' }}>
+      <Box role="radiogroup" aria-label="Nominal donasi" sx={{ border: `1px solid ${c.rule}`, borderRadius: radius.lg, bgcolor: c.paper, overflow: 'hidden' }}>
         {packages.map((pkg, index) => {
           const isActive = selectedPackage === pkg.id;
           const hasBadge = Boolean(pkg.badge);

@@ -14,9 +14,11 @@ import {
   MenuItem
 } from '@mui/material';
 import { doc, setDoc, getDoc, Timestamp } from 'firebase/firestore';
-import { db } from '../../../firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, storage } from '../../../firebase';
 import { c, eyebrow, radius } from '../../../design';
 import { Eyebrow } from '../../common/primitives';
+import { ZISWAF_CATEGORIES } from '../../../types';
 import type { CampaignDocument, CampaignStatus, PublicConfig } from '../../../types';
 
 interface CampaignBuilderDialogProps {
@@ -42,6 +44,9 @@ export const CampaignBuilderDialog: React.FC<CampaignBuilderDialogProps> = ({
   const [slug, setSlug] = useState('');
   const [title, setTitle] = useState('');
   const [shortName, setShortName] = useState('');
+  const [category, setCategory] = useState<string>('Wakaf');
+  const [imageUrl, setImageUrl] = useState<string>('');
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [targetJPY, setTargetJPY] = useState('20000000');
   const [locationText, setLocationText] = useState('');
   const [status, setStatus] = useState<CampaignStatus>('active');
@@ -61,6 +66,8 @@ export const CampaignBuilderDialog: React.FC<CampaignBuilderDialogProps> = ({
         setSlug(editCampaign.id);
         setTitle(editCampaign.title || '');
         setShortName(editCampaign.shortName || '');
+        setCategory(editCampaign.category || (editCampaign.publicConfig as any)?.category || 'Wakaf');
+        setImageUrl(editCampaign.imageUrl || (editCampaign.publicConfig as any)?.imageUrl || '');
         setTargetJPY(String(editCampaign.totalNeed || 20000000));
         setLocationText(editCampaign.publicConfig?.locationText || '');
         setStatus(editCampaign.status || 'active');
@@ -78,6 +85,8 @@ export const CampaignBuilderDialog: React.FC<CampaignBuilderDialogProps> = ({
         setSlug(`${cloneFrom.id}-baru`);
         setTitle(`${cloneFrom.title}`);
         setShortName(cloneFrom.shortName);
+        setCategory(cloneFrom.category || (cloneFrom.publicConfig as any)?.category || 'Wakaf');
+        setImageUrl(cloneFrom.imageUrl || (cloneFrom.publicConfig as any)?.imageUrl || '');
         setTargetJPY(String(cloneFrom.totalNeed || 20000000));
         setLocationText(cloneFrom.publicConfig?.locationText || '');
         setStatus('active');
@@ -95,6 +104,8 @@ export const CampaignBuilderDialog: React.FC<CampaignBuilderDialogProps> = ({
         setSlug('');
         setTitle('');
         setShortName('');
+        setCategory('Wakaf');
+        setImageUrl('');
         setTargetJPY('20000000');
         setLocationText('');
         setStatus('active');
@@ -109,6 +120,32 @@ export const CampaignBuilderDialog: React.FC<CampaignBuilderDialogProps> = ({
       setIsSubmitting(false);
     }
   }, [open, cloneFrom, editCampaign, basePublicConfig]);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !e.target.files[0]) return;
+    const file = e.target.files[0];
+    const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Ukuran foto maksimal 10MB.');
+      e.target.value = '';
+      return;
+    }
+    setIsUploadingImage(true);
+    try {
+      const targetSlug = slug.trim() || 'new-campaign';
+      const fileName = `cover_${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
+      const storageRef = ref(storage, `campaigns/${targetSlug}/${fileName}`);
+      const snapshot = await uploadBytes(storageRef, file);
+      const downloadUrl = await getDownloadURL(snapshot.ref);
+      setImageUrl(downloadUrl);
+    } catch (err: any) {
+      console.error('Failed to upload image:', err);
+      alert(`Gagal upload foto: ${err?.message || 'Terjadi kesalahan'}`);
+    } finally {
+      setIsUploadingImage(false);
+      e.target.value = '';
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -146,13 +183,17 @@ export const CampaignBuilderDialog: React.FC<CampaignBuilderDialogProps> = ({
           masjidName: shortName.trim() || title.trim(),
           shortName: shortName.trim() || 'KMII Jepang',
           campaignTitle: title.trim(),
+          category: category.trim() || undefined,
+          imageUrl: imageUrl.trim() || undefined,
           locationText: locationText.trim() || 'Jepang',
           wakafHadith: hadith.trim(),
         };
 
-        const updatePayload = {
+        const updatePayload: Record<string, any> = {
           title: title.trim(),
           shortName: shortName.trim(),
+          category: category.trim() || 'Wakaf',
+          imageUrl: imageUrl.trim() || null,
           status,
           isFeatured,
           order: Number(order) || 1,
@@ -196,6 +237,8 @@ export const CampaignBuilderDialog: React.FC<CampaignBuilderDialogProps> = ({
         masjidName: shortName.trim() || title.trim(),
         shortName: shortName.trim() || 'KMII Jepang',
         campaignTitle: title.trim(),
+        category: category.trim() || 'Wakaf',
+        imageUrl: imageUrl.trim() || undefined,
         locationText: locationText.trim() || 'Jepang',
         footerCredit: clonedConfig.footerCredit || 'KMII Jepang',
         donorListTitle: clonedConfig.donorListTitle || 'Daftar Donatur',
@@ -228,6 +271,8 @@ export const CampaignBuilderDialog: React.FC<CampaignBuilderDialogProps> = ({
         id: cleanSlug,
         title: title.trim(),
         shortName: shortName.trim(),
+        category: category.trim() || 'Wakaf',
+        imageUrl: imageUrl.trim() || null,
         status: 'active',
         isFeatured: false,
         order: Number(order) || 99,
@@ -329,6 +374,25 @@ export const CampaignBuilderDialog: React.FC<CampaignBuilderDialogProps> = ({
               />
             </Box>
             <Box>
+              <Eyebrow sx={{ mb: 0.5 }}>Kategori Program</Eyebrow>
+              <TextField
+                select
+                fullWidth
+                size="small"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+              >
+                {ZISWAF_CATEGORIES.map((cat) => (
+                  <MenuItem key={cat} value={cat}>
+                    {cat}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Box>
+          </Box>
+
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+            <Box>
               <Eyebrow sx={{ mb: 0.5 }}>Lokasi</Eyebrow>
               <TextField
                 fullWidth
@@ -338,9 +402,6 @@ export const CampaignBuilderDialog: React.FC<CampaignBuilderDialogProps> = ({
                 onChange={(e) => setLocationText(e.target.value)}
               />
             </Box>
-          </Box>
-
-          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
             <Box>
               <Eyebrow sx={{ mb: 0.5 }}>Target Dana (JPY)</Eyebrow>
               <TextField
@@ -353,16 +414,54 @@ export const CampaignBuilderDialog: React.FC<CampaignBuilderDialogProps> = ({
                 onChange={(e) => setTargetJPY(e.target.value)}
               />
             </Box>
-            <Box>
-              <Eyebrow sx={{ mb: 0.5 }}>Batas Waktu (Deadline)</Eyebrow>
+          </Box>
+
+          <Box>
+            <Eyebrow sx={{ mb: 0.5 }}>Batas Waktu (Deadline)</Eyebrow>
+            <TextField
+              fullWidth
+              size="small"
+              type="date"
+              value={deadline}
+              onChange={(e) => setDeadline(e.target.value)}
+            />
+          </Box>
+
+          <Box>
+            <Eyebrow sx={{ mb: 0.5 }}>Foto / Banner Program (Opsional)</Eyebrow>
+            <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
               <TextField
                 fullWidth
                 size="small"
-                type="date"
-                value={deadline}
-                onChange={(e) => setDeadline(e.target.value)}
+                placeholder="https://... atau klik Upload Foto"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                helperText="Banner foto akan ditampilkan di halaman utama dan katalog program."
               />
+              <Button
+                variant="outlined"
+                component="label"
+                disabled={isUploadingImage}
+                sx={{ ...eyebrow, fontSize: '0.625rem', whiteSpace: 'nowrap', py: 1, minHeight: 40 }}
+              >
+                {isUploadingImage ? 'Mengunggah…' : 'Upload Foto'}
+                <input
+                  type="file"
+                  hidden
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                />
+              </Button>
             </Box>
+            {imageUrl && (
+              <Box sx={{ mt: 1.5, position: 'relative', width: '100%', height: 130, borderRadius: radius.md, overflow: 'hidden', border: `1px solid ${c.rule}` }}>
+                <img
+                  src={imageUrl}
+                  alt="Banner Program"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              </Box>
+            )}
           </Box>
 
           {mode === 'edit' && (

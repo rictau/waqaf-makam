@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Box, Typography, Button, Card, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Switch, FormControlLabel, InputAdornment, Tooltip, Divider } from '@mui/material';
-import { ExternalLink, CheckCircle2, Trash2, Wallet, Download, Pencil, Filter, Search, Plus } from 'lucide-react';
+import { Box, Typography, Button, Card, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Switch, FormControlLabel, InputAdornment, Tooltip, Divider, CircularProgress } from '@mui/material';
+import { ExternalLink, CheckCircle2, Trash2, Wallet, Download, Pencil, Filter, Search, Plus, Upload } from 'lucide-react';
 import { updateDoc, deleteDoc, doc, setDoc, collection, getDocs, query, orderBy, where, Timestamp, writeBatch, getDocFromServer, deleteField } from 'firebase/firestore';
 import { EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
-import { db, auth } from '../../../firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, auth, storage } from '../../../firebase';
 import { formatJPY } from '../../../utils/formatters';
 import { c, eyebrow, mono, radius, tnum } from '../../../design';
 import { Eyebrow, Figure, LedgerRow, SectionHeading, StatusTag } from '../../common/primitives';
@@ -87,8 +88,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [campaignStatusInput, setCampaignStatusInput] = useState<CampaignStatus>(
     currentCampaign?.status || (isClosed ? 'closed' : 'active')
   );
+  const [campaignCategoryInput, setCampaignCategoryInput] = useState<string>(
+    currentCampaign?.category || publicConfig.category || 'Donasi'
+  );
+  const [imageUrlInput, setImageUrlInput] = useState<string>(
+    currentCampaign?.imageUrl || publicConfig.imageUrl || ''
+  );
   const [isFeaturedInput, setIsFeaturedInput] = useState<boolean>(Boolean(currentCampaign?.isFeatured));
   const [campaignOrderInput, setCampaignOrderInput] = useState<string>(String(currentCampaign?.order ?? 1));
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isDeletingCampaign, setIsDeletingCampaign] = useState(false);
 
   const [deadlineInput, setDeadlineInput] = useState(toLocalInput(donationDeadline));
   const [totalNeedInput, setTotalNeedInput] = useState(String(totalNeed));
@@ -108,15 +117,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     wakafHadith: publicConfig.wakafHadith || '',
     phase1Label: publicConfig.phases[0]?.shortLabel || '',
     phase2Label: publicConfig.phases[1]?.shortLabel || '',
+    packageBulananBadge: findPackage('bulanan')?.badge || 'Paket Bersama',
     packageBulananPrice: String(findPackage('bulanan')?.priceJPY || '3000'),
+    packageBulananSubtext: findPackage('bulanan')?.subtext || 'Partisipasi gotong royong.',
+    packageSekaliBadge: findPackage('sekali')?.badge || 'Paket Reguler',
     packageSekaliPrice: String(findPackage('sekali')?.priceJPY || '10000'),
+    packageSekaliSubtext: findPackage('sekali')?.subtext || 'Donasi percepatan program.',
+    package1SlotBadge: findPackage('1slot')?.badge || 'Paket Utama',
     package1SlotPrice: String(findPackage('1slot')?.priceJPY || '320000'),
+    package1SlotSubtext: findPackage('1slot')?.subtext || 'Mendapat sertifikat dan laporan resmi.',
     whatsapp: publicConfig.contactLinks.WHATSAPP,
     instagram: publicConfig.contactLinks.INSTAGRAM,
     email: publicConfig.contactLinks.EMAIL,
     donationClosedTitle: publicConfig.donationClosedTitle || '',
     donationClosedText: publicConfig.donationClosedText || '',
-    cashPaymentText: publicConfig.cashPaymentText || 'Donasi tunai dapat diserahkan langsung atau dikonfirmasikan kepada panitia melalui direct message (DM) Instagram @kmiijepang.'
+    cashPaymentText: publicConfig.cashPaymentText || 'Donasi tunai dapat diserahkan langsung atau dikonfirmasikan kepada panitia.'
   });
   const [banksJP, setBanksJP] = useState<BankAccountConfig[]>(publicConfig.banks?.JP || []);
   const [banksID, setBanksID] = useState<BankAccountConfig[]>(publicConfig.banks?.ID || []);
@@ -138,6 +153,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   React.useEffect(() => {
     const curCamp = campaigns.find((c) => c.id === currentCampaignId);
     setCampaignStatusInput(curCamp?.status || (isClosed ? 'closed' : 'active'));
+    setCampaignCategoryInput(curCamp?.category || publicConfig.category || 'Donasi');
+    setImageUrlInput(curCamp?.imageUrl || publicConfig.imageUrl || '');
     setIsFeaturedInput(Boolean(curCamp?.isFeatured));
     setCampaignOrderInput(String(curCamp?.order ?? 1));
     setPublicConfigInput({
@@ -151,15 +168,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       wakafHadith: publicConfig.wakafHadith || '',
       phase1Label: publicConfig.phases[0]?.shortLabel || '',
       phase2Label: publicConfig.phases[1]?.shortLabel || '',
+      packageBulananBadge: publicConfig.packages.find((pkg) => pkg.id === 'bulanan')?.badge || 'Paket Bersama',
       packageBulananPrice: String(publicConfig.packages.find((pkg) => pkg.id === 'bulanan')?.priceJPY || '3000'),
+      packageBulananSubtext: publicConfig.packages.find((pkg) => pkg.id === 'bulanan')?.subtext || 'Partisipasi gotong royong.',
+      packageSekaliBadge: publicConfig.packages.find((pkg) => pkg.id === 'sekali')?.badge || 'Paket Reguler',
       packageSekaliPrice: String(publicConfig.packages.find((pkg) => pkg.id === 'sekali')?.priceJPY || '10000'),
+      packageSekaliSubtext: publicConfig.packages.find((pkg) => pkg.id === 'sekali')?.subtext || 'Donasi percepatan program.',
+      package1SlotBadge: publicConfig.packages.find((pkg) => pkg.id === '1slot')?.badge || 'Paket Utama',
       package1SlotPrice: String(publicConfig.packages.find((pkg) => pkg.id === '1slot')?.priceJPY || '320000'),
+      package1SlotSubtext: publicConfig.packages.find((pkg) => pkg.id === '1slot')?.subtext || 'Mendapat sertifikat dan laporan resmi.',
       whatsapp: publicConfig.contactLinks.WHATSAPP,
       instagram: publicConfig.contactLinks.INSTAGRAM,
       email: publicConfig.contactLinks.EMAIL,
       donationClosedTitle: publicConfig.donationClosedTitle || '',
       donationClosedText: publicConfig.donationClosedText || '',
-      cashPaymentText: publicConfig.cashPaymentText || 'Donasi tunai dapat diserahkan langsung atau dikonfirmasikan kepada panitia melalui direct message (DM) Instagram @kmiijepang.'
+      cashPaymentText: publicConfig.cashPaymentText || 'Donasi tunai dapat diserahkan langsung atau dikonfirmasikan kepada panitia.'
     });
     setBanksJP(publicConfig.banks?.JP || []);
     setBanksID(publicConfig.banks?.ID || []);
@@ -178,9 +201,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     const priceBulanan = Number(publicConfigInput.packageBulananPrice);
     const priceSekali = Number(publicConfigInput.packageSekaliPrice);
     const price1Slot = Number(publicConfigInput.package1SlotPrice);
-    if (isNaN(priceBulanan) || priceBulanan <= 0) throw new Error('Harga Paket Bersama harus angka positif.');
-    if (isNaN(priceSekali) || priceSekali <= 0) throw new Error('Harga Paket Reguler harus angka positif.');
-    if (isNaN(price1Slot) || price1Slot <= 0) throw new Error('Harga Paket 1 Slot Makam harus angka positif.');
+    if (isNaN(priceBulanan) || priceBulanan <= 0) throw new Error('Harga Paket 1 harus angka positif.');
+    if (isNaN(priceSekali) || priceSekali <= 0) throw new Error('Harga Paket 2 harus angka positif.');
+    if (isNaN(price1Slot) || price1Slot <= 0) throw new Error('Harga Paket 3 harus angka positif.');
 
     const rate = Number(jpyToIdrRateInput) || 113;
 
@@ -192,8 +215,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           label: yenLabel(priceBulanan),
           priceJPY: priceBulanan,
           priceLabel: `${yenLabel(priceBulanan)} (~Rp ${idr.toLocaleString('id-ID')})`,
-          badge: 'Paket Bersama',
-          subtext: 'Partisipasi gotong royong pembebasan lahan pemakaman.'
+          badge: publicConfigInput.packageBulananBadge || 'Paket Bersama',
+          subtext: publicConfigInput.packageBulananSubtext || 'Partisipasi gotong royong.'
         };
       }
       if (pkg.id === 'sekali') {
@@ -203,8 +226,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           label: yenLabel(priceSekali),
           priceJPY: priceSekali,
           priceLabel: `${yenLabel(priceSekali)} (~Rp ${idr.toLocaleString('id-ID')})`,
-          badge: 'Paket Reguler',
-          subtext: 'Donasi percepatan pelunasan lahan pemakaman muslim.'
+          badge: publicConfigInput.packageSekaliBadge || 'Paket Reguler',
+          subtext: publicConfigInput.packageSekaliSubtext || 'Donasi percepatan program.'
         };
       }
       if (pkg.id === '1slot') {
@@ -214,7 +237,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           label: yenLabel(price1Slot),
           priceJPY: price1Slot,
           priceLabel: `${yenLabel(price1Slot)} (~Rp ${idr.toLocaleString('id-ID')})`,
-          subtext: 'Administrasi & perawatan termasuk. Mendapat sertifikat wakaf.'
+          badge: publicConfigInput.package1SlotBadge || 'Paket Utama',
+          subtext: publicConfigInput.package1SlotSubtext || 'Mendapat sertifikat dan laporan resmi.'
         };
       }
       return pkg;
@@ -272,6 +296,77 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
   const handleRemoveNarahubung = (index: number) => {
     setNarahubungList((prev) => prev.filter((_, idx) => idx !== index));
+  };
+
+  const handleCoverPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !e.target.files[0]) return;
+    const file = e.target.files[0];
+    const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Ukuran foto terlalu besar! Maksimal 10MB.');
+      e.target.value = '';
+      return;
+    }
+    const targetCampId = currentCampaignId || 'pemakaman';
+    setIsUploadingImage(true);
+    try {
+      const fileName = `cover_${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
+      const storageRef = ref(storage, `campaigns/${targetCampId}/${fileName}`);
+      const snapshot = await uploadBytes(storageRef, file);
+      const downloadUrl = await getDownloadURL(snapshot.ref);
+      setImageUrlInput(downloadUrl);
+      alert('Foto program berhasil diunggah! Jangan lupa klik "Simpan Perubahan" untuk menyimpan.');
+    } catch (err: any) {
+      console.error('Failed to upload image:', err);
+      alert(`Gagal mengunggah foto: ${err?.message || 'Terjadi kesalahan'}`);
+    } finally {
+      setIsUploadingImage(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleDeleteCampaign = () => {
+    if (campaigns.length <= 1) {
+      alert('Tidak dapat menghapus program: Minimal harus ada 1 program aktif di sistem.');
+      return;
+    }
+    const targetCampId = currentCampaignId || 'pemakaman';
+    const campToDelete = campaigns.find((c) => c.id === targetCampId);
+    const campName = campToDelete?.shortName || campToDelete?.title || targetCampId;
+
+    if (
+      !window.confirm(
+        `PERINGATAN: Apakah Anda yakin ingin MENGHAPUS program "${campName}" (${targetCampId}) secara permanen?\n\nSemua konfigurasi program ini akan dihapus dari sistem. Tindakan ini tidak dapat dibatalkan.`
+      )
+    ) {
+      return;
+    }
+
+    requestSudoVerification(async () => {
+      setIsDeletingCampaign(true);
+      try {
+        const isAuthorized = await checkSuperAdminAuthorization();
+        if (!isAuthorized) {
+          setIsDeletingCampaign(false);
+          return;
+        }
+
+        await deleteDoc(doc(db, 'campaigns', targetCampId));
+
+        const remainingCampaigns = campaigns.filter((c) => c.id !== targetCampId);
+        const nextCamp = remainingCampaigns[0]?.id || 'pemakaman';
+        if (onSelectCampaign) {
+          onSelectCampaign(nextCamp);
+        }
+
+        alert(`Program "${campName}" berhasil dihapus.`);
+      } catch (err: any) {
+        console.error('Failed to delete campaign:', err);
+        alert(`Gagal menghapus program: ${err?.message || 'Terjadi kesalahan'}`);
+      } finally {
+        setIsDeletingCampaign(false);
+      }
+    });
   };
 
   const checkAdminAuthorization = async (): Promise<boolean> => {
@@ -522,14 +617,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         const targetCampId = currentCampaignId || 'pemakaman';
         const curCamp = campaigns.find((c) => c.id === targetCampId);
         const isClosedValue = campaignStatusInput === 'closed';
+        const cleanImageUrl = imageUrlInput.trim();
 
         const settingsPayload: any = {
           status: campaignStatusInput,
+          category: campaignCategoryInput || 'Donasi',
+          ...(cleanImageUrl ? { imageUrl: cleanImageUrl } : { imageUrl: deleteField() }),
           isFeatured: isFeaturedInput,
           order: Number(campaignOrderInput) || 1,
           isClosed: isClosedValue,
-          title: publicConfigInput.masjidName ? `Wakaf Pemakaman Muslim ${publicConfigInput.masjidName}` : (curCamp?.title || 'Wakaf Pemakaman Muslim'),
-          shortName: publicConfigInput.shortName || curCamp?.shortName || 'Pemakaman',
+          title: publicConfigInput.masjidName ? publicConfigInput.masjidName : (curCamp?.title || 'Program Donasi'),
+          shortName: publicConfigInput.shortName || curCamp?.shortName || 'Program',
           donationDeadline: Timestamp.fromDate(deadlineDate),
           totalNeed: totalNeedNum,
           baseVerified: baseVerifiedNum,
@@ -539,15 +637,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           publicConfig: {
             masjidName: publicConfigInput.masjidName || '',
             shortName: publicConfigInput.shortName || '',
-            campaignTitle: `Wakaf Pembangunan ${publicConfigInput.masjidName || ''}`,
+            campaignTitle: publicConfigInput.masjidName || curCamp?.title || 'Program Donasi',
             locationText: publicConfigInput.locationText || '',
+            category: campaignCategoryInput || 'Donasi',
+            ...(cleanImageUrl ? { imageUrl: cleanImageUrl } : { imageUrl: deleteField() }),
             footerCredit: publicConfigInput.footerCredit?.trim() || publicConfig.footerCredit || '',
-            donorListTitle: publicConfig.donorListTitle || '',
+            donorListTitle: publicConfig.donorListTitle || 'Daftar Donatur',
             donorListSubtitleDate: publicConfigInput.donorListSubtitleDate?.trim() || publicConfig.donorListSubtitleDate || '',
             wakafHadith: publicConfigInput.wakafHadith?.trim() || publicConfig.wakafHadith || '',
             programmeScopeTitle: publicConfigInput.programmeScopeTitle !== undefined ? publicConfigInput.programmeScopeTitle.trim() : (publicConfig.programmeScopeTitle || ''),
             programmeScopeDescription: publicConfigInput.programmeScopeDescription !== undefined ? publicConfigInput.programmeScopeDescription.trim() : (publicConfig.programmeScopeDescription || ''),
-            cashPaymentText: publicConfigInput.cashPaymentText?.trim() || 'Donasi tunai dapat diserahkan langsung atau dikonfirmasikan kepada panitia melalui direct message (DM) Instagram @kmiijepang.',
+            cashPaymentText: publicConfigInput.cashPaymentText?.trim() || 'Donasi tunai dapat diserahkan langsung atau dikonfirmasikan kepada panitia.',
             donationClosedTitle: publicConfigInput.donationClosedTitle || '',
             donationClosedText: publicConfigInput.donationClosedText || '',
             logos: publicConfig.logos || [],
@@ -892,7 +992,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2, mb: 2.5 }}>
           <Box sx={{ minWidth: 0 }}>
             <Eyebrow tone="brass">Panel Panitia</Eyebrow>
-            <Typography variant="h2" sx={{ mt: 0.5, color: c.ink }}>Administrasi Wakaf</Typography>
+            <Typography variant="h2" sx={{ mt: 0.5, color: c.ink }}>Administrasi ZISWAF & Donasi</Typography>
             <Typography sx={{ mt: 0.5, fontSize: '0.6875rem', fontWeight: 600, color: c.inkFaint, ...tnum }}>
               {donations.length} data dimuat · {donations.filter((d) => d.status === 'pending').length} menunggu verifikasi
             </Typography>
@@ -1220,7 +1320,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   value={campaignStatusInput}
                   onChange={(e) => setCampaignStatusInput(e.target.value as CampaignStatus)}
                   fullWidth
-                  helperText="Status 'Ditutup' akan menonaktifkan form penerimaan donasi untuk program ini"
+                  helperText="Status 'Ditutup' akan menonaktifkan form donasi untuk program ini"
                 >
                   <MenuItem value="active">Aktif (Menerima Donasi)</MenuItem>
                   <MenuItem value="closed">Ditutup (Periode Selesai)</MenuItem>
@@ -1228,13 +1328,28 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   <MenuItem value="archived">Diarsipkan</MenuItem>
                 </TextField>
                 <TextField
+                  select
+                  size="small"
+                  label="Kategori ZISWAF"
+                  value={campaignCategoryInput}
+                  onChange={(e) => setCampaignCategoryInput(e.target.value)}
+                  fullWidth
+                  helperText="Klasifikasi jenis program (Wakaf, Sedekah, Infaq, dll.)"
+                >
+                  <MenuItem value="Wakaf">Wakaf</MenuItem>
+                  <MenuItem value="Sedekah">Sedekah / Infaq</MenuItem>
+                  <MenuItem value="Zakat">Zakat</MenuItem>
+                  <MenuItem value="Kemanusiaan">Donasi Kemanusiaan</MenuItem>
+                  <MenuItem value="Donasi">Donasi Umum</MenuItem>
+                </TextField>
+                <TextField
                   size="small"
                   label="Urutan Tampilan"
                   type="number"
                   value={campaignOrderInput}
                   onChange={(e) => setCampaignOrderInput(e.target.value)}
-                  fullWidth
-                  helperText="Urutan nomor saat ditampilkan di menu program"
+                  sx={{ minWidth: { xs: '100%', sm: 140 } }}
+                  helperText="Urutan nomor katalog"
                 />
               </Box>
               <FormControlLabel
@@ -1256,6 +1371,63 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   </Box>
                 }
                 sx={{ m: 0 }}
+              />
+            </Box>
+          </Card>
+
+          {/* Group 0B: Foto / Banner Program */}
+          <Card sx={{ p: 2.25, border: `1px solid ${c.ruleStrong}`, borderRadius: radius.lg, bgcolor: c.paper }}>
+            <SectionHeading title="Foto / Banner Program (Opsional)" />
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Typography sx={{ fontSize: '0.75rem', color: c.inkMuted }}>
+                Foto ini akan tampil di bagian atas halaman donasi dan pada kartu katalog portal ZISWAF.
+              </Typography>
+              {imageUrlInput ? (
+                <Box sx={{ position: 'relative', maxWidth: 460, borderRadius: radius.md, overflow: 'hidden', border: `1px solid ${c.rule}` }}>
+                  <Box
+                    component="img"
+                    src={imageUrlInput}
+                    alt="Preview Program"
+                    sx={{ width: '100%', height: 200, objectFit: 'cover', display: 'block' }}
+                  />
+                  <Button
+                    size="small"
+                    variant="contained"
+                    onClick={() => setImageUrlInput('')}
+                    sx={{
+                      position: 'absolute',
+                      top: 8,
+                      right: 8,
+                      bgcolor: 'rgba(0,0,0,0.65)',
+                      color: '#fff',
+                      fontSize: '0.625rem',
+                      '&:hover': { bgcolor: 'rgba(211,47,47,0.9)' }
+                    }}
+                  >
+                    Hapus Foto
+                  </Button>
+                </Box>
+              ) : null}
+              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+                <Button
+                  variant="outlined"
+                  component="label"
+                  disabled={isUploadingImage}
+                  startIcon={isUploadingImage ? <CircularProgress size={14} /> : <Upload size={14} />}
+                  sx={{ ...eyebrow, fontSize: '0.625rem', color: c.ink, borderColor: c.ruleStrong }}
+                >
+                  {isUploadingImage ? 'Mengunggah…' : 'Unggah Foto Baru'}
+                  <input type="file" accept="image/*" hidden onChange={handleCoverPhotoUpload} />
+                </Button>
+                <Typography sx={{ fontSize: '0.75rem', color: c.inkFaint }}>atau gunakan link langsung:</Typography>
+              </Box>
+              <TextField
+                size="small"
+                label="URL Gambar / Foto (Opsional)"
+                placeholder="https://..."
+                value={imageUrlInput}
+                onChange={(e) => setImageUrlInput(e.target.value.trim())}
+                fullWidth
               />
             </Box>
           </Card>
@@ -1356,7 +1528,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               />
               <TextField
                 size="small"
-                label="Kutipan Hadits / Teks Penguat Wakaf"
+                label="Kutipan Hadits / Teks Penguat"
                 placeholder="Contoh: Jika seseorang meninggal dunia, maka terputuslah amalannya kecuali tiga perkara..."
                 value={publicConfigInput.wakafHadith}
                 onChange={(e) => updatePublicConfigInput('wakafHadith', e.target.value)}
@@ -1368,9 +1540,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             </Box>
           </Card>
 
-              {/* Group 2: Fase & Paket Wakaf */}
+              {/* Group 2: Fase & Paket Donasi */}
               <Card sx={{ p: 2.25, border: `1px solid ${c.ruleStrong}`, borderRadius: radius.lg, bgcolor: c.paper }}>
-                <SectionHeading title="Pengaturan Fase & Paket Wakaf" />
+                <SectionHeading title="Pengaturan Fase & Paket Donasi" />
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
                   <FormControlLabel
                     control={
@@ -1401,26 +1573,70 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                       />
                     )}
                   </Box>
-                  <Eyebrow sx={{ mt: 0.5 }}>Harga Paket Donasi (JPY)</Eyebrow>
-                  <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
-                    <TextField
-                      size="small" label="Paket Bersama (JPY)" type="number" value={publicConfigInput.packageBulananPrice}
-                      onChange={(e) => updatePublicConfigInput('packageBulananPrice', e.target.value)}
-                      helperText="Default: ¥3,000"
-                      fullWidth
-                    />
-                    <TextField
-                      size="small" label="Paket Reguler (JPY)" type="number" value={publicConfigInput.packageSekaliPrice}
-                      onChange={(e) => updatePublicConfigInput('packageSekaliPrice', e.target.value)}
-                      helperText="Default: ¥10,000"
-                      fullWidth
-                    />
-                    <TextField
-                      size="small" label="Paket 1 Slot Makam (JPY)" type="number" value={publicConfigInput.package1SlotPrice}
-                      onChange={(e) => updatePublicConfigInput('package1SlotPrice', e.target.value)}
-                      helperText="Default: ¥320,000"
-                      fullWidth
-                    />
+                  <Eyebrow sx={{ mt: 0.5 }}>Pilihan Paket Nominal Donasi (JPY)</Eyebrow>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    {/* Paket 1 */}
+                    <Card sx={{ p: 1.75, bgcolor: c.well, border: `1px solid ${c.rule}`, borderRadius: radius.md }}>
+                      <Box sx={{ display: 'flex', gap: 1.5, flexDirection: { xs: 'column', sm: 'row' }, mb: 1.5 }}>
+                        <TextField
+                          size="small" label="Nama Paket 1" value={publicConfigInput.packageBulananBadge}
+                          onChange={(e) => updatePublicConfigInput('packageBulananBadge', e.target.value)}
+                          fullWidth
+                        />
+                        <TextField
+                          size="small" label="Nominal Paket 1 (JPY)" type="number" value={publicConfigInput.packageBulananPrice}
+                          onChange={(e) => updatePublicConfigInput('packageBulananPrice', e.target.value)}
+                          fullWidth
+                        />
+                      </Box>
+                      <TextField
+                        size="small" label="Keterangan Paket 1" value={publicConfigInput.packageBulananSubtext}
+                        onChange={(e) => updatePublicConfigInput('packageBulananSubtext', e.target.value)}
+                        fullWidth
+                      />
+                    </Card>
+
+                    {/* Paket 2 */}
+                    <Card sx={{ p: 1.75, bgcolor: c.well, border: `1px solid ${c.rule}`, borderRadius: radius.md }}>
+                      <Box sx={{ display: 'flex', gap: 1.5, flexDirection: { xs: 'column', sm: 'row' }, mb: 1.5 }}>
+                        <TextField
+                          size="small" label="Nama Paket 2" value={publicConfigInput.packageSekaliBadge}
+                          onChange={(e) => updatePublicConfigInput('packageSekaliBadge', e.target.value)}
+                          fullWidth
+                        />
+                        <TextField
+                          size="small" label="Nominal Paket 2 (JPY)" type="number" value={publicConfigInput.packageSekaliPrice}
+                          onChange={(e) => updatePublicConfigInput('packageSekaliPrice', e.target.value)}
+                          fullWidth
+                        />
+                      </Box>
+                      <TextField
+                        size="small" label="Keterangan Paket 2" value={publicConfigInput.packageSekaliSubtext}
+                        onChange={(e) => updatePublicConfigInput('packageSekaliSubtext', e.target.value)}
+                        fullWidth
+                      />
+                    </Card>
+
+                    {/* Paket 3 */}
+                    <Card sx={{ p: 1.75, bgcolor: c.well, border: `1px solid ${c.rule}`, borderRadius: radius.md }}>
+                      <Box sx={{ display: 'flex', gap: 1.5, flexDirection: { xs: 'column', sm: 'row' }, mb: 1.5 }}>
+                        <TextField
+                          size="small" label="Nama Paket 3" value={publicConfigInput.package1SlotBadge}
+                          onChange={(e) => updatePublicConfigInput('package1SlotBadge', e.target.value)}
+                          fullWidth
+                        />
+                        <TextField
+                          size="small" label="Nominal Paket 3 (JPY)" type="number" value={publicConfigInput.package1SlotPrice}
+                          onChange={(e) => updatePublicConfigInput('package1SlotPrice', e.target.value)}
+                          fullWidth
+                        />
+                      </Box>
+                      <TextField
+                        size="small" label="Keterangan Paket 3" value={publicConfigInput.package1SlotSubtext}
+                        onChange={(e) => updatePublicConfigInput('package1SlotSubtext', e.target.value)}
+                        fullWidth
+                      />
+                    </Card>
                   </Box>
                 </Box>
               </Card>
@@ -1778,6 +1994,30 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                       sx={{ ...eyebrow, fontSize: '0.5625rem', color: c.danger, borderColor: c.danger, whiteSpace: 'nowrap', px: 2.5, py: 1, '&:hover': { borderColor: c.danger, bgcolor: c.dangerTint } }}
                     >
                       {isResettingCampaign ? 'Mereset…' : 'Reset Program'}
+                    </Button>
+                  </Box>
+
+                  <Divider sx={{ my: 2 }} />
+
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 3, flexDirection: { xs: 'column', sm: 'row' } }}>
+                    <Box>
+                      <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 600, lineHeight: 1.4 }}>
+                        Hapus program ini secara permanen dari sistem. Tindakan ini hanya dapat dilakukan jika masih terdapat program aktif lainnya.
+                      </Typography>
+                      {campaigns.length <= 1 && (
+                        <Typography sx={{ fontSize: '0.6875rem', color: c.inkMuted, mt: 0.5 }}>
+                          * Minimal harus ada 1 program aktif di sistem sehingga program ini tidak dapat dihapus.
+                        </Typography>
+                      )}
+                    </Box>
+                    <Button
+                      variant="outlined" size="small"
+                      onClick={handleDeleteCampaign}
+                      disabled={isDeletingCampaign || campaigns.length <= 1}
+                      startIcon={<Trash2 size={14} />}
+                      sx={{ ...eyebrow, fontSize: '0.5625rem', color: c.danger, borderColor: c.danger, whiteSpace: 'nowrap', px: 2.5, py: 1, '&:hover': { borderColor: c.danger, bgcolor: c.dangerTint } }}
+                    >
+                      {isDeletingCampaign ? 'Menghapus…' : 'Hapus Program'}
                     </Button>
                   </Box>
                 </Card>

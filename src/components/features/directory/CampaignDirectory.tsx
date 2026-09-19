@@ -36,7 +36,7 @@ export const CampaignDirectory: React.FC<CampaignDirectoryProps> = ({
                 KMII Jepang
               </Typography>
               <Typography sx={{ fontSize: '0.625rem', color: c.inkMuted, fontWeight: 600 }}>
-                Pusat Infaq, Wakaf & Donasi
+                Portal ZISWAF & Donasi
               </Typography>
             </Box>
           </Box>
@@ -69,10 +69,10 @@ export const CampaignDirectory: React.FC<CampaignDirectoryProps> = ({
               mb: 2
             }}
           >
-            Katalog Infaq & Wakaf KMII Jepang
+            Portal Donasi & ZISWAF KMII Jepang
           </Typography>
           <Typography sx={{ color: 'rgba(251,249,244,0.85)', fontSize: '0.875rem', maxWidth: '55ch', lineHeight: 1.6 }}>
-            Salurkan donasi, infaq, dan wakaf Anda untuk berbagai program dakwah, pembebasan lahan, dan pembangunan sarana ibadah muslim di Jepang.
+            Salurkan zakat, infaq, sedekah, dan wakaf Anda untuk berbagai program dakwah, kepedulian sosial, dan kemaslahatan muslim di Jepang.
           </Typography>
 
           {/* Global summary stats */}
@@ -149,11 +149,27 @@ export const CampaignDirectory: React.FC<CampaignDirectoryProps> = ({
                   }
                 }}
               >
+                {(camp.imageUrl || camp.publicConfig?.imageUrl) && (
+                  <Box
+                    component="img"
+                    src={camp.imageUrl || camp.publicConfig?.imageUrl}
+                    alt={camp.title || camp.shortName}
+                    sx={{
+                      width: '100%',
+                      height: { xs: 160, sm: 200 },
+                      objectFit: 'cover',
+                      borderBottom: `1px solid ${c.rule}`,
+                      cursor: 'pointer',
+                      display: 'block'
+                    }}
+                    onClick={() => onSelectCampaign(camp.id)}
+                  />
+                )}
                 <Box sx={{ p: 2.5 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2, mb: 1 }}>
                     <Box>
                       <Eyebrow tone="brass" sx={{ fontSize: '0.625rem' }}>
-                        {camp.shortName || 'Program KMII'}
+                        {camp.category || camp.publicConfig?.category ? `${camp.category || camp.publicConfig?.category} · ` : ''}{camp.shortName || 'Program KMII'}
                       </Eyebrow>
                       <Typography
                         variant="h2"

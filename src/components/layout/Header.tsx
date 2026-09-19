@@ -125,7 +125,7 @@ export const Header: React.FC<HeaderProps> = ({ user, isAdminUser, onAdminClick,
         }}
       >
         <Eyebrow tone="inverse" sx={{ mb: 0.75, fontSize: '0.625rem' }}>
-          Program Wakaf · {publicConfig.shortName}
+          {publicConfig.category ? `Program ${publicConfig.category}` : 'Program'} · {publicConfig.shortName}
         </Eyebrow>
         <Typography
           variant="h2"

@@ -29,6 +29,18 @@ export type EditableDonationRecord = Omit<DonationRecord, 'amount'> & {
   amount: number | string;
 };
 
+export const ZISWAF_CATEGORIES = [
+  'Wakaf',
+  'Sedekah',
+  'Infaq',
+  'Zakat',
+  'Kemanusiaan',
+  'Operasional & Dakwah',
+  'Donasi Umum',
+] as const;
+
+export type ZiswafCategory = typeof ZISWAF_CATEGORIES[number] | string;
+
 export type CampaignStatus = 'draft' | 'active' | 'closed' | 'archived';
 
 export interface CampaignDocument {
@@ -36,6 +48,8 @@ export interface CampaignDocument {
   title: string;
   shortName: string;
   status: CampaignStatus;
+  category?: string;
+  imageUrl?: string;
   isFeatured?: boolean;
   order?: number;
   totalNeed: number;
@@ -56,7 +70,7 @@ export interface CampaignDocument {
 
 export type CampaignSummary = Pick<
   CampaignDocument,
-  'id' | 'title' | 'shortName' | 'status' | 'isFeatured' | 'order' | 'totalNeed' | 'baseVerified' | 'totalVerifiedAmount' | 'totalPendingAmount' | 'donationDeadline' | 'publicConfig'
+  'id' | 'title' | 'shortName' | 'status' | 'category' | 'imageUrl' | 'isFeatured' | 'order' | 'totalNeed' | 'baseVerified' | 'totalVerifiedAmount' | 'totalPendingAmount' | 'donationDeadline' | 'publicConfig'
 >;
 
 export interface GlobalStats {
@@ -66,6 +80,8 @@ export interface GlobalStats {
   showDonaturTab: boolean;
   isClosed?: boolean;
   jpyToIdrRate?: number;
+  category?: string;
+  imageUrl?: string;
   spreadsheetId?: string;
   publicConfig?: Partial<PublicConfig>;
   totalVerifiedAmount: number;
@@ -141,6 +157,8 @@ export interface PublicConfig {
   cashPaymentText: string;
   donationClosedTitle: string;
   donationClosedText: string;
+  category?: string;
+  imageUrl?: string;
   programmeScopeTitle?: string;
   programmeScopeDescription?: string;
   logos: PublicLogo[];

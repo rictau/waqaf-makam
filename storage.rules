@@ -9,5 +9,14 @@ service firebase.storage {
       allow write: if request.resource.size <= 10 * 1024 * 1024
                    && (request.resource.contentType.matches('image/.*') || request.resource.contentType == 'application/pdf');
     }
+
+    match /campaigns/{allPaths=**} {
+      // Anyone can view campaign images/banners
+      allow read: if true;
+
+      // Images up to 10MB can be uploaded
+      allow write: if request.resource.size <= 10 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
   }
 }

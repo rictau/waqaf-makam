@@ -248,7 +248,7 @@ function DonationApp() {
 
   const getPackageName = () => {
     const pkg = publicConfig.packages.find(p => p.id === selectedPackage);
-    if (pkg?.id === 'kelipatan') return `Wakaf ${multiplier} m²`;
+    if (pkg?.id === 'kelipatan') return `${publicConfig.category || 'Donasi'} ${multiplier} m²`;
     return pkg?.label || 'Donasi';
   };
 
@@ -506,6 +506,29 @@ function DonationApp() {
             <Box>
               <Header user={user} isAdminUser={isAdminUser} onAdminClick={() => navigateToTab('admin')} publicConfig={publicConfig} />
               <Box sx={{ px: 2, py: 2.5, display: 'flex', flexDirection: 'column', gap: 3 }}>
+                {Boolean(publicConfig.imageUrl) && (
+                  <Box
+                    sx={{
+                      width: '100%',
+                      overflow: 'hidden',
+                      borderRadius: radius.lg,
+                      border: `1px solid ${c.ruleStrong}`,
+                      bgcolor: c.paper
+                    }}
+                  >
+                    <Box
+                      component="img"
+                      src={publicConfig.imageUrl}
+                      alt={publicConfig.campaignTitle || publicConfig.shortName}
+                      sx={{
+                        width: '100%',
+                        maxHeight: { xs: 220, sm: 300 },
+                        objectFit: 'cover',
+                        display: 'block'
+                      }}
+                    />
+                  </Box>
+                )}
                 <StatsCard 
                   danaTerkumpulAmount={danaTerkumpulAmount} 
                   terverifikasiAmount={terverifikasiAmount} 
