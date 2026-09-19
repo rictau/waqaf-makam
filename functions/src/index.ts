@@ -62,14 +62,19 @@ export const sendVerificationEmail = functions.runWith({ secrets: ['RESEND_API_K
         const campaignData = await getCampaignConfig(db, campaignId);
         const pubConfig = campaignData?.publicConfig;
 
-        const masjidName = pubConfig?.masjidName || EMAIL_CONFIG.masjidName;
-        const emailBrandName = pubConfig?.masjidName ? `Wakaf ${pubConfig.masjidName}` : EMAIL_CONFIG.emailBrandName;
-        const verifiedSubject = pubConfig?.masjidName ? `Tanda Terima Wakaf ${pubConfig.masjidName}` : EMAIL_CONFIG.verifiedSubject;
-        const secretariatName = pubConfig?.masjidName ? `Sekretariat Panitia Pembangunan ${pubConfig.masjidName}` : EMAIL_CONFIG.secretariatName;
-        const locationDetail = pubConfig?.locationText ? `Berjarak sekitar 5 Menit jalan kaki dari Stasiun ${pubConfig.locationText}.` : EMAIL_CONFIG.locationDetail;
-        const safeMasjidName = escapeHtml(masjidName);
+        const category = pubConfig?.category || campaignData?.category || 'Donasi';
+        const programName = pubConfig?.campaignTitle || pubConfig?.masjidName || campaignData?.title || EMAIL_CONFIG.masjidName;
+        const orgName = pubConfig?.shortName || pubConfig?.footerCredit || 'KMII Jepang';
+
+        const emailBrandName = `${programName} · ${orgName}`;
+        const verifiedSubject = `Tanda Terima ${category} - ${programName}`;
+        const secretariatName = `Panitia ${programName} (${orgName})`;
+        const locationDetail = pubConfig?.locationText ? `Lokasi: ${pubConfig.locationText}` : '';
+
+        const safeCategory = escapeHtml(category);
+        const safeProgramName = escapeHtml(programName);
         const safeSecretariatName = escapeHtml(secretariatName);
-        const safeLocationDetail = escapeHtml(locationDetail);
+        const safeLocationDetail = locationDetail ? escapeHtml(locationDetail) : '';
 
         const verifiedDate = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
         const donorName = after.name || 'Hamba Allah';
@@ -81,11 +86,11 @@ export const sendVerificationEmail = functions.runWith({ secrets: ['RESEND_API_K
         const paymentMethod = after.paymentMethod || '-';
 
         const textBody = [
-          `Bukti Verifikasi Donasi - ${masjidName}`,
+          `Bukti Verifikasi ${category} - ${programName}`,
           ``,
           `Assalamu'alaikum Warahmatullahi Wabarakatuh,`,
           ``,
-          `Jazakumullah Khairan Katsiran atas donasi Anda yang sangat berharga. Kami menginformasikan bahwa donasi Anda telah berhasil diverifikasi oleh panitia dan telah tercatat secara resmi di sistem kami.`,
+          `Jazakumullah Khairan Katsiran atas donasi Anda yang sangat berharga. Kami menginformasikan bahwa donasi Anda untuk program ${programName} telah berhasil diverifikasi oleh panitia dan telah tercatat secara resmi di sistem kami.`,
           ``,
           `Rincian Donasi:`,
           `- Nama Donatur: ${donorName}`,
@@ -95,12 +100,12 @@ export const sendVerificationEmail = functions.runWith({ secrets: ['RESEND_API_K
           `- Metode Transfer: ${paymentMethod}`,
           `- Tanggal Verifikasi: ${verifiedDate}`,
           ``,
-          `Semoga Allah Subhaanahu wa Ta'ala menerima amalan ini, menjadikannya sebagai sedekah jariyah yang pahalanya mengalir tiada henti, serta melimpahkan keberkahan bagi Anda dan keluarga. Aamiin Ya Rabbal 'Alamin.`,
+          `Semoga Allah Subhaanahu wa Ta'ala menerima amalan ini, menjadikannya sebagai amal jariyah yang pahalanya mengalir tiada henti, serta melimpahkan keberkahan bagi Anda dan keluarga. Aamiin Ya Rabbal 'Alamin.`,
           ``,
           `---`,
           `${secretariatName}`,
-          `Lokasi: ${locationDetail}`,
-        ].join('\n');
+          locationDetail ? `${locationDetail}` : '',
+        ].filter(Boolean).join('\n');
 
         const data = await resend.emails.send({
           from: `${emailBrandName} <${EMAIL_CONFIG.fromEmail}>`,
@@ -110,30 +115,30 @@ export const sendVerificationEmail = functions.runWith({ secrets: ['RESEND_API_K
           text: textBody,
           html: `
             <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 25px; border: 1px solid #eaeaea; border-radius: 12px; background-color: #ffffff; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
-              <h2 style="color: #4F46E5; text-align: center; margin-bottom: 5px; font-weight: 800;">Bukti Verifikasi Donasi</h2>
-              <p style="text-align: center; color: #6b7280; font-size: 14px; margin-top: 0; margin-bottom: 25px;">${safeMasjidName}</p>
+              <h2 style="color: #1E3A2F; text-align: center; margin-bottom: 5px; font-weight: 800;">Bukti Verifikasi ${safeCategory}</h2>
+              <p style="text-align: center; color: #6b7280; font-size: 14px; margin-top: 0; margin-bottom: 25px;">${safeProgramName}</p>
               
               <p><em>Assalamu'alaikum Warahmatullahi Wabarakatuh,</em></p>
-              <p>Jazakumullah Khairan Katsiran atas donasi Anda yang sangat berharga. Kami menginformasikan bahwa donasi Anda telah <strong>berhasil diverifikasi</strong> oleh panitia dan telah tercatat secara resmi di sistem kami.</p>
+              <p>Jazakumullah Khairan Katsiran atas donasi Anda yang sangat berharga. Kami menginformasikan bahwa donasi Anda untuk program <strong>${safeProgramName}</strong> telah <strong>berhasil diverifikasi</strong> oleh panitia dan telah tercatat secara resmi di sistem kami.</p>
               
               <div style="background-color: #f9fafb; border-radius: 8px; padding: 15px; margin: 25px 0; border: 1px solid #f3f4f6;">
                 <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
                   <tr><td style="padding: 10px 5px; color: #4b5563; border-bottom: 1px solid #e5e7eb; width: 40%;"><strong>Nama Donatur</strong></td><td style="padding: 10px 5px; color: #111827; border-bottom: 1px solid #e5e7eb; font-weight: 600;">: ${escapeHtml(after.name, 'Hamba Allah')}</td></tr>
                   <tr><td style="padding: 10px 5px; color: #4b5563; border-bottom: 1px solid #e5e7eb;"><strong>Domisili</strong></td><td style="padding: 10px 5px; color: #111827; border-bottom: 1px solid #e5e7eb;">: ${escapeHtml(after.loc)}</td></tr>
                   <tr><td style="padding: 10px 5px; color: #4b5563; border-bottom: 1px solid #e5e7eb;"><strong>Program / Paket</strong></td><td style="padding: 10px 5px; color: #111827; border-bottom: 1px solid #e5e7eb;">: ${escapeHtml(after.package)}</td></tr>
-                  <tr><td style="padding: 10px 5px; color: #4b5563; border-bottom: 1px solid #e5e7eb;"><strong>Nominal Donasi</strong></td><td style="padding: 10px 5px; color: #4F46E5; border-bottom: 1px solid #e5e7eb; font-weight: 700; font-size: 16px;">: ${formatJPY(after.amount)}${after.originalCurrency === 'IDR' && after.originalAmount ? ` <span style="font-size: 13px; font-weight: normal; color: #6b7280;">(Rp ${Number(after.originalAmount).toLocaleString('id-ID')})</span>` : ''}</td></tr>
+                  <tr><td style="padding: 10px 5px; color: #4b5563; border-bottom: 1px solid #e5e7eb;"><strong>Nominal Donasi</strong></td><td style="padding: 10px 5px; color: #1E3A2F; border-bottom: 1px solid #e5e7eb; font-weight: 700; font-size: 16px;">: ${formatJPY(after.amount)}${after.originalCurrency === 'IDR' && after.originalAmount ? ` <span style="font-size: 13px; font-weight: normal; color: #6b7280;">(Rp ${Number(after.originalAmount).toLocaleString('id-ID')})</span>` : ''}</td></tr>
                   <tr><td style="padding: 10px 5px; color: #4b5563; border-bottom: 1px solid #e5e7eb;"><strong>Metode Transfer</strong></td><td style="padding: 10px 5px; color: #111827; border-bottom: 1px solid #e5e7eb;">: ${escapeHtml(after.paymentMethod)}</td></tr>
                   <tr><td style="padding: 10px 5px; color: #4b5563;"><strong>Tanggal Verifikasi</strong></td><td style="padding: 10px 5px; color: #111827;">: ${verifiedDate}</td></tr>
                 </table>
               </div>
 
-              <p style="line-height: 1.6;">Semoga Allah Subhaanahu wa Ta'ala menerima amalan ini, menjadikannya sebagai sedekah jariyah yang pahalanya mengalir tiada henti, serta melimpahkan keberkahan bagi Anda dan keluarga. Aamiin Ya Rabbal 'Alamin.</p>
+              <p style="line-height: 1.6;">Semoga Allah Subhaanahu wa Ta'ala menerima amalan ini, menjadikannya sebagai amal jariyah yang pahalanya mengalir tiada henti, serta melimpahkan keberkahan bagi Anda dan keluarga. Aamiin Ya Rabbal 'Alamin.</p>
               
               <hr style="border: 0; border-top: 1px dashed #d1d5db; margin: 30px 0;">
               
               <p style="font-size: 13px; color: #6b7280; line-height: 1.5;">
                 <strong style="color: #374151;">${safeSecretariatName}</strong><br>
-                Lokasi: ${safeLocationDetail}<br><br>
+                ${safeLocationDetail ? `${safeLocationDetail}<br>` : ''}
               </p>
             </div>
           `,
@@ -167,11 +172,16 @@ export const sendPendingEmail = functions.runWith({ secrets: ['RESEND_API_KEY'] 
       const campaignData = await getCampaignConfig(db, campaignId);
       const pubConfig = campaignData?.publicConfig;
 
-      const masjidName = pubConfig?.masjidName || EMAIL_CONFIG.masjidName;
-      const emailBrandName = pubConfig?.masjidName ? `Wakaf ${pubConfig.masjidName}` : EMAIL_CONFIG.emailBrandName;
-      const pendingSubject = pubConfig?.masjidName ? `Menunggu Verifikasi Wakaf ${pubConfig.masjidName}` : EMAIL_CONFIG.pendingSubject;
-      const secretariatName = pubConfig?.masjidName ? `Sekretariat Panitia Pembangunan ${pubConfig.masjidName}` : EMAIL_CONFIG.secretariatName;
-      const safeMasjidName = escapeHtml(masjidName);
+      const category = pubConfig?.category || campaignData?.category || 'Donasi';
+      const programName = pubConfig?.campaignTitle || pubConfig?.masjidName || campaignData?.title || EMAIL_CONFIG.masjidName;
+      const orgName = pubConfig?.shortName || pubConfig?.footerCredit || 'KMII Jepang';
+
+      const emailBrandName = `${programName} · ${orgName}`;
+      const pendingSubject = `Menunggu Verifikasi ${category} - ${programName}`;
+      const secretariatName = `Panitia ${programName} (${orgName})`;
+
+      const safeCategory = escapeHtml(category);
+      const safeProgramName = escapeHtml(programName);
       const safeSecretariatName = escapeHtml(secretariatName);
 
       const donorName = data.name || 'Hamba Allah';
@@ -182,11 +192,11 @@ export const sendPendingEmail = functions.runWith({ secrets: ['RESEND_API_KEY'] 
       const paymentMethod = data.paymentMethod || '-';
 
       const textBody = [
-        `Menunggu Verifikasi Administrasi - ${masjidName}`,
+        `Menunggu Verifikasi Administrasi - ${programName}`,
         ``,
         `Assalamu'alaikum Warahmatullahi Wabarakatuh,`,
         ``,
-        `Formulir komitmen donasi Anda telah berhasil kami terima. Saat ini kontribusi Anda berstatus Pending (Menunggu Verifikasi) oleh panitia pembangunan.`,
+        `Formulir komitmen donasi Anda untuk program ${programName} telah berhasil kami terima. Saat ini kontribusi Anda berstatus Pending (Menunggu Verifikasi) oleh panitia.`,
         ``,
         `Rincian Donasi:`,
         `- Nama Donatur: ${donorName}`,
@@ -210,18 +220,18 @@ export const sendPendingEmail = functions.runWith({ secrets: ['RESEND_API_KEY'] 
         text: textBody,
         html: `
           <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 25px; border: 1px solid #eaeaea; border-radius: 12px; background-color: #ffffff; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
-            <h2 style="color: #F59E0B; text-align: center; margin-bottom: 5px; font-weight: 800;">Menunggu Verifikasi Administrasi</h2>
-            <p style="text-align: center; color: #6b7280; font-size: 14px; margin-top: 0; margin-bottom: 25px;">${safeMasjidName}</p>
+            <h2 style="color: #B45309; text-align: center; margin-bottom: 5px; font-weight: 800;">Menunggu Verifikasi ${safeCategory}</h2>
+            <p style="text-align: center; color: #6b7280; font-size: 14px; margin-top: 0; margin-bottom: 25px;">${safeProgramName}</p>
             
             <p><em>Assalamu'alaikum Warahmatullahi Wabarakatuh,</em></p>
-            <p>Formulir komitmen donasi Anda telah berhasil kami terima. Saat ini kontribusi Anda berstatus <strong>Pending (Menunggu Verifikasi)</strong> oleh panitia pembangunan.</p>
+            <p>Formulir komitmen donasi Anda untuk program <strong>${safeProgramName}</strong> telah berhasil kami terima. Saat ini kontribusi Anda berstatus <strong>Pending (Menunggu Verifikasi)</strong> oleh panitia.</p>
             
             <div style="background-color: #f9fafb; border-radius: 8px; padding: 15px; margin: 25px 0; border: 1px solid #f3f4f6;">
               <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
                 <tr><td style="padding: 10px 5px; color: #4b5563; border-bottom: 1px solid #e5e7eb; width: 40%;"><strong>Nama Donatur</strong></td><td style="padding: 10px 5px; color: #111827; border-bottom: 1px solid #e5e7eb; font-weight: 600;">: ${escapeHtml(data.name, 'Hamba Allah')}</td></tr>
                 <tr><td style="padding: 10px 5px; color: #4b5563; border-bottom: 1px solid #e5e7eb;"><strong>Program / Paket</strong></td><td style="padding: 10px 5px; color: #111827; border-bottom: 1px solid #e5e7eb;">: ${escapeHtml(data.package)}</td></tr>
-                <tr><td style="padding: 10px 5px; color: #4b5563; border-bottom: 1px solid #e5e7eb;"><strong>Nominal Donasi</strong></td><td style="padding: 10px 5px; color: #F59E0B; border-bottom: 1px solid #e5e7eb; font-weight: 700; font-size: 16px;">: ${formatJPY(data.amount)}${data.originalCurrency === 'IDR' && data.originalAmount ? ` <span style="font-size: 13px; font-weight: normal; color: #6b7280;">(Rp ${Number(data.originalAmount).toLocaleString('id-ID')})</span>` : ''}</td></tr>
-                <tr><td style="padding: 10px 5px; color: #4b5563;"><strong>Metode Pembayaran</strong></td><td style="padding: 10px 5px; color: #111827;">: ${escapeHtml(data.paymentMethod)}</td></tr>
+                <tr><td style="padding: 10px 5px; color: #4b5563; border-bottom: 1px solid #e5e7eb;"><strong>Nominal Donasi</strong></td><td style="padding: 10px 5px; color: #B45309; border-bottom: 1px solid #e5e7eb; font-weight: 700; font-size: 16px;">: ${formatJPY(data.amount)}${data.originalCurrency === 'IDR' && data.originalAmount ? ` <span style="font-size: 13px; font-weight: normal; color: #6b7280;">(Rp ${Number(data.originalAmount).toLocaleString('id-ID')})</span>` : ''}</td></tr>
+                <tr><td style="padding: 10px 5px; color: #4b5563; border-bottom: 1px solid #e5e7eb;"><strong>Metode Pembayaran</strong></td><td style="padding: 10px 5px; color: #111827; border-bottom: 1px solid #e5e7eb;">: ${escapeHtml(data.paymentMethod)}</td></tr>
               </table>
             </div>
 
