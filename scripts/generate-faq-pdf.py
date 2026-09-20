@@ -3,7 +3,7 @@ import base64
 import subprocess
 
 def main():
-    logo_path = 'public/kmii-logo.png'
+    logo_path = 'public/ivc-logo.png'
     logo_base64 = ''
     if os.path.exists(logo_path):
         with open(logo_path, 'rb') as f:
@@ -13,7 +13,7 @@ def main():
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Panduan & Kajian Komprehensif: Wakaf Pemakaman Muslim WNI di Jepang - KMII Jepang</title>
+<title>Draf Kajian Komprehensif & FAQ: Ikhtiar Pemakaman Muslim WNI di Jepang - INVAC</title>
 <style>
   @page {{
     size: A4;
@@ -88,11 +88,11 @@ def main():
 
   .doc-badge {{
     display: inline-block;
-    background-color: #F1F5F2;
-    color: #1E3A2F;
-    border: 1px solid #D1E2D7;
+    background-color: #FEF3C7;
+    color: #92400E;
+    border: 1px solid #FCD34D;
     font-size: 6.5pt;
-    font-weight: 700;
+    font-weight: 800;
     padding: 1px 6px;
     border-radius: 4px;
     text-transform: uppercase;
@@ -258,22 +258,23 @@ def main():
     margin-top: 10px;
     padding: 9px 12px;
     border-radius: 5px;
-    background-color: #F1F5F2;
-    border: 1px solid #D1E2D7;
+    background-color: #F8FAFC;
+    border: 1px solid #E2E8F0;
     display: flex;
     justify-content: space-between;
     align-items: center;
     page-break-inside: avoid;
   }}
 
-  .footer-sign .bank-info {{
+  .footer-sign .internal-info {{
     font-size: 7.25pt;
-    color: #1E3A2F;
-    line-height: 1.35;
+    color: #475569;
+    line-height: 1.4;
   }}
 
-  .footer-sign .bank-info strong {{
+  .footer-sign .internal-info strong {{
     font-size: 8pt;
+    color: #1E3A2F;
     display: block;
     margin-bottom: 2px;
   }}
@@ -290,27 +291,27 @@ def main():
   <!-- ==================== HALAMAN 1 ==================== -->
   <div class="header">
     <div class="header-left">
-      {'<img src="' + logo_base64 + '" class="logo" alt="KMII Logo">' if logo_base64 else ''}
+      {'<img src="' + logo_base64 + '" class="logo" alt="INVAC Logo">' if logo_base64 else ''}
       <div class="header-title-box">
-        <h1>KMII JEPANG</h1>
-        <p class="sub">Keluarga Masyarakat Islam Indonesia</p>
+        <h1>INVAC JEPANG</h1>
+        <p class="sub">Indonesia Volunteer Community</p>
       </div>
     </div>
     <div class="header-right">
-      <div class="doc-badge">DOKUMEN RESMI</div><br>
-      Nomor: KMII/WAKAF-MAKAM/2026/09<br>
-      Edisi: September 2026<br>
-      Portal: <strong>ziswaf.kmii.jp</strong>
+      <div class="doc-badge">DRAFT KAJIAN INTERNAL</div><br>
+      Status: <strong>Belum Dipublikasikan (Internal Only)</strong><br>
+      Edisi Kerja: September 2026<br>
+      Inisiator: <strong>INVAC Japan</strong>
     </div>
   </div>
 
   <div class="main-title-block">
-    <h2>PANDUAN & KAJIAN KOMPREHENSIF<br>WAKAF PEMAKAMAN MUSLIM WNI DI JEPANG</h2>
-    <p>Tinjauan Aspek Regulasi Nasional Jepang, Sains Lingkungan (AMDAL & WHO), Kaidah Syariat Islam, Alur Tanggap Darurat, serta Panduan Tanya-Jawab (FAQ) Resmi.</p>
+    <h2>DRAF KAJIAN KOMPREHENSIF & PANDUAN<br>IKHTIAR PEMAKAMAN MUSLIM WNI DI JEPANG</h2>
+    <p>Tinjauan Aspek Regulasi Nasional Jepang, Sains Lingkungan (AMDAL & WHO), Kaidah Syariat Islam, Alur Tanggap Darurat, serta Panduan Tanya-Jawab (FAQ).</p>
     <div class="meta-strip">
-      <span>Penyusun: Tim Advokasi & Satgas Wakaf KMII Jepang</span>
-      <span>Klasifikasi: Dokumen Publik & Advokasi Umat</span>
-      <span>Status: Berlaku Aktif</span>
+      <span>Penyusun: Tim Riset & Advokasi INVAC (Indonesia Volunteer Community)</span>
+      <span>Klasifikasi: Dokumen Kerja Internal / Draf Terbatas</span>
+      <span>Sifat: Konfidensial (Internal Relawan)</span>
     </div>
   </div>
 
@@ -340,8 +341,8 @@ def main():
       <strong>Kremasi (火葬 - Kaso)</strong> dan <strong>Penguburan Tanah (埋葬 / 土葬 - Maiso / Doso)</strong>. Pemerintah pusat Jepang tidak pernah melarang <em>doso</em>. Dominasi kremasi di Jepang (>99%) murni disebabkan oleh keterbatasan lahan di kawasan metropolitan pasca-Perang Dunia II, bukan karena pelarangan yuridis.
     </div>
     <p>
-      <strong>Model Pengadaan Program KMII Jepang:</strong><br>
-      Panitia KMII Jepang <strong>TIDAK MEMBUKA LAHAN MAKAM BARU DARI NOL</strong> di pemukiman warga. Panitia berikhtiar mengakuisisi dan menyewa hak kapling jangka panjang pada kompleks pemakaman umum resmi yang <strong>IZIN PENGUBURAN TANAHNYA (土葬) TELAH LENGKAP DAN DITERBITKAN SECARA SAH OLEH PEMERINTAH DAERAH / PREFEKTUR SETEMPAT</strong>. Dengan demikian, seluruh kepatuhan hukum, tata ruang, dan administrasi telah terpenuhi sejak awal tanpa memerlukan permohonan izin baru.
+      <strong>Model Pendekatan Program INVAC:</strong><br>
+      Tim INVAC (Indonesia Volunteer Community) <strong>TIDAK MEMBUKA LAHAN MAKAM BARU DARI NOL</strong> di pemukiman warga. Ikhtiar difokuskan pada akuisisi dan sewa hak kapling jangka panjang pada kompleks pemakaman umum resmi yang <strong>IZIN PENGUBURAN TANAHNYA (土葬) TELAH LENGKAP DAN DITERBITKAN SECARA SAH OLEH PEMERINTAH DAERAH / PREFEKTUR SETEMPAT</strong>. Dengan demikian, seluruh kepatuhan hukum, tata ruang, dan administrasi telah terpenuhi sejak awal tanpa memerlukan permohonan izin baru.
     </p>
   </div>
 
@@ -376,13 +377,13 @@ def main():
   </div>
 
   <div class="section-block">
-    <h3 class="section-title">4. KOMPARASI: KASUS HIJI/BEPPU VS PROGRAM KMII JEPANG</h3>
+    <h3 class="section-title">4. KOMPARASI: KASUS HIJI/BEPPU VS INVENTARISASI INVAC</h3>
     <table class="data-table">
       <thead>
         <tr>
           <th style="width: 25%;">Parameter</th>
           <th style="width: 37%;">Kasus Hiji / Beppu (Oita)</th>
-          <th style="width: 38%;">Program Wakaf KMII Jepang</th>
+          <th style="width: 38%;">Rencana Pendekatan INVAC</th>
         </tr>
       </thead>
       <tbody>
@@ -416,7 +417,7 @@ def main():
       Penguburan tanah Muslim telah berjalan puluhan tahun di berbagai wilayah Jepang dengan rekam jejak sanitasi 100% aman:
     </p>
     <ul>
-      <li><strong>Pemakaman Muslim Enzan (Koshu, Yamanashi):</strong> Dikelola oleh <em>Japan Islamic Trust</em> sejak tahun 2000-an di tengah sentra perkebunan buah persik dan anggur. Selama lebih dari 20 tahun dan ratusan pemakaman, hasil uji laboratorium air sumur warga sekitar membuktikan kemurnian air tetap terjaga sempurna tanpa ada insiden kontaminasi.</li>
+      <li><strong>Pemakaman Muslim Enzan (Koshu, Yamanashi):</strong> Dikelola komunitas Muslim sejak tahun 2000-an di tengah sentra perkebunan buah persik dan anggur. Selama lebih dari 20 tahun dan ratusan pemakaman, hasil uji laboratorium air sumur warga sekitar membuktikan kemurnian air tetap terjaga sempurna tanpa ada insiden kontaminasi.</li>
       <li><strong>Pemakaman Muslim Yoichi (Hokkaido):</strong> Melayani umat Islam di kawasan utara Jepang secara tertib dan harmonis berdampingan dengan masyarakat lokal.</li>
       <li><strong>Kobe Foreign Cemetery (Hyogo) & Makam Kristen Kanto:</strong> Praktik penguburan tanah telah berlangsung lebih dari 150 tahun sejak era Meiji di area penyangga perkotaan tanpa pernah mencatat gangguan kesehatan masyarakat.</li>
       <li><strong>Tradisi Kekaisaran Jepang:</strong> Selama ribuan tahun hingga era modern, para Kaisar dan Permaisuri Jepang dimakamkan secara tradisi penguburan tanah (<em>Doso</em>).</li>
@@ -430,10 +431,10 @@ def main():
     <h3 class="section-title">6. TANYA JAWAB RESMI (FAQ) — BAGIAN 1</h3>
 
     <div class="qa-card">
-      <div class="qa-q">Q1: Apakah pemakaman ini berizin resmi dan legal di Jepang?</div>
+      <div class="qa-q">Q1: Apakah pemakaman tanah ini berizin resmi dan legal di Jepang?</div>
       <div class="qa-a">
         <strong>Jawaban: Ya, 100% sah dan berizin resmi.</strong><br>
-        Berdasarkan UU No. 48 Tahun 1948, penguburan tanah sah di Jepang. Panitia mengakuisisi kapling pada pemakaman umum resmi yang izin Doso-nya sudah disahkan pemerintah daerah setempat, sehingga tidak ada perizinan liar maupun sanksi hukum.
+        Berdasarkan UU No. 48 Tahun 1948, penguburan tanah sah di Jepang. Skema yang dirancang adalah mengakuisisi kapling pada pemakaman umum resmi yang izin Doso-nya sudah disahkan pemerintah daerah setempat, sehingga tidak ada perizinan liar maupun sanksi hukum.
       </div>
     </div>
 
@@ -441,7 +442,7 @@ def main():
       <div class="qa-q">Q2: Apakah pemakaman ini khusus untuk Muslim?</div>
       <div class="qa-a">
         <strong>Jawaban: Ya, 100% Khusus Muslim.</strong><br>
-        Kapling dialokasikan khusus bagi jenazah Muslim WNI. Pemulasaraan jenazah (memandikan, mengkafani, menyalatkan, dan menguburkan menghadap kiblat) dilaksanakan mutlak sesuai syariat Islam di bawah bimbingan asatidz pembina KMII.
+        Kapling dialokasikan khusus bagi jenazah Muslim WNI. Seluruh tata cara pemulasaraan jenazah (memandikan, mengkafani, menyalatkan, dan menguburkan menghadap kiblat) dilaksanakan mutlak sesuai syariat Islam.
       </div>
     </div>
 
@@ -451,7 +452,7 @@ def main():
         <strong>Jawaban:</strong><br>
         1. <em>Menjaga Privasi & Ketenangan:</em> Menghormati regulasi privasi pihak pengelola kompleks makam.<br>
         2. <em>Mencegah Politisasi Pihak Luar:</em> Di Jepang, isu pemakaman tanah rentan dipolitisasi oleh kelompok tertentu jika diekspos sembarangan di ranah terbuka.<br>
-        3. <em>Akses Terbuka bagi Donatur & Jamaah:</em> Informasi detail lokasi, koordinat ziarah, dan dokumen legalitas dapat diakses secara transparan oleh donatur dan keluarga via jalur resmi DM Instagram @kmiijepang.
+        3. <em>Akses Terbuka bagi Pihak Terkait:</em> Informasi detail lokasi, koordinat ziarah, dan dokumen legalitas diakses secara tertutup dan terverifikasi via jalur resmi relawan.
       </div>
     </div>
 
@@ -483,14 +484,14 @@ def main():
     <div class="qa-card">
       <div class="qa-q">Q6: Bagaimana sistem pemanfaatan lahannya?</div>
       <div class="qa-a">
-        <strong>Jawaban:</strong> Menggunakan hak pakai kapling jangka panjang yang dapat digunakan kembali secara bergantian (<em>reusable</em>) setelah masa pakai tertentu (misal 10 tahun) sesuai ketentuan syariat dan tata kelola pemakaman di Jepang, menjamin keberlanjutan wakaf selama puluhan tahun.
+        <strong>Jawaban:</strong> Menggunakan hak pakai kapling jangka panjang yang dapat digunakan kembali secara bergantian (<em>reusable</em>) setelah masa pakai tertentu (misal 10 tahun) sesuai ketentuan syariat dan tata kelola pemakaman di Jepang, menjamin keberlanjutan pemanfaatan selama puluhan tahun.
       </div>
     </div>
 
     <div class="qa-card">
-      <div class="qa-q">Q7: Bagaimana cara memverifikasi keabsahan program dan menyalurkan donasi?</div>
+      <div class="qa-q">Q7: Bagaimana cara koordinasi dan verifikasi informasi draf ini?</div>
       <div class="qa-a">
-        <strong>Jawaban:</strong> Seluruh laporan penerimaan donasi dan perkembangan program tercatat secara transparan dan realtime di portal resmi: <strong>https://ziswaf.kmii.jp</strong>.
+        <strong>Jawaban:</strong> Dokumen ini merupakan bahan kajian awal tim kerja INVAC (Indonesia Volunteer Community). Koordinasi dan masukan teknis dikomunikasikan secara internal melalui narahubung koordinator relawan.
       </div>
     </div>
   </div>
@@ -498,7 +499,7 @@ def main():
   <div class="section-block">
     <h3 class="section-title">7. ALUR TANGGAP DARURAT PENGURUSAN JENAZAH WNI DI JEPANG</h3>
     <p>
-      Sebagai panduan praktis bagi keluarga, rekan kerja, dan komunitas Muslim apabila terjadi musibah kematian saudara kita di Jepang:
+      Sebagai panduan praktis bagi keluarga, rekan kerja, dan relawan apabila terjadi musibah kematian saudara kita di Jepang:
     </p>
     <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin: 9px 0;">
       <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:5px; padding:7px 8px;">
@@ -518,31 +519,31 @@ def main():
       </div>
       <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:5px; padding:7px 8px;">
         <div style="font-weight:800; font-size:7pt; color:#9C6D37; margin-bottom:2px;">LANGKAH 4</div>
-        <div style="font-weight:700; font-size:7.75pt; color:#1E3A2F; margin-bottom:2px;">Satgas KMII Jepang</div>
-        <div style="font-size:7pt; color:#475569; line-height:1.35;">Koordinasi pemulasaraan syar'i (memandikan, mengkafani, menyalatkan) & pemakaman di kapling wakaf.</div>
+        <div style="font-weight:700; font-size:7.75pt; color:#1E3A2F; margin-bottom:2px;">Satgas Relawan INVAC</div>
+        <div style="font-size:7pt; color:#475569; line-height:1.35;">Koordinasi pemulasaraan syar'i (memandikan, mengkafani, menyalatkan) & pemakaman di kapling makam Muslim.</div>
       </div>
     </div>
   </div>
 
   <div class="section-block">
-    <h3 class="section-title">8. AKUNTABILITAS & KANAL RESMI DONASI</h3>
+    <h3 class="section-title">8. CATATAN PENGGUNAAN INTERNAL RELAWAN</h3>
     <div class="footer-sign">
-      <div class="bank-info">
-        <strong>REKENING RESMI KMII JEPANG:</strong>
-        • Japan Post Bank (Yucho): 10130-23901591 (a.n. KMII JEPANG)<br>
-        • Bank Syariah Indonesia (BSI): 7192271887 (a.n. KMII JEPANG WAKAF)<br>
-        • Portal Real-Time: <strong>ziswaf.kmii.jp</strong> | Narahubung IG: <strong>@kmiijepang</strong>
+      <div class="internal-info">
+        <strong>CATATAN INTERNAL INVAC (INDONESIA VOLUNTEER COMMUNITY):</strong>
+        • Dokumen ini berstatus draf kerja kajian awal dan <em>TIDAK UNTUK DISEBARLUASKAN</em> ke publik.<br>
+        • Disusun sebagai bahan telaah ilmiah, legalitas, dan mitigasi risiko internal tim relawan.<br>
+        • Seluruh koordinasi dan masukan teknis ditujukan ke Koordinator Tim Advokasi INVAC.
       </div>
       <div class="sign-box">
         Tokyo, September 2026<br>
-        <strong>Pengurus Pusat KMII Jepang</strong><br>
-        <em>Keluarga Masyarakat Islam Indonesia</em>
+        <strong>Tim Riset & Advokasi INVAC</strong><br>
+        <em>Indonesia Volunteer Community</em>
       </div>
     </div>
   </div>
 
   <div class="citation-box">
-    <strong>Daftar Rujukan Dokumen:</strong><br>
+    <strong>Daftar Rujukan Dokumen Ilmiah & Regulasi:</strong><br>
     1. World Health Organization (WHO). (1998). <em>The Impact of Cemeteries on the Environment and Public Health</em>. WHO Regional Office for Europe, Copenhagen.<br>
     2. 墓地、埋葬等に関する法律 (昭和二十三年法律第四十八号 / <em>Law on Cemeteries, Burials, etc. No. 48 of 1948</em>).<br>
     3. 厚生労働省 (Kementerian Kesehatan, Tenaga Kerja, dan Kesejahteraan Jepang). <em>墓地経営・管理の指針等について (Pedoman Pengelolaan dan Manajemen Pemakaman)</em>.<br>
@@ -553,8 +554,8 @@ def main():
 </html>
 """
 
-    html_file = '/tmp/panduan_faq_wakaf_makam.html'
-    pdf_file = 'public/Panduan_dan_FAQ_Wakaf_Pemakaman_KMII_Jepang.pdf'
+    html_file = '/tmp/draft_kajian_pemakaman_invac.html'
+    pdf_file = 'docs/Draft_Kajian_dan_FAQ_Pemakaman_INVAC.pdf'
 
     with open(html_file, 'w', encoding='utf-8') as f:
         f.write(html_content)
@@ -570,7 +571,7 @@ def main():
 
     res = subprocess.run(chrome_cmd, capture_output=True, text=True)
     if os.path.exists(pdf_file) and os.path.getsize(pdf_file) > 0:
-        print(f"PDF successfully generated at: {pdf_file} ({os.path.getsize(pdf_file)} bytes)")
+        print(f"PDF successfully generated locally at: {pdf_file} ({os.path.getsize(pdf_file)} bytes)")
     else:
         print(f"Error generating PDF: {res.stderr}")
 
