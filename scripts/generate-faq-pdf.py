@@ -318,10 +318,10 @@ def main():
   <div class="section-block">
     <h3 class="section-title">1. LATAR BELAKANG & URGENSI SOSIAL-KEAGAMAAN</h3>
     <p>
-      Pertumbuhan komunitas Muslim Indonesia di Jepang selama satu dekade terakhir mengalami lonjakan yang sangat signifikan. Berdasarkan data resmi Imigrasi Jepang, terdapat lebih dari 150.000 warga negara Indonesia (WNI) yang berdomisili di Jepang, terdiri atas pekerja berketerampilan spesifik (<em>Tokutei Ginou</em>), pemagang teknis (<em>Kenshusei</em>), tenaga medis (<em>Kaigo</em>), pelajar/mahasiswa, hingga diaspora keluarga yang telah menetap jangka panjang dan memiliki keturunan yang lahir di Jepang.
+      Pertumbuhan komunitas Muslim Indonesia di Jepang selama satu dekade terakhir mengalami lonjakan yang sangat pesat. Berdasarkan statistik resmi Badan Layanan Imigrasi Jepang (出入国在留管理庁 - ISA), jumlah WNI yang berdomisili di Jepang telah mencapai <strong>hampir 200.000 jiwa</strong> (199.824 jiwa per akhir 2024), menempatkan Indonesia sebagai komunitas warga asing terbesar ke-4 di Jepang. Komunitas ini mencakup pekerja berketerampilan spesifik (<em>Tokutei Ginou</em>), pemagang teknis (<em>Kenshusei</em>), perawat (<em>Kaigo</em>), pelajar/mahasiswa, hingga diaspora keluarga yang telah berdomisili tetap.
     </p>
     <p>
-      Di tengah realitas tersebut, kebutuhan akan <strong>fasilitas pemakaman yang sesuai dengan syariat Islam</strong> telah menjadi kebutuhan darurat dan kewajiban kolektif (<em>Fardhu Kifayah</em>) yang tidak dapat ditunda lagi, didasari oleh faktor-faktor krusial berikut:
+      Di tengah realitas tersebut, ketersediaan <strong>fasilitas pemakaman yang sesuai syariat Islam</strong> telah menjadi kebutuhan darurat dan kewajiban kolektif (<em>Fardhu Kifayah</em>) umat, didasari oleh faktor-faktor krusial berikut:
     </p>
     <ul>
       <li><strong>Kewajiban Syariat Menyegerakan Jenazah:</strong> Dalam ajaran Islam, pengurusan jenazah diwajibkan untuk disegerakan (<em>sunnah ta'jil janazah</em>). Praktik pengiriman jenazah lintas negara (repatriasi kargo udara) memerlukan birokrasi berliku, perizinan kedutaan, karantina internasional, serta koordinasi maskapai yang rata-rata memakan waktu 3 hingga 7 hari lebih.</li>
@@ -333,12 +333,12 @@ def main():
   <div class="section-block">
     <h3 class="section-title">2. KERANGKA HUKUM & LEGALITAS PEMAKAMAN DI JEPANG</h3>
     <p>
-      Terdapat kesalahpahaman di sebagian masyarakat bahwa metode penguburan tanah (<em>土葬 - Doso</em>) adalah tindakan terlarang di Jepang. Secara hukum ketatanegaraan Jepang, pandangan tersebut adalah <strong>keliru</strong>:
+      Terdapat kesalahpahaman umum bahwa metode penguburan tanah (<em>土葬 - Doso</em>) dilarang oleh hukum Jepang. Secara hukum ketatanegaraan positif Jepang, pandangan tersebut adalah <strong>tidak tepat</strong>:
     </p>
     <div class="highlight-box">
       <strong>Undang-Undang Pemakaman Jepang (墓地、埋葬等に関する法律 - UU No. 48 Tahun 1948):</strong><br>
-      Hukum nasional Jepang pada Pasal 1 dan Pasal 2 secara tegas mendefinisikan dan mengakui dua metode pemakaman yang sah dan setara di mata hukum:
-      <strong>Kremasi (火葬 - Kaso)</strong> dan <strong>Penguburan Tanah (埋葬 / 土葬 - Maiso / Doso)</strong>. Pemerintah pusat Jepang tidak pernah melarang <em>doso</em>. Dominasi kremasi di Jepang (>99%) murni disebabkan oleh keterbatasan lahan di kawasan metropolitan pasca-Perang Dunia II, bukan karena pelarangan yuridis.
+      Pasal 1 dan Pasal 2 UU Pemakaman Nasional Jepang mendefinisikan dan mengakui dua metode pemakaman yang sah secara hukum:
+      <strong>Kremasi (火葬 - Kaso)</strong> dan <strong>Penguburan Tanah (埋葬 / 土葬 - Maiso / Doso)</strong>. Pemerintah pusat Jepang tidak pernah melarang <em>doso</em>. Namun, pelaksanaan teknisnya diatur melalui Peraturan Daerah (<em>条例 - Jōrei</em>) masing-masing pemerintah kota/prefektur dan wajib bertempat di kompleks pemakaman yang berizin resmi (Pasal 4).
     </div>
     <p>
       <strong>Model Pendekatan Program INVAC:</strong><br>
@@ -357,7 +357,7 @@ def main():
 
     <div class="highlight-box gold">
       <strong>1. Kajian Resmi World Health Organization (WHO):</strong><br>
-      Laporan ilmiah WHO Regional Office for Europe bertajuk <em>"The Impact of Cemeteries on the Environment and Public Health"</em> (Engelbrecht, 1998) menegaskan bahwa lapisan tanah alami (<em>vadose zone</em>) merupakan biofilter biologis yang sangat kuat. Mikroorganisme patogen manusia (bakteri dan virus) memerlukan inang hidup bersuhu tubuh ~37°C. Di dalam tanah alami yang lebih dingin, mikroba patogen mengalami kematian massal alami (<em>die-off</em>) dalam beberapa meter pertama dan tidak bermigrasi ke air tanah jika pemakaman memenuhi standar jarak muka air tanah.
+      Laporan ilmiah WHO Regional Office for Europe bertajuk <em>"The Impact of Cemeteries on the Environment and Public Health"</em> (A.S. Üçisik & P. Rushbrook, 1998) menegaskan bahwa lapisan tanah alami tak jenuh (<em>vadose zone</em>) berfungsi sebagai biofilter biologis yang sangat efektif. Mikroorganisme patogen manusia memerlukan inang hidup bersuhu tubuh ~37°C. Di dalam tanah alami yang lebih dingin, mikroba patogen mengalami kematian massal alami (<em>die-off</em>) dalam beberapa meter pertama dan tidak bermigrasi ke akuifer air tanah jika pemakaman memenuhi standar jarak muka air tanah.
     </div>
 
     <div class="highlight-box">
@@ -414,13 +414,13 @@ def main():
   <div class="section-block">
     <h3 class="section-title">5. BUKTI EMPIRIS DI JEPANG: PULUHAN TAHUN TANPA INSIDEN</h3>
     <p>
-      Penguburan tanah Muslim telah berjalan puluhan tahun di berbagai wilayah Jepang dengan rekam jejak sanitasi 100% aman:
+      Penguburan tanah telah berjalan puluhan hingga ratusan tahun di Jepang dengan rekam jejak sanitasi 100% aman:
     </p>
     <ul>
-      <li><strong>Pemakaman Muslim Enzan (Koshu, Yamanashi):</strong> Dikelola komunitas Muslim sejak tahun 2000-an di tengah sentra perkebunan buah persik dan anggur. Selama lebih dari 20 tahun dan ratusan pemakaman, hasil uji laboratorium air sumur warga sekitar membuktikan kemurnian air tetap terjaga sempurna tanpa ada insiden kontaminasi.</li>
-      <li><strong>Pemakaman Muslim Yoichi (Hokkaido):</strong> Melayani umat Islam di kawasan utara Jepang secara tertib dan harmonis berdampingan dengan masyarakat lokal.</li>
+      <li><strong>Pemakaman Muslim Enzan (Koshu, Yamanashi):</strong> Bersebelahan dengan Kuil Monju-in, dikelola oleh Japan Muslim Association (日本ムスリム協会) sejak <strong>1962 (lebih dari 60 tahun)</strong> di sentra perkebunan anggur dan persik. Selama lebih dari setengah abad, uji kualitas air sumur warga membuktikan kemurnian air tetap terjaga tanpa insiden pencemaran.</li>
+      <li><strong>Pemakaman Muslim Yawara (Joso, Ibaraki) & Yoichi (Hokkaido):</strong> Melayani umat Islam di Kanto dan Hokkaido secara legal, tertib, dan harmonis berdampingan dengan masyarakat lokal.</li>
       <li><strong>Kobe Foreign Cemetery (Hyogo) & Makam Kristen Kanto:</strong> Praktik penguburan tanah telah berlangsung lebih dari 150 tahun sejak era Meiji di area penyangga perkotaan tanpa pernah mencatat gangguan kesehatan masyarakat.</li>
-      <li><strong>Tradisi Kekaisaran Jepang:</strong> Selama ribuan tahun hingga era modern, para Kaisar dan Permaisuri Jepang dimakamkan secara tradisi penguburan tanah (<em>Doso</em>).</li>
+      <li><strong>Fakta Sejarah Kekaisaran Jepang:</strong> <strong>Kaisar Showa (Hirohito, wafat 1989)</strong> dan <strong>Kaisar Taisho</strong> beserta permaisuri dimakamkan dengan metode <strong>Doso (penguburan tanah)</strong> di Pemakaman Kekaisaran Musashi (武蔵陵墓地, Hachioji, Tokyo). Hal ini membuktikan bahwa penguburan tanah merupakan bagian dari tradisi luhur pemakaman di Jepang.</li>
     </ul>
   </div>
 
@@ -460,7 +460,7 @@ def main():
       <div class="qa-q">Q4: Apakah pemakaman jenazah mencemari air tanah atau sumber air minum warga?</div>
       <div class="qa-a">
         <strong>Jawaban: Sama sekali tidak.</strong><br>
-        Laporan WHO membuktikan tanah adalah biofilter alami yang menguraikan patogen secara tuntas. Pemakaman Muslim adalah <em>Green Burial</em> murni tanpa formalin pengawet dan tanpa peti logam beracun. Pemakaman Muslim Enzan di sentra perkebunan Yamanashi telah membuktikan selama >20 tahun kualitas air tetap 100% higienis.
+        Laporan WHO membuktikan tanah adalah biofilter alami yang menguraikan patogen secara tuntas. Pemakaman Muslim adalah <em>Green Burial</em> murni tanpa formalin pengawet dan tanpa peti logam beracun. Pemakaman Muslim Enzan di sentra perkebunan Yamanashi telah membuktikan selama >60 tahun kualitas air tetap 100% higienis.
       </div>
     </div>
 
@@ -544,10 +544,11 @@ def main():
 
   <div class="citation-box">
     <strong>Daftar Rujukan Dokumen Ilmiah & Regulasi:</strong><br>
-    1. World Health Organization (WHO). (1998). <em>The Impact of Cemeteries on the Environment and Public Health</em>. WHO Regional Office for Europe, Copenhagen.<br>
+    1. Üçisik, A. S., & Rushbrook, P. (1998). <em>The Impact of Cemeteries on the Environment and Public Health: An Introductory Briefing</em>. World Health Organization (WHO) Regional Office for Europe, Copenhagen.<br>
     2. 墓地、埋葬等に関する法律 (昭和二十三年法律第四十八号 / <em>Law on Cemeteries, Burials, etc. No. 48 of 1948</em>).<br>
     3. 厚生労働省 (Kementerian Kesehatan, Tenaga Kerja, dan Kesejahteraan Jepang). <em>墓地経営・管理の指針等について (Pedoman Pengelolaan dan Manajemen Pemakaman)</em>.<br>
-    4. Dent, B. B., & Knight, M. J. (1998). <em>Cemeteries: a review of groundwater concerns</em>. Environmental Geology, 36(1-2).
+    4. 出入国在留管理庁 (Badan Layanan Imigrasi Jepang). <em>令和6年末在留外国人統計 (Statistik Warga Asing Akhir 2024)</em>.<br>
+    5. Dent, B. B., & Knight, M. J. (1998). <em>Cemeteries: a review of groundwater concerns</em>. Environmental Geology, 36(1-2).
   </div>
 
 </body>
@@ -571,7 +572,7 @@ def main():
 
     res = subprocess.run(chrome_cmd, capture_output=True, text=True)
     if os.path.exists(pdf_file) and os.path.getsize(pdf_file) > 0:
-        print(f"PDF successfully generated locally at: {pdf_file} ({os.path.getsize(pdf_file)} bytes)")
+        print(f"PDF successfully regenerated locally at: {pdf_file} ({os.path.getsize(pdf_file)} bytes)")
     else:
         print(f"Error generating PDF: {res.stderr}")
 
