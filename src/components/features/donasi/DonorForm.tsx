@@ -99,7 +99,7 @@ export const DonorForm: React.FC<DonorFormProps> = ({
       <Box sx={{ border: `1px solid ${c.rule}`, borderRadius: radius.lg, bgcolor: c.paper, overflow: 'hidden' }}>
         <FieldRow id="donor-name" label="Nama" valid={donorName.length > 2 && !isAnonymous}>
           <InputBase
-            id="donor-name" fullWidth placeholder="Cth: Febry" sx={fieldSx}
+            id="donor-name" fullWidth placeholder="Cth: Fulan" sx={fieldSx}
             value={isAnonymous ? 'Hamba Allah' : donorName}
             disabled={isAnonymous}
             onChange={(e) => setDonorName(e.target.value)}
