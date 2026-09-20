@@ -37,4 +37,4 @@ pnpm-debug.log*
 functions/lib/
 
 .idx/
-docs/*.pdf
+docs/
