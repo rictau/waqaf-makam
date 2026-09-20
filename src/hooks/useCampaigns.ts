@@ -22,8 +22,8 @@ export function useCampaigns() {
         setCampaigns([
           {
             id: 'pemakaman',
-            title: 'Wakaf Tanah Makam Muslim untuk WNI di Jepang',
-            shortName: 'Pemakaman Honjo',
+            title: 'Wakaf Pemakaman Muslim WNI di Jepang',
+            shortName: 'Pemakaman Muslim',
             status: 'active',
             isFeatured: true,
             order: 1,
@@ -44,8 +44,8 @@ export function useCampaigns() {
       setCampaigns([
         {
           id: 'pemakaman',
-          title: 'Wakaf Tanah Makam Muslim untuk WNI di Jepang',
-          shortName: 'Pemakaman Honjo',
+          title: 'Wakaf Pemakaman Muslim WNI di Jepang',
+          shortName: 'Pemakaman Muslim',
           status: 'active',
           isFeatured: true,
           order: 1,

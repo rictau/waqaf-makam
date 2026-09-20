@@ -127,7 +127,7 @@ export const DonorForm: React.FC<DonorFormProps> = ({
 
         <FieldRow id="donor-city" label="Domisili" valid={donorCity.length > 1} last>
           <InputBase
-            id="donor-city" fullWidth placeholder="Cth: Tokyo / Saitama" sx={fieldSx}
+            id="donor-city" fullWidth placeholder="Cth: Tokyo / Kanagawa" sx={fieldSx}
             value={donorCity}
             onChange={(e) => setDonorCity(e.target.value)}
           />

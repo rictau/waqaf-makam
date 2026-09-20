@@ -569,8 +569,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
         const firstPhaseBase = publicConfig.phases[0] || {
           id: "pemakaman",
-          label: "Tahap 1: Lahan Pemakaman Muslim Honjo (10 Kapling / 120 Slot)",
-          shortLabel: "Pemakaman Honjo",
+          label: "Tahap 1: Lahan Pemakaman Muslim (10 Kapling / 120 Slot)",
+          shortLabel: "Pemakaman Muslim",
           targetJPY: 20000000,
           shortfallLabel: "Masih Dibutuhkan",
           completedLabel: "Lunas (100%)",
@@ -1008,7 +1008,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               onChange={(e) => onSelectCampaign && onSelectCampaign(e.target.value)}
               sx={{ bgcolor: c.well }}
             >
-              {(campaigns.length > 0 ? campaigns : [{ id: 'pemakaman', shortName: 'Pemakaman Honjo', title: 'Wakaf Pemakaman Muslim Honjo' }]).map((camp) => (
+              {(campaigns.length > 0 ? campaigns : [{ id: 'pemakaman', shortName: 'Pemakaman Muslim', title: 'Wakaf Pemakaman Muslim WNI di Jepang' }]).map((camp) => (
                 <MenuItem key={camp.id} value={camp.id}>
                   {camp.shortName || camp.title || camp.id}
                 </MenuItem>

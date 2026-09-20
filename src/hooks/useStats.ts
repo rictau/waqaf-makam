@@ -5,10 +5,10 @@ import { handleFirestoreError, OperationType } from '../utils/errors';
 import type { GlobalStats, PublicConfig, PhaseProgress } from '../types';
 
 const defaultPublicConfig: PublicConfig = {
-  masjidName: "Pemakaman Muslim Honjo",
+  masjidName: "Wakaf Pemakaman Muslim WNI di Jepang",
   shortName: "KMII Jepang",
-  campaignTitle: "Wakaf Tanah Makam Muslim untuk WNI di Jepang",
-  locationText: "Pemakaman Muslim Honjo, Saitama, Jepang",
+  campaignTitle: "Wakaf Pemakaman Muslim WNI di Jepang",
+  locationText: "Jepang",
   footerCredit: "KMII Jepang",
   donorListTitle: "Daftar Donatur",
   donorListSubtitleDate: "21 September 2026",
@@ -17,7 +17,7 @@ const defaultPublicConfig: PublicConfig = {
   donationClosedTitle: "Periode Donasi Telah Ditutup",
   donationClosedText: "Jazakumullah Khairan atas dukungan seluruh donatur. Untuk informasi lebih lanjut, silakan hubungi panitia.",
   programmeScopeTitle: "Tahap 1: 10 Kapling · ~300 m² · 120 Slot",
-  programmeScopeDescription: "Setelah masa pakai 10 tahun, kapling digunakan kembali untuk jenazah berikutnya sehingga melayani keluarga WNI di Jepang selama puluhan tahun ke depan.",
+  programmeScopeDescription: "Setelah masa pakai 10 tahun, kapling digunakan kembali untuk jenazah berikutnya sehingga melayani keluarga WNI muslim di Jepang selama puluhan tahun ke depan.",
   logos: [
     { src: "/kmii-logo.png", alt: "KMII Jepang" },
     { src: "/ivc-logo.png", alt: "Indonesian Volunteer Community" }
@@ -25,8 +25,8 @@ const defaultPublicConfig: PublicConfig = {
   phases: [
     {
       id: "pemakaman",
-      label: "Tahap 1: Lahan Pemakaman Muslim Honjo (10 Kapling / 120 Slot)",
-      shortLabel: "Pemakaman Honjo",
+      label: "Tahap 1: Lahan Pemakaman Muslim (10 Kapling / 120 Slot)",
+      shortLabel: "Pemakaman Muslim",
       targetJPY: 20000000,
       shortfallLabel: "Masih Dibutuhkan",
       completedLabel: "Lunas (100%)",
