@@ -152,7 +152,7 @@ def html_to_whatsapp(html_content):
         if p_intro:
             wa.append(clean_inline(p_intro.group(1)) + "\n")
         
-        steps = re.findall(r'<div style="font-weight:800;[^>]*>(.*?)</div>\s*<div style="font-weight:700;[^>]*>(.*?)</div>\s*<div style="font-size:[^>]*>(.*?)</div>', content, re.DOTALL)
+        steps = re.findall(r'<(?:span|div)[^>]*style="[^"]*font-weight:\s*800;[^"]*"[^>]*>(.*?)</(?:span|div)>\s*<(?:span|div)[^>]*style="[^"]*font-weight:\s*700;[^"]*"[^>]*>(.*?)</(?:span|div)>\s*<(?:div|p)[^>]*style="[^"]*font-size:[^"]*"[^>]*>(.*?)</(?:div|p)>', content, re.DOTALL)
         emojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣"]
         for idx, (s_num, s_title, s_desc) in enumerate(steps):
             emoji = emojis[idx] if idx < len(emojis) else "▫️"
