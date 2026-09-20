@@ -125,31 +125,13 @@ def html_to_whatsapp(html_content):
         if len(p_all) > 1:
             wa.append(f"🏛️ {clean_inline(p_all[-1])}\n")
 
-    # 5. Ambil Bab 4: Komparasi Kasus Hiji vs INVAC
-    b4_match = re.search(r'<h3 class="section-title">4\. KOMPARASI.*?</h3>(.*?)(?=<div class="section-block">)', html_content, re.DOTALL)
+    # 5. Ambil Bab 4: Bukti Empiris di Jepang
+    b4_match = re.search(r'<h3 class="section-title">4\. BUKTI EMPIRIS.*?</h3>(.*?)(?=<div class="page-break">|<div class="section-block">)', html_content, re.DOTALL)
     if b4_match:
         wa.append("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-        wa.append("📊 *4. KOMPARASI: KASUS HIJI/BEPPU VS INVENTARISASI INVAC*")
+        wa.append("📌 *4. BUKTI EMPIRIS DI JEPANG: PULUHAN TAHUN TANPA INSIDEN*")
         wa.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
         content = b4_match.group(1)
-        rows = re.findall(r'<tr>(.*?)</tr>', content, re.DOTALL)
-        for r in rows[1:]:  # Lewati header
-            cols = re.findall(r'<td>(.*?)</td>', r, re.DOTALL)
-            if len(cols) >= 3:
-                param = clean_inline(cols[0]).replace('*', '')
-                hiji = clean_inline(cols[1])
-                invac = clean_inline(cols[2])
-                wa.append(f"🔹 *Parameter: {param}*")
-                wa.append(f"   • _Kasus Hiji / Beppu (Oita):_ {hiji}")
-                wa.append(f"   • *Pendekatan INVAC:* {invac}\n")
-
-    # 6. Ambil Bab 5: Bukti Empiris di Jepang
-    b5_match = re.search(r'<h3 class="section-title">5\. BUKTI EMPIRIS.*?</h3>(.*?)(?=<div class="page-break">|<div class="section-block">)', html_content, re.DOTALL)
-    if b5_match:
-        wa.append("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-        wa.append("📌 *5. BUKTI EMPIRIS DI JEPANG: PULUHAN TAHUN TANPA INSIDEN*")
-        wa.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
-        content = b5_match.group(1)
         p_intro = re.search(r'<p>(.*?)</p>', content, re.DOTALL)
         if p_intro:
             wa.append(clean_inline(p_intro.group(1)) + "\n")
@@ -159,11 +141,11 @@ def html_to_whatsapp(html_content):
             wa.append(f"• {clean_inline(it)}")
         wa.append("")
 
-    # 7. Ambil Bab 6: Tanya Jawab Resmi (FAQ Q1 - Q7)
+    # 6. Ambil Bab 5: Tanya Jawab Resmi (FAQ Q1 - Q8 SATU BAB UTUH)
     qa_pairs = re.findall(r'<div class="qa-card">\s*<div class="qa-q">(.*?)</div>\s*<div class="qa-a">(.*?)</div>\s*</div>', html_content, re.DOTALL)
     if qa_pairs:
         wa.append("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-        wa.append("❓ *6. TANYA JAWAB RESMI (FAQ SEPUTAR PEMAKAMAN MUSLIM)*")
+        wa.append("❓ *5. TANYA JAWAB RESMI (FAQ SEPUTAR PEMAKAMAN MUSLIM)*")
         wa.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
         for q, a in qa_pairs:
             q_clean = clean_inline(q)
@@ -171,13 +153,13 @@ def html_to_whatsapp(html_content):
             wa.append(f"❓ *{q_clean}*")
             wa.append(f"💬 {a_clean}\n")
 
-    # 8. Ambil Bab 7: Alur Tanggap Darurat
-    b7_match = re.search(r'<h3 class="section-title">7\. ALUR TANGGAP DARURAT.*?</h3>(.*?)(?=<div class="section-block">)', html_content, re.DOTALL)
-    if b7_match:
+    # 7. Ambil Bab 6: Alur Tanggap Darurat
+    b6_match = re.search(r'<h3 class="section-title">6\. ALUR TANGGAP DARURAT.*?</h3>(.*?)(?=<div class="section-block">)', html_content, re.DOTALL)
+    if b6_match:
         wa.append("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-        wa.append("🚑 *7. ALUR TANGGAP DARURAT PENGURUSAN JENAZAH WNI DI JEPANG*")
+        wa.append("🚑 *6. ALUR TANGGAP DARURAT PENGURUSAN JENAZAH WNI DI JEPANG*")
         wa.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
-        content = b7_match.group(1)
+        content = b6_match.group(1)
         p_intro = re.search(r'<p>(.*?)</p>', content, re.DOTALL)
         if p_intro:
             wa.append(clean_inline(p_intro.group(1)) + "\n")
@@ -189,12 +171,12 @@ def html_to_whatsapp(html_content):
             wa.append(f"{emoji} *{clean_inline(s_num)}: {clean_inline(s_title)}*")
             wa.append(f"   {clean_inline(s_desc)}\n")
 
-    # 9. Ambil Bab 8: Catatan Penggunaan Internal Relawan
+    # 8. Ambil Bab 7: Catatan Penggunaan Internal Relawan
     internal_info = re.search(r'<div class="internal-info">(.*?)</div>', html_content, re.DOTALL)
     sign_box = re.search(r'<div class="sign-box">(.*?)</div>', html_content, re.DOTALL)
     if internal_info:
         wa.append("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-        wa.append("🔒 *8. CATATAN PENGGUNAAN INTERNAL RELAWAN*")
+        wa.append("🔒 *7. CATATAN PENGGUNAAN INTERNAL RELAWAN*")
         wa.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
         wa.append(clean_inline(internal_info.group(1)) + "\n")
         if sign_box:
