@@ -5,34 +5,33 @@ import { handleFirestoreError, OperationType } from '../utils/errors';
 import type { GlobalStats, PublicConfig, PhaseProgress } from '../types';
 
 const defaultPublicConfig: PublicConfig = {
-  masjidName: "Wakaf Pemakaman Muslim WNI di Jepang",
+  masjidName: "Program Donasi & ZISWAF",
   shortName: "KMII Jepang",
-  campaignTitle: "Wakaf Pemakaman Muslim WNI di Jepang",
+  campaignTitle: "Program Donasi & ZISWAF KMII Jepang",
   locationText: "Jepang",
   footerCredit: "KMII Jepang",
   donorListTitle: "Daftar Donatur",
-  donorListSubtitleDate: "21 September 2026",
-  wakafHadith: '"Apabila seorang manusia meninggal dunia, maka terputuslah semua amalnya kecuali tiga perkara: sedekah jariyah, ilmu yang bermanfaat, dan anak saleh yang mendoakannya." (HR. Muslim No. 1631)',
+  donorListSubtitleDate: "",
+  wakafHadith: '"Perumpamaan orang yang menginfakkan hartanya di jalan Allah seperti sebutir biji yang menumbuhkan tujuh tangkai, pada setiap tangkai ada seratus biji." (QS. Al-Baqarah: 261)',
   cashPaymentText: "Donasi tunai dapat diserahkan langsung atau dikonfirmasikan kepada panitia melalui direct message (DM) Instagram @kmiijepang.",
   donationClosedTitle: "Periode Donasi Telah Ditutup",
   donationClosedText: "Jazakumullah Khairan atas dukungan seluruh donatur. Untuk informasi lebih lanjut, silakan hubungi panitia.",
-  programmeScopeTitle: "Tahap 1: 10 Kapling · ~300 m² · 120 Slot",
-  programmeScopeDescription: "Setelah masa pakai 10 tahun, kapling digunakan kembali untuk jenazah berikutnya sehingga melayani keluarga WNI muslim di Jepang selama puluhan tahun ke depan.",
+  programmeScopeTitle: "Sasaran Program",
+  programmeScopeDescription: "Penyaluran dan pelaksanaan amanah donasi untuk kemaslahatan umat dan dakwah di Jepang.",
   logos: [
-    { src: "/kmii-logo.png", alt: "KMII Jepang" },
-    { src: "/ivc-logo.png", alt: "Indonesian Volunteer Community" }
+    { src: "/kmii-logo.png", alt: "KMII Jepang" }
   ],
   phases: [
     {
-      id: "pemakaman",
-      label: "Tahap 1: Lahan Pemakaman Muslim (10 Kapling / 120 Slot)",
-      shortLabel: "Pemakaman Muslim",
-      targetJPY: 20000000,
+      id: "tahap1",
+      label: "Tahap 1: Target Pendanaan Program",
+      shortLabel: "Target Pendanaan",
+      targetJPY: 10000000,
       shortfallLabel: "Masih Dibutuhkan",
-      completedLabel: "Lunas (100%)",
+      completedLabel: "Tercapai (100%)",
       completedDate: "",
-      completionAnnouncement: "Alhamdulillah, pembebasan lahan pemakaman telah lunas.",
-      subtext: "10 kapling (~300 m² / 120 slot). Target pelunasan 31 Maret 2027."
+      completionAnnouncement: "Alhamdulillah, target pendanaan telah tercapai.",
+      subtext: "Penyaluran amanah donasi terverifikasi oleh panitia."
     }
   ],
   packages: [
@@ -42,7 +41,7 @@ const defaultPublicConfig: PublicConfig = {
       priceJPY: 3000,
       priceLabel: '¥3,000 (~Rp 339,000)',
       badge: 'Paket Bersama',
-      subtext: 'Partisipasi gotong royong pembebasan lahan pemakaman.'
+      subtext: 'Partisipasi donasi gotong royong bersama umat.'
     },
     {
       id: 'sekali',
@@ -50,22 +49,22 @@ const defaultPublicConfig: PublicConfig = {
       priceJPY: 10000,
       priceLabel: '¥10,000 (~Rp 1,130,000)',
       badge: 'Paket Reguler',
-      subtext: 'Donasi percepatan pelunasan lahan pemakaman muslim.'
+      subtext: 'Donasi percepatan realisasi program.'
     },
     {
       id: '1slot',
-      label: '¥320.000',
-      priceJPY: 320000,
-      priceLabel: '¥320,000 (~Rp 36,160,000)',
-      badge: 'Wakaf 1 Slot',
-      subtext: 'Administrasi & perawatan termasuk. Mendapat sertifikat wakaf.'
+      label: '¥50.000',
+      priceJPY: 50000,
+      priceLabel: '¥50,000 (~Rp 5,650,000)',
+      badge: 'Paket Utama',
+      subtext: 'Kontribusi utama pendanaan program dakwah.'
     },
     {
       id: 'infaq',
-      label: 'Seikhlasnya',
+      label: 'Nominal Bebas',
       priceLabel: 'Nominal Bebas',
-      badge: 'Amal Jariyah',
-      subtext: 'Sedikit atau banyak, insya Allah berpahala amal jariyah'
+      badge: 'Infaq Bebas',
+      subtext: 'Masukkan nominal donasi sesuai keikhlasan Anda.'
     }
   ],
   banks: {

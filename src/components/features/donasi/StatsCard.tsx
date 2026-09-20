@@ -217,16 +217,14 @@ export const StatsCard: React.FC<StatsCardProps> = ({
                 <> · target pelunasan <strong style={{ color: c.ink }}>{formattedDeadline}</strong></>
               )}.
             </Typography>
-            {((publicConfig?.programmeScopeTitle || 'Tahap 1: 10 Kapling · ~300 m² · 120 Slot') || (publicConfig?.programmeScopeDescription || 'Setelah masa pakai 10 tahun, kapling digunakan kembali untuk jenazah berikutnya sehingga melayani keluarga WNI di Jepang selama puluhan tahun ke depan.')) && (
+            {(publicConfig?.programmeScopeTitle || publicConfig?.programmeScopeDescription) && (
               <Typography sx={{ fontSize: '0.75rem', lineHeight: 1.55, color: c.inkMuted, mt: 0.75 }}>
-                {(publicConfig?.programmeScopeTitle !== undefined ? publicConfig.programmeScopeTitle : 'Tahap 1: 10 Kapling · ~300 m² · 120 Slot') && (
+                {publicConfig?.programmeScopeTitle && (
                   <Box component="span" sx={{ ...eyebrow, fontSize: '0.5625rem', color: c.brass, display: 'block', mb: 0.25 }}>
-                    {publicConfig?.programmeScopeTitle !== undefined ? publicConfig.programmeScopeTitle : 'Tahap 1: 10 Kapling · ~300 m² · 120 Slot'}
+                    {publicConfig.programmeScopeTitle}
                   </Box>
                 )}
-                {publicConfig?.programmeScopeDescription !== undefined
-                  ? publicConfig.programmeScopeDescription
-                  : 'Setelah masa pakai 10 tahun, kapling digunakan kembali untuk jenazah berikutnya sehingga melayani keluarga WNI di Jepang selama puluhan tahun ke depan.'}
+                {publicConfig?.programmeScopeDescription}
               </Typography>
             )}
           </Box>

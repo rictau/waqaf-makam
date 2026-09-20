@@ -171,8 +171,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       locationText: publicConfig.locationText,
       footerCredit: publicConfig.footerCredit,
       donorListSubtitleDate: publicConfig.donorListSubtitleDate,
-      programmeScopeTitle: publicConfig.programmeScopeTitle ?? (currentCampaignId === 'pemakaman' ? 'Tahap 1: 10 Kapling · ~300 m² · 120 Slot' : ''),
-      programmeScopeDescription: publicConfig.programmeScopeDescription ?? (currentCampaignId === 'pemakaman' ? 'Setelah masa pakai 10 tahun, kapling digunakan kembali untuk jenazah berikutnya sehingga melayani keluarga WNI di Jepang selama puluhan tahun ke depan.' : ''),
+      programmeScopeTitle: publicConfig.programmeScopeTitle ?? '',
+      programmeScopeDescription: publicConfig.programmeScopeDescription ?? '',
       wakafHadith: publicConfig.wakafHadith || '',
       phase1Label: publicConfig.phases[0]?.shortLabel || '',
       phase2Label: publicConfig.phases[1]?.shortLabel || '',
@@ -568,24 +568,24 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         }
 
         const firstPhaseBase = publicConfig.phases[0] || {
-          id: "pemakaman",
-          label: "Tahap 1: Lahan Pemakaman Muslim (10 Kapling / 120 Slot)",
-          shortLabel: "Pemakaman Muslim",
-          targetJPY: 20000000,
+          id: "tahap1",
+          label: "Tahap 1: Target Pendanaan Program",
+          shortLabel: "Target Pendanaan",
+          targetJPY: 10000000,
           shortfallLabel: "Masih Dibutuhkan",
-          completedLabel: "Lunas (100%)",
+          completedLabel: "Tercapai (100%)",
           completedDate: "",
-          completionAnnouncement: "Alhamdulillah, pembebasan lahan pemakaman telah lunas.",
-          subtext: "10 kapling (~300 m² / 120 slot). Target pelunasan 31 Maret 2027."
+          completionAnnouncement: "Alhamdulillah, target pendanaan telah tercapai.",
+          subtext: "Penyaluran amanah donasi terverifikasi oleh panitia."
         };
         
         const secondPhaseBase = publicConfig.phases[1] || {
           id: "tahap2",
-          label: "Tahap 2: Fasilitas & Operasional Makam",
-          shortLabel: "Fasilitas Makam",
+          label: "Tahap 2: Pengembangan & Operasional Lanjutan",
+          shortLabel: "Pengembangan Lanjutan",
           targetJPY: 5000000,
           shortfallLabel: "Masih Dibutuhkan",
-          subtext: "Pengembangan sarana & prasarana pemakaman."
+          subtext: "Pengembangan dan operasional lanjutan program."
         };
 
         const phases = [];
@@ -1008,7 +1008,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               onChange={(e) => onSelectCampaign && onSelectCampaign(e.target.value)}
               sx={{ bgcolor: c.well }}
             >
-              {(campaigns.length > 0 ? campaigns : [{ id: 'pemakaman', shortName: 'Pemakaman Muslim', title: 'Wakaf Pemakaman Muslim WNI di Jepang' }]).map((camp) => (
+              {(campaigns.length > 0 ? campaigns : [{ id: 'pemakaman', shortName: 'Program Donasi', title: 'Program Donasi & ZISWAF KMII Jepang' }]).map((camp) => (
                 <MenuItem key={camp.id} value={camp.id}>
                   {camp.shortName || camp.title || camp.id}
                 </MenuItem>
@@ -1680,7 +1680,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               <TextField
                 size="small"
                 label="Judul Ruang Lingkup (Scope Title)"
-                placeholder="Contoh: Tahap 1: 10 Kapling · ~300 m² · 120 Slot"
+                placeholder="Contoh: Sasaran & Target Program Tahap 1"
                 value={publicConfigInput.programmeScopeTitle}
                 onChange={(e) => updatePublicConfigInput('programmeScopeTitle', e.target.value)}
                 helperText="Teks tebal sorotan sasaran di kartu progress donasi publik"
@@ -1689,7 +1689,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               <TextField
                 size="small"
                 label="Keterangan Detail Ruang Lingkup (Scope Description)"
-                placeholder="Contoh: Setelah masa pakai 10 tahun, kapling digunakan kembali untuk jenazah berikutnya sehingga melayani keluarga WNI di Jepang selama puluhan tahun ke depan."
+                placeholder="Contoh: Penyaluran dan pemanfaatan amanah donasi untuk kemaslahatan umat dan dakwah di Jepang."
                 value={publicConfigInput.programmeScopeDescription}
                 onChange={(e) => updatePublicConfigInput('programmeScopeDescription', e.target.value)}
                 multiline
@@ -1700,7 +1700,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               <TextField
                 size="small"
                 label="Kutipan Hadits / Teks Penguat"
-                placeholder="Contoh: Jika seseorang meninggal dunia, maka terputuslah amalannya kecuali tiga perkara..."
+                placeholder="Contoh: Perumpamaan orang yang menginfakkan hartanya di jalan Allah..."
                 value={publicConfigInput.wakafHadith}
                 onChange={(e) => updatePublicConfigInput('wakafHadith', e.target.value)}
                 multiline
