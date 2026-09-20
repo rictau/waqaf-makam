@@ -141,35 +141,38 @@ def html_to_whatsapp(html_content):
             wa.append(f"• {clean_inline(it)}")
         wa.append("")
 
-    # 6. Ambil Bab 5: Tanya Jawab Resmi (FAQ Q1 - Q8 SATU BAB UTUH)
+    # 6. Ambil Bab 5: Alur Tanggap Darurat
+    b5_match = re.search(r'<h3 class="section-title">5\. ALUR TANGGAP DARURAT.*?</h3>(.*?)(?=<div class="page-break">|<div class="section-block">)', html_content, re.DOTALL)
+    if b5_match:
+        wa.append("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        wa.append("🚑 *5. ALUR TANGGAP DARURAT PENGURUSAN JENAZAH WNI DI JEPANG*")
+        wa.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
+        content = b5_match.group(1)
+        p_intro = re.search(r'<p>(.*?)</p>', content, re.DOTALL)
+        if p_intro:
+            wa.append(clean_inline(p_intro.group(1)) + "\n")
+        
+        steps = re.findall(r'<div style="font-weight:800; font-size:6.75pt; color:#9C6D37; margin-bottom:1px;">(.*?)</div>\s*<div style="font-weight:700; font-size:7.5pt; color:#1E3A2F; margin-bottom:1px;">(.*?)</div>\s*<div style="font-size:6.75pt; color:#475569; line-height:1.3;">(.*?)</div>', content, re.DOTALL)
+        if not steps:
+            # Fallback jika font-size berbeda
+            steps = re.findall(r'<div style="font-weight:800;[^>]*>(.*?)</div>\s*<div style="font-weight:700;[^>]*>(.*?)</div>\s*<div style="font-size:[^>]*>(.*?)</div>', content, re.DOTALL)
+        emojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣"]
+        for idx, (s_num, s_title, s_desc) in enumerate(steps):
+            emoji = emojis[idx] if idx < len(emojis) else "▫️"
+            wa.append(f"{emoji} *{clean_inline(s_num)}: {clean_inline(s_title)}*")
+            wa.append(f"   {clean_inline(s_desc)}\n")
+
+    # 7. Ambil Bab 6: Tanya Jawab Resmi (FAQ Q1 - Q8 di bagian akhir dokumen)
     qa_pairs = re.findall(r'<div class="qa-card">\s*<div class="qa-q">(.*?)</div>\s*<div class="qa-a">(.*?)</div>\s*</div>', html_content, re.DOTALL)
     if qa_pairs:
         wa.append("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-        wa.append("❓ *5. TANYA JAWAB RESMI (FAQ SEPUTAR PEMAKAMAN MUSLIM)*")
+        wa.append("❓ *6. TANYA JAWAB RESMI (FAQ SEPUTAR PEMAKAMAN MUSLIM)*")
         wa.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
         for q, a in qa_pairs:
             q_clean = clean_inline(q)
             a_clean = clean_inline(a)
             wa.append(f"❓ *{q_clean}*")
             wa.append(f"💬 {a_clean}\n")
-
-    # 7. Ambil Bab 6: Alur Tanggap Darurat
-    b6_match = re.search(r'<h3 class="section-title">6\. ALUR TANGGAP DARURAT.*?</h3>(.*?)(?=<div class="section-block">)', html_content, re.DOTALL)
-    if b6_match:
-        wa.append("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-        wa.append("🚑 *6. ALUR TANGGAP DARURAT PENGURUSAN JENAZAH WNI DI JEPANG*")
-        wa.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
-        content = b6_match.group(1)
-        p_intro = re.search(r'<p>(.*?)</p>', content, re.DOTALL)
-        if p_intro:
-            wa.append(clean_inline(p_intro.group(1)) + "\n")
-        
-        steps = re.findall(r'<div style="font-weight:800; font-size:7pt; color:#9C6D37; margin-bottom:2px;">(.*?)</div>\s*<div style="font-weight:700; font-size:7.75pt; color:#1E3A2F; margin-bottom:2px;">(.*?)</div>\s*<div style="font-size:7pt; color:#475569; line-height:1.35;">(.*?)</div>', content, re.DOTALL)
-        emojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣"]
-        for idx, (s_num, s_title, s_desc) in enumerate(steps):
-            emoji = emojis[idx] if idx < len(emojis) else "▫️"
-            wa.append(f"{emoji} *{clean_inline(s_num)}: {clean_inline(s_title)}*")
-            wa.append(f"   {clean_inline(s_desc)}\n")
 
     # 8. Ambil Bab 7: Catatan Penggunaan Internal Relawan
     internal_info = re.search(r'<div class="internal-info">(.*?)</div>', html_content, re.DOTALL)
