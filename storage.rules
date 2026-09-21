@@ -1,9 +1,21 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.email == 'rictau.jp@gmail.com' ||
+        (firestore.exists(/databases/(default)/documents/users/$(request.auth.uid)) &&
+         firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role in ['admin', 'superadmin'])
+      );
+    }
+
     match /proofs/{allPaths=**} {
-      // Anyone can read proof images
-      allow read: if true;
+      // Only authenticated admins can read/download proof images
+      allow read: if isAdmin();
 
       // Anyone can upload a proof file, but only if it's an image or PDF and less than or equal to 10MB
       allow write: if request.resource.size <= 10 * 1024 * 1024
@@ -14,8 +26,9 @@ service firebase.storage {
       // Anyone can view campaign images/banners
       allow read: if true;
 
-      // Images up to 10MB can be uploaded
-      allow write: if request.resource.size <= 10 * 1024 * 1024
+      // Images up to 10MB can be uploaded by admins
+      allow write: if isAdmin()
+                   && request.resource.size <= 10 * 1024 * 1024
                    && request.resource.contentType.matches('image/.*');
     }
   }

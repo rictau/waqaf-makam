@@ -1,5 +1,16 @@
 import { useState, useEffect } from 'react';
-import { collection, addDoc, onSnapshot, query, orderBy, limit, where, Timestamp, type QueryConstraint } from 'firebase/firestore';
+import { 
+  collection, 
+  doc, 
+  writeBatch, 
+  onSnapshot, 
+  query, 
+  orderBy, 
+  limit, 
+  where, 
+  Timestamp, 
+  type QueryConstraint 
+} from 'firebase/firestore';
 import { db } from '../firebase';
 import { handleFirestoreError, OperationType } from '../utils/errors';
 import type { DonationRecord, DonationStatus } from '../types';
@@ -7,6 +18,13 @@ import type { DonationRecord, DonationStatus } from '../types';
 interface UseDonationsProps {
   isAdminMode: boolean;
   campaignId?: string;
+}
+
+interface PrivateDonationData {
+  email?: string;
+  phone?: string;
+  proofUrl?: string;
+  remarks?: string;
 }
 
 export function useDonations({ isAdminMode, campaignId }: UseDonationsProps) {
@@ -36,34 +54,62 @@ export function useDonations({ isAdminMode, campaignId }: UseDonationsProps) {
       }
     }
 
-    const q = query(collection(db, 'donations'), ...constraints);
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const docs = snapshot.docs.map((docSnap): DonationRecord => {
+    let privateMap = new Map<string, PrivateDonationData>();
+    let latestPublicDocs: any[] = [];
+
+    const mergeAndSetDonations = () => {
+      const records = latestPublicDocs.map((docSnap): DonationRecord => {
         const data = docSnap.data();
+        const priv = privateMap.get(docSnap.id);
         return {
           id: docSnap.id,
           campaignId: data.campaignId,
           name: String(data.name || 'Hamba Allah'),
-          email: data.email,
+          email: priv?.email ?? data.email,
           amount: Number(data.amount || 0),
           date: data.date?.toDate ? data.date.toDate().toLocaleString('id-ID') : 'Baru saja',
           status: (data.status === 'verified' ? 'verified' : 'pending') as DonationStatus,
           loc: data.loc,
-          phone: data.phone,
+          phone: priv?.phone ?? data.phone,
           isAnonymous: data.isAnonymous,
-          proofUrl: data.proofUrl,
+          proofUrl: priv?.proofUrl ?? data.proofUrl,
           package: data.package,
           paymentMethod: data.paymentMethod,
-          remarks: data.remarks,
+          remarks: priv?.remarks ?? data.remarks,
           originalCurrency: data.originalCurrency,
           originalAmount: data.originalAmount ? Number(data.originalAmount) : undefined,
         };
       });
-      setDonations(docs);
-      setHasMore(docs.length === donationLimit);
+      setDonations(records);
+      setHasMore(records.length === donationLimit);
+    };
+
+    const q = query(collection(db, 'donations'), ...constraints);
+    const unsubscribePublic = onSnapshot(q, (snapshot) => {
+      latestPublicDocs = snapshot.docs;
+      mergeAndSetDonations();
     }, (error) => handleFirestoreError(error, OperationType.GET, 'donations'));
+
+    // In admin mode, also listen to donations_private to merge sensitive PII
+    let unsubscribePrivate: (() => void) | undefined;
+    if (isAdminMode) {
+      unsubscribePrivate = onSnapshot(collection(db, 'donations_private'), (snapshot) => {
+        const nextMap = new Map<string, PrivateDonationData>();
+        snapshot.docs.forEach((d) => {
+          nextMap.set(d.id, d.data() as PrivateDonationData);
+        });
+        privateMap = nextMap;
+        mergeAndSetDonations();
+      }, (error) => {
+        // Silently handle or log if admin session is still verifying
+        console.warn('Unable to subscribe to donations_private:', error);
+      });
+    }
     
-    return () => unsubscribe();
+    return () => {
+      unsubscribePublic();
+      if (unsubscribePrivate) unsubscribePrivate();
+    };
   }, [donationLimit, isAdminMode, campaignId, adminFilterStatus, adminFilterPayment]);
 
   const loadMore = () => {
@@ -85,12 +131,40 @@ export function useDonations({ isAdminMode, campaignId }: UseDonationsProps) {
     campaignId?: string;
   }) => {
     try {
-      return await addDoc(collection(db, 'donations'), {
-        ...donationData,
-        campaignId: donationData.campaignId || campaignId || 'pemakaman',
-        date: Timestamp.now(),
-        status: 'pending'
+      const batch = writeBatch(db);
+      const donationRef = doc(collection(db, 'donations'));
+      const privateRef = doc(db, 'donations_private', donationRef.id);
+      const targetCampaignId = donationData.campaignId || campaignId || 'pemakaman';
+      const now = Timestamp.now();
+
+      // 1. Write public record (Strictly non-PII)
+      batch.set(donationRef, {
+        name: donationData.name,
+        amount: donationData.amount,
+        loc: donationData.loc || '',
+        package: donationData.package || '',
+        paymentMethod: donationData.paymentMethod || '',
+        isAnonymous: Boolean(donationData.isAnonymous),
+        campaignId: targetCampaignId,
+        date: now,
+        status: 'pending',
+        ...(donationData.originalCurrency ? { originalCurrency: donationData.originalCurrency } : {}),
+        ...(donationData.originalAmount !== undefined && donationData.originalAmount !== null
+          ? { originalAmount: Number(donationData.originalAmount) }
+          : {})
       });
+
+      // 2. Write private record (PII only accessible by authenticated admin)
+      batch.set(privateRef, {
+        email: donationData.email || '',
+        phone: donationData.phone || '',
+        proofUrl: donationData.proofUrl || '',
+        campaignId: targetCampaignId,
+        createdAt: now
+      });
+
+      await batch.commit();
+      return donationRef;
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, 'donations');
       throw error;

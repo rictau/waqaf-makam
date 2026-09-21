@@ -49,7 +49,10 @@ export const sendVerificationEmail = functions.runWith({ secrets: ['RESEND_API_K
 
     // Trigger ONLY when status changes from 'pending' to 'verified'
     if (before.status !== 'verified' && after.status === 'verified') {
-      const email = after.email;
+      const db = admin.firestore();
+      const privateSnap = await db.doc(`donations_private/${context.params.donationId}`).get();
+      const privateData = privateSnap.exists ? privateSnap.data() : null;
+      const email = privateData?.email || after.email;
 
       if (!email || !process.env.RESEND_API_KEY || process.env.RESEND_API_KEY === 'RE_PLACEHOLDER') {
         console.log('Skipping verification email: Missing email or API key.');
@@ -57,7 +60,6 @@ export const sendVerificationEmail = functions.runWith({ secrets: ['RESEND_API_K
       }
 
       try {
-        const db = admin.firestore();
         const campaignId = after.campaignId || 'pemakaman';
         const campaignData = await getCampaignConfig(db, campaignId);
         const pubConfig = campaignData?.publicConfig;
@@ -159,7 +161,10 @@ export const sendPendingEmail = functions.runWith({ secrets: ['RESEND_API_KEY'] 
   .onCreate(async (snap, context) => {
     const resend = new Resend(process.env.RESEND_API_KEY);
     const data = snap.data();
-    const email = data.email;
+    const db = admin.firestore();
+    const privateSnap = await db.doc(`donations_private/${context.params.donationId}`).get();
+    const privateData = privateSnap.exists ? privateSnap.data() : null;
+    const email = privateData?.email || data.email;
 
     if (!email || !process.env.RESEND_API_KEY || process.env.RESEND_API_KEY === 'RE_PLACEHOLDER') {
       console.log('Skipping pending email: Missing email or API key.');
@@ -331,7 +336,13 @@ export const syncToSheets = functions
 
       // 1. Handle DELETION
       if (!change.after.exists) {
-        console.log(`Donation ${donationId} deleted. Searching for row to remove.`);
+        console.log(`Donation ${donationId} deleted. Cleaning up donations_private and spreadsheet row.`);
+        try {
+          await db.doc(`donations_private/${donationId}`).delete();
+        } catch (err) {
+          console.warn(`Could not delete donations_private/${donationId}:`, err);
+        }
+
         const response = await sheets.spreadsheets.values.get({
           spreadsheetId,
           range: 'Donations!L:L',
@@ -370,6 +381,14 @@ export const syncToSheets = functions
 
       // 2. Handle CREATE or UPDATE
       const data = change.after.data()!;
+      const privateSnap = await db.doc(`donations_private/${donationId}`).get();
+      const privateData = privateSnap.exists ? privateSnap.data() : null;
+
+      const email = privateData?.email || data.email || '-';
+      const phone = privateData?.phone || data.phone || '-';
+      const proofUrl = privateData?.proofUrl || data.proofUrl || '-';
+      const remarks = privateData?.remarks || data.remarks || '-';
+
       const dateObj = data.date && typeof data.date.toDate === 'function' ? data.date.toDate() : new Date();
       const formattedDate = dateObj.toISOString().slice(0, 10) + ': ' + 
                            dateObj.getHours().toString().padStart(2, '0') + ':' + 
@@ -378,15 +397,15 @@ export const syncToSheets = functions
       const rowData = [
         formattedDate,
         data.name || 'Hamba Allah',
-        data.email || '-',
-        data.phone || '-',
+        email,
+        phone,
         data.amount || 0,
         data.package || '-',
         data.loc || '-',
         data.status || 'pending',
         data.paymentMethod || '-',
-        data.proofUrl || '-',
-        data.remarks || '-',
+        proofUrl,
+        remarks,
         donationId // Column L
       ];
 

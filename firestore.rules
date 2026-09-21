@@ -63,7 +63,7 @@ service cloud.firestore {
         : (!('isClosed' in get(/databases/$(database)/documents/stats/global).data && get(/databases/$(database)/documents/stats/global).data.isClosed == true));
     }
 
-    function isValidDonation(data) {
+    function isValidPublicDonation(data) {
       return data.keys().hasAll(['name', 'amount', 'date', 'status']) &&
              data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
              data.amount is number && data.amount > 0 &&
@@ -71,15 +71,22 @@ service cloud.firestore {
              data.status in ['pending', 'verified'] &&
              (!('campaignId' in data) || (data.campaignId is string && data.campaignId.size() < 100)) &&
              (!('loc' in data) || (data.loc is string && data.loc.size() < 100)) &&
-             (!('phone' in data) || (data.phone is string && data.phone.size() < 50)) &&
-             (!('email' in data) || (data.email is string && data.email.size() < 150)) &&
              (!('isAnonymous' in data) || data.isAnonymous is bool) &&
-             (!('proofUrl' in data) || (data.proofUrl is string && data.proofUrl.size() < 1000)) &&
              (!('package' in data) || (data.package is string && data.package.size() < 100)) &&
              (!('paymentMethod' in data) || (data.paymentMethod is string && data.paymentMethod.size() < 100)) &&
-             (!('remarks' in data) || (data.remarks is string && data.remarks.size() < 1000)) &&
              (!('originalCurrency' in data) || data.originalCurrency in ['JPY', 'IDR']) &&
-             (!('originalAmount' in data) || data.originalAmount == null || (data.originalAmount is number && data.originalAmount >= 0));
+             (!('originalAmount' in data) || data.originalAmount == null || (data.originalAmount is number && data.originalAmount >= 0)) &&
+             // Prevent PII from being written to the public collection on create
+             (!('phone' in data) && !('email' in data) && !('proofUrl' in data) && !('remarks' in data));
+    }
+
+    function isValidPrivateDonation(data) {
+      return (!('email' in data) || (data.email is string && data.email.size() < 150)) &&
+             (!('phone' in data) || (data.phone is string && data.phone.size() < 50)) &&
+             (!('proofUrl' in data) || (data.proofUrl is string && data.proofUrl.size() < 1000)) &&
+             (!('remarks' in data) || (data.remarks is string && data.remarks.size() < 1000)) &&
+             (!('campaignId' in data) || (data.campaignId is string && data.campaignId.size() < 100)) &&
+             (!('createdAt' in data) || data.createdAt is timestamp);
     }
 
     // ===============================================================
@@ -95,17 +102,30 @@ service cloud.firestore {
     }
 
     match /donations/{donationId} {
-      // Public can read donations for the list
+      // Public can read donations for the public ledger (strictly non-PII)
       allow read: if true;
       
-      // Anyone can create a donation (submit form) while donations are open.
+      // Anyone can create a public donation entry while donations are open.
       // Admins can always create (manual entry / re-opening case).
-      allow create: if isValidDonation(request.resource.data)
+      allow create: if isValidPublicDonation(request.resource.data)
                     && request.resource.data.status == 'pending'
                     && (donationsOpen(request.resource.data) || isAdmin());
       
       // Only admins can update or delete donations
-      allow update: if isAdmin() && isValidDonation(request.resource.data);
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /donations_private/{donationId} {
+      // ONLY authenticated admins can read private donor data (email, phone, proofUrl, remarks)
+      allow read: if isAdmin();
+      
+      // Anyone can create a private donation record during submission while donations are open
+      allow create: if isValidPrivateDonation(request.resource.data)
+                    && (donationsOpen(request.resource.data) || isAdmin());
+      
+      // Only admins can update or delete private donor records
+      allow update: if isAdmin() && isValidPrivateDonation(request.resource.data);
       allow delete: if isAdmin();
     }
 

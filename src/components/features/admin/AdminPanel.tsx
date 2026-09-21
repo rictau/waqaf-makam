@@ -762,24 +762,34 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     setIsExporting(true);
     try {
       const q = query(collection(db, 'donations'), orderBy('date', 'desc'));
-      const querySnapshot = await getDocs(q);
+      const [querySnapshot, privateSnapshot] = await Promise.all([
+        getDocs(q),
+        getDocs(collection(db, 'donations_private')).catch((err) => {
+          console.warn('Unable to load donations_private for export:', err);
+          return { docs: [] };
+        })
+      ]);
       
+      const privateMap = new Map<string, any>();
+      privateSnapshot.docs.forEach((d: any) => privateMap.set(d.id, d.data()));
+
       const allDonations = querySnapshot.docs.map((docSnap): DonationRecord => {
         const data = docSnap.data();
+        const priv = privateMap.get(docSnap.id);
         return {
           id: docSnap.id,
           name: String(data.name || 'Hamba Allah'),
-          email: data.email,
+          email: priv?.email ?? data.email,
           amount: Number(data.amount || 0),
           date: data.date?.toDate ? data.date.toDate().toLocaleString('id-ID') : 'Baru saja',
           status: data.status === 'verified' ? 'verified' : 'pending',
           loc: data.loc,
-          phone: data.phone,
+          phone: priv?.phone ?? data.phone,
           isAnonymous: data.isAnonymous,
-          proofUrl: data.proofUrl,
+          proofUrl: priv?.proofUrl ?? data.proofUrl,
           package: data.package,
           paymentMethod: data.paymentMethod,
-          remarks: data.remarks
+          remarks: priv?.remarks ?? data.remarks
         };
       });
 
@@ -845,18 +855,27 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       if (!isAuthorized) return;
 
       const docRef = doc(db, 'donations', editingDonation.id);
-      const updateData = {
+      const privateRef = doc(db, 'donations_private', editingDonation.id);
+      const batch = writeBatch(db);
+
+      // Update public record
+      batch.update(docRef, {
         name: editingDonation.name,
         amount: amountNum,
         status: (editingDonation.status === 'verified' ? 'verified' : 'pending') as DonationStatus,
-        phone: editingDonation.phone || '',
         loc: editingDonation.loc || '',
         package: editingDonation.package || '',
         paymentMethod: editingDonation.paymentMethod || '',
+      });
+
+      // Update private record
+      batch.set(privateRef, {
+        phone: editingDonation.phone || '',
         email: editingDonation.email || '',
         remarks: editingDonation.remarks || ''
-      };
-      await updateDoc(docRef, updateData);
+      }, { merge: true });
+
+      await batch.commit();
       await recalculateStats();
       setEditDialogOpen(false);
       setEditingDonation(null);
@@ -948,12 +967,25 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           return;
         }
 
-        const snapshot = await getDocs(collection(db, 'donations'));
+        const [snapshot, privateSnapshot] = await Promise.all([
+          getDocs(collection(db, 'donations')),
+          getDocs(collection(db, 'donations_private')).catch(() => ({ docs: [] }))
+        ]);
         let batch = writeBatch(db);
         let operations = 0;
 
         for (const donationDoc of snapshot.docs) {
           batch.delete(donationDoc.ref);
+          operations += 1;
+          if (operations === 450) {
+            await batch.commit();
+            batch = writeBatch(db);
+            operations = 0;
+          }
+        }
+
+        for (const privDoc of privateSnapshot.docs) {
+          batch.delete(privDoc.ref);
           operations += 1;
           if (operations === 450) {
             await batch.commit();
@@ -1332,6 +1364,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                               if (!isAuthorized) return;
 
                               await deleteDoc(doc(db, 'donations', donor.id));
+                              await deleteDoc(doc(db, 'donations_private', donor.id)).catch(() => {});
                               await recalculateStats();
                             } catch (e) {
                               console.error('Failed to delete donation:', e);
