@@ -38,3 +38,5 @@ functions/lib/
 
 .idx/
 docs/
+__pycache__/
+*.py[cod]

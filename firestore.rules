@@ -38,14 +38,16 @@ service cloud.firestore {
     function isSuperAdmin() {
       return isAuthenticated() && (
         request.auth.token.email == 'rictau.jp@gmail.com' ||
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin'
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin')
       );
     }
 
     function isAdmin() {
       return isAuthenticated() && (
         isSuperAdmin() ||
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
       );
     }
 
@@ -116,8 +118,11 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      // Only the user themselves or an admin can read/write their own user document
-      allow read, write: if request.auth.uid == userId || isAdmin();
+      // Users can read their own document; admins can read any user document
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      
+      // Only Superadmin can create, update, or delete user roles and profiles
+      allow write: if isSuperAdmin();
     }
   }
 }
